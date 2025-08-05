@@ -9,7 +9,8 @@ const multer = require('multer');
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
+
 
 // Multer config
 const storage = multer.diskStorage({
