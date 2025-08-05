@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SyncRoom</title>
+  <link href="/css/output.css" rel="stylesheet" />
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+  <!-- Navigation -->
+  <nav class="bg-white shadow px-6 py-4 flex justify-between items-center">
+    <div class="text-xl font-semibold text-gray-800">SyncRoom</div>
+    <div class="space-x-4">
+      <% if (user) { %>
+        <a href="/user/<%= user.id %>" class="text-blue-600 hover:text-blue-800 transition">Dashboard</a>
+        <a href="/logout" class="text-red-500 hover:text-red-700 transition">Logout</a>
+      <% } else { %>
+        <a href="/login" class="text-blue-600 hover:text-blue-800 transition">Login</a>
+        <a href="/register" class="text-green-600 hover:text-green-800 transition">Sign Up</a>
+      <% } %>
+    </div>
+  </nav>
+
+  <!-- Hero section -->
+  <main class="flex-1 flex flex-col items-center justify-center text-center px-4">
+    <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-3">Welcome to SyncRoom</h1>
+    <p class="text-gray-600 text-lg mb-6 max-w-xl">
+      Real‑time group chat and file sharing. Organize your team, share files securely, and stay connected anywhere.
+    </p>
+
+    <% if (user) { %>
+      <a href="/groups" class="bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700 transition">
+        Go to My Groups
+      </a>
+    <% } else { %>
+      <div class="flex space-x-4">
+        <a href="/register" class="bg-green-600 text-white px-6 py-2 rounded-lg shadow hover:bg-green-700 transition">Sign Up</a>
+        <a href="/login" class="bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700 transition">Login</a>
+      </div>
+    <% } %>
+  </main>
+
+  <!-- Features section -->
+  <section class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 px-4 mb-12">
+    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+      <h2 class="font-semibold text-lg mb-2">Group Chat</h2>
+      <p class="text-gray-600 text-sm">Chat with your groups instantly and stay in sync in real time.</p>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+      <h2 class="font-semibold text-lg mb-2">File Sharing</h2>
+      <p class="text-gray-600 text-sm">Upload and share files securely with your team members.</p>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+      <h2 class="font-semibold text-lg mb-2">Easy Management</h2>
+      <p class="text-gray-600 text-sm">Create or join groups effortlessly and manage members easily.</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="text-center text-gray-500 text-sm py-4 border-t">
+    © 2025 SyncRoom by Aryan Patel
+  </footer>
+</body>
+</html>

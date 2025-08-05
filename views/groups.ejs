@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Your Groups</title>
+  <link href="/css/output.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    integrity="sha512-papapapa..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+
+<body class="bg-gray-100">
+  <div class="flex h-screen">
+    <!-- Left fixed panel -->
+    <div class="w-80 bg-white p-4 shadow flex flex-col">
+      <h1 class="text-xl font-bold mb-4 text-center">Welcome, <%= user.username %>!</h1>
+
+      <form action="/groups/create" method="POST" class="bg-gray-50 p-4 rounded shadow mb-4">
+        <h2 class="font-semibold mb-2">Create Group</h2>
+        <input name="group_name" placeholder="Group name" class="border px-2 py-1 mb-2 w-full rounded" required>
+        <input name="group_key" placeholder="Group key" class="border px-2 py-1 mb-2 w-full rounded" required>
+        <button class="bg-blue-500 text-white px-2 py-1 rounded w-full">Create</button>
+      </form>
+
+      <form action="/groups/join" method="POST" class="bg-gray-50 p-4 rounded shadow">
+        <h2 class="font-semibold mb-2">Join Group</h2>
+        <input name="group_name" placeholder="Group name" class="border px-2 py-1 mb-2 w-full rounded" required>
+        <input name="group_key" placeholder="Group key" class="border px-2 py-1 mb-2 w-full rounded" required>
+        <button class="bg-green-500 text-white px-2 py-1 rounded w-full">Join</button>
+      </form>
+
+      <div class="text-center mt-4">
+        <a href="/logout" class="text-red-500 underline">Logout</a>
+      </div>
+    </div>
+
+    <!-- Right scrollable panel -->
+    <div class="flex-1 overflow-y-auto p-6">
+      <div class="mb-4">
+        <h2 class="text-xl font-semibold mb-2">Your Groups:</h2>
+        <div class="relative mt-4 w-full">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="fas fa-search text-gray-500"></i>
+          </div>
+          <input id="searchInput" type="text" placeholder="Search groups..."
+            class="pl-10 pr-4 py-2 w-full rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+      </div>
+
+      <ul id="groupsList" class="flex flex-col space-y-3">
+        <% groups.forEach(group => { %>
+          <li class="w-full max-w-2xl">
+            <div
+              class="flex items-center justify-between bg-white rounded-2xl shadow hover:shadow-lg transition duration-300 px-4 py-3">
+              <div class="flex items-center space-x-4">
+                <div class="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100">
+                  <span class="font-semibold text-blue-700">
+                    <%= group.name.charAt(0).toUpperCase() %>
+                  </span>
+                </div>
+                <a href="/chat/<%= group.id %>" class="text-lg font-medium text-gray-800 hover:text-blue-600 transition group-name">
+                  <%= group.name %>
+                </a>
+              </div>
+            </div>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const groupsList = document.getElementById('groupsList');
+    searchInput.addEventListener('keyup', () => {
+      const filter = searchInput.value.toLowerCase();
+      const items = groupsList.querySelectorAll('li');
+      items.forEach(item => {
+        const groupName = item.querySelector('.group-name').textContent.toLowerCase();
+        item.style.display = groupName.includes(filter) ? '' : 'none';
+      });
+    });
+  </script>
+</body>
+
+</html>

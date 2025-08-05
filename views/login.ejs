@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <link href="/css/output.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <form action="/login" method="POST" class="bg-white p-6 rounded shadow w-80">
+    <h2 class="text-xl font-semibold mb-4 text-center">Login</h2>
+    <input name="username" placeholder="Username" class="mb-3 w-full border px-3 py-2 rounded" required />
+    <input type="password" name="password" placeholder="Password" class="mb-3 w-full border px-3 py-2 rounded" required />
+    <button class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">Login</button>
+    <p class="text-center text-sm mt-4">Don't have an account? <a href="/register" class="text-blue-500">Sign-in</a></p>
+  </form>
+</body>
+</html>

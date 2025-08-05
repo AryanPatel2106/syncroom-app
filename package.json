@@ -1,0 +1,26 @@
+{
+  "name": "login_page",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:css": "npx tailwindcss -i ./views/input.css -o ./public/css/output.css --watch",
+    "start": "nodemon app.js"
+  },
+  "author": "Aryan Patel",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@google-cloud/storage": "^7.16.0",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "multer": "^2.0.2",
+    "mysql2": "^3.14.3",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10",
+    "tailwindcss": "^3.4.17"
+  }
+}
