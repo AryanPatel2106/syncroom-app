@@ -1,0 +1,4 @@
+To upage the changes:
+    git add .
+    git commit -m "Your descriptive message here"
+    git push

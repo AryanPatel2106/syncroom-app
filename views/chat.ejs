@@ -156,7 +156,7 @@
     const msgInput = document.getElementById('msg');
     const messagesDiv = document.getElementById('messages');
 
-    messagesDiv.scrollTop = 0;
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
     form.addEventListener('submit', e => {
       e.preventDefault();
@@ -164,6 +164,7 @@
       if (msg) {
         socket.emit('chatMessage', { room: roomId, userId, username, message: msg });
         msgInput.value = '';
+        msgInput.focus();
       }
     });
 
@@ -173,20 +174,21 @@
 
       if (data.user === username) {
         div.className += ' flex justify-end';
-        div.innerHTML = `<div class="bg-blue-600 text-white px-4 py-2 rounded-2xl max-w-xs sm:max-w-sm md:max-w-md shadow-md text-sm sm:text-base">${data.message}</div>`;
+        div.innerHTML = `<div class="bg-blue-600 text-white px-4 py-2 rounded-2xl max-w-xs sm:max-w-sm md:max-w-md shadow-md text-sm sm.text-base">${data.message}</div>`;
       } else {
         div.className += ' flex justify-start';
         div.innerHTML = `<div class="bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-2xl border dark:border-gray-600 max-w-xs sm:max-w-sm md:max-w-md shadow-md text-sm sm:text-base">
-          <span class="block text-blue-600 dark:text-blue-400 font-semibold text-xs mb-1">${data.user}</span>${data.message}</div>`;
+                          <span class="block text-blue-600 dark:text-blue-400 font-semibold text-xs mb-1">${data.user}</span>
+                          ${data.message}
+                        </div>`;
       }
       messagesDiv.prepend(div);
     });
 
-    // --- Theme Management ---
+    // --- Theme Management & File Panel Logic ---
     const themeToggleBtn = document.getElementById('theme-toggle');
     const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
     const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-
     const setTheme = (isDark) => {
         document.documentElement.classList.toggle('dark', isDark);
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
@@ -194,42 +196,34 @@
         if(themeToggleDarkIcon) themeToggleDarkIcon.style.display = isDark ? 'none' : 'block';
         loadParticles(isDark);
     };
-
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const savedTheme = localStorage.getItem('theme');
     const isInitiallyDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
     setTheme(isInitiallyDark);
-
     themeToggleBtn.addEventListener('click', () => {
       const isCurrentlyDark = document.documentElement.classList.contains('dark');
       setTheme(!isCurrentlyDark);
     });
-
-    // --- File Panel Logic ---
     const filePanelContainer = document.getElementById('file-panel-container');
     const filePanel = document.getElementById('file-panel');
     const filePanelToggleBtn = document.getElementById('file-panel-toggle');
     const closeFilePanelBtn = document.getElementById('close-file-panel');
     const filePanelBackdrop = document.getElementById('file-panel-backdrop');
-
     const openFilePanel = () => {
         filePanelContainer.classList.remove('hidden');
         setTimeout(() => {
             filePanel.classList.remove('translate-x-full');
         }, 10);
     };
-
     const closeFilePanel = () => {
         filePanel.classList.add('translate-x-full');
         setTimeout(() => {
             filePanelContainer.classList.add('hidden');
         }, 300);
     };
-
     filePanelToggleBtn.addEventListener('click', openFilePanel);
     closeFilePanelBtn.addEventListener('click', closeFilePanel);
     filePanelBackdrop.addEventListener('click', closeFilePanel);
-
   </script>
 </body>
 </html>
