@@ -41,7 +41,8 @@ app.use(session({
   secret: process.env.SESSION_SECRET || "fallback_secret",
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: process.env.NODE_ENV === 'production' }
+  // ✅ THE KEY FIX: 'secure: false' allows the session cookie to be saved on http://localhost
+  cookie: { secure: false }
 }));
 
 // Auth middleware
@@ -55,7 +56,7 @@ app.get('/', (req, res) => {
   res.render('home', { user: req.session.user });
 });
 
-// ✅ CHANGED: Pass error query parameter to the login view
+// Pass error query parameter to the login view
 app.get('/login', (req, res) => {
   res.render('login', { error: req.query.error });
 });
@@ -83,7 +84,7 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// ✅ CHANGED: Redirect with an error on failure instead of sending text
+// Redirect with an error on failure instead of sending text
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
   try {
