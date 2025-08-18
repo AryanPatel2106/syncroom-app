@@ -55,15 +55,20 @@ app.get('/', (req, res) => {
   res.render('home', { user: req.session.user });
 });
 
-app.get('/login', (req, res) => res.render('login'));
+// ✅ CHANGED: Pass error query parameter to the login view
+app.get('/login', (req, res) => {
+  res.render('login', { error: req.query.error });
+});
+
 app.get('/register', (req, res) => res.render('register'));
 
-// ✅ FIXED REGISTER ROUTE
 app.post('/register', async (req, res) => {
-  const { username, email, password } = req.body; // include email
+  const { username, email, password } = req.body;
   try {
-    const existing = await db.query("SELECT * FROM users WHERE username=$1", [username]);
-    if (existing.rows.length > 0) return res.send("Username already taken");
+    const existing = await db.query("SELECT * FROM users WHERE username=$1 OR email=$2", [username, email]);
+    if (existing.rows.length > 0) {
+        return res.status(400).send("Username or email already taken");
+    }
 
     const hash = await bcrypt.hash(password, saltRounds);
     await db.query(
@@ -71,24 +76,31 @@ app.post('/register', async (req, res) => {
       [username, email, hash]
     );
 
-    res.redirect('/login'); // after register → go to login
+    res.redirect('/login');
   } catch (err) {
     console.error("Register error:", err);
     res.status(500).send("Server error");
   }
 });
 
-// Login
+// ✅ CHANGED: Redirect with an error on failure instead of sending text
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
   try {
     const result = await db.query("SELECT * FROM users WHERE username=$1", [username]);
-    if (result.rows.length === 0) return res.send("Invalid credentials");
+    // If user not found, redirect back to login with an error message
+    if (result.rows.length === 0) {
+        return res.redirect('/login?error=Invalid credentials');
+    }
 
     const user = result.rows[0];
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.send("Invalid credentials");
+    // If password doesn't match, redirect back to login with an error message
+    if (!match) {
+        return res.redirect('/login?error=Invalid credentials');
+    }
 
+    // On success, save user to session and redirect
     req.session.user = user;
     res.redirect('/groups');
   } catch (err) {
