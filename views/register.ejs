@@ -48,7 +48,6 @@
 
   <div id="particles-js"></div>
 
-  <!-- Theme toggle button positioned at top right -->
   <div class="absolute top-4 right-4 z-10">
       <button id="theme-toggle" class="text-gray-600 dark:text-gray-400 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm hover:text-gray-800 dark:hover:text-gray-200 transition p-3 rounded-full shadow-md" title="Toggle Theme">
           <i class="fas fa-moon" id="theme-toggle-dark-icon"></i>
@@ -62,11 +61,13 @@
           <h2 class="text-3xl font-bold mb-2 text-center text-gray-800 dark:text-gray-200">Create Account</h2>
           <div class="space-y-4">
             <input name="username" placeholder="Username" class="bg-gray-100 dark:bg-gray-700 border-2 border-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" required />
+            
+            <input type="email" name="email" placeholder="Email" class="bg-gray-100 dark:bg-gray-700 border-2 border-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" required />
+            
             <input type="password" id="password" name="password" placeholder="Password" class="bg-gray-100 dark:bg-gray-700 border-2 border-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" required />
             <input type="password" id="confirm-password" name="confirmPassword" placeholder="Confirm Password" class="bg-gray-100 dark:bg-gray-700 border-2 border-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" required />
           </div>
 
-          <!-- Password Criteria Checklist -->
           <div id="password-criteria" class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
               <p class="criteria-item" id="criteria-length"><i class="far fa-circle"></i><i class="fas fa-check-circle"></i> At least 8 characters</p>
               <p class="criteria-item" id="criteria-uppercase"><i class="far fa-circle"></i><i class="fas fa-check-circle"></i> An uppercase letter</p>
