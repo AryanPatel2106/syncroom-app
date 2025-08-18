@@ -12,56 +12,37 @@
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
-    /* --- NEW ANIMATED GRADIENT BACKGROUND --- */
-    #animated-bg {
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      z-index: -1;
-      /* Gradient for light mode */
-      background: linear-gradient(45deg, #6dd5ed, #2193b0, #ee9ca7, #ffdde1);
-      background-size: 400% 400%;
-      animation: gradientAnimation 30s ease infinite;
-      transition: opacity 0.5s ease;
-    }
-
-    /* Gradient for dark mode */
-    html.dark #animated-bg {
-      background: linear-gradient(45deg, #0f2027, #203a43, #2c5364, #536976);
-    }
-
-    @keyframes gradientAnimation {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    
-    .content-wrapper {
-      position: relative;
-      z-index: 1;
-    }
-    .animate-on-load {
-      animation: fadeInUp 0.5s ease-out forwards;
-      animation-fill-mode: backwards;
-    }
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
+      #particles-js {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        z-index: -1;
       }
-      to {
-        opacity: 1;
-        transform: translateY(0);
+      .content-wrapper {
+        position: relative;
+        z-index: 1;
       }
-    }
+      .animate-on-load {
+        animation: fadeInUp 0.5s ease-out forwards;
+        animation-fill-mode: backwards;
+      }
+      @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+      }
   </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
   
-  <!-- The new background div replaces particles-js -->
-  <div id="animated-bg"></div>
+  <div id="particles-js"></div>
 
   <div class="content-wrapper flex flex-col lg:flex-row min-h-screen">
     <!-- Left fixed panel -->
@@ -130,8 +111,18 @@
     </div>
   </div>
   
-  <!-- particles.js script is no longer needed -->
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
   <script>
+    // --- Particle.js Configuration ---
+    const particleConfig = (isDark) => {
+        const particleColor = isDark ? "#ffffff" : "#374151";
+        const lineColor = isDark ? "#ffffff" : "#374151";
+        return { "particles":{ "number":{ "value":80, "density":{ "enable":true, "value_area":800 } }, "color":{ "value":particleColor }, "shape":{ "type":"circle" }, "opacity":{ "value":0.5, "random":false }, "size":{ "value":3, "random":true }, "line_linked":{ "enable":true, "distance":150, "color":lineColor, "opacity":0.4, "width":1 }, "move":{ "enable":true, "speed":2, "direction":"none", "random":false, "straight":false, "out_mode":"out", "bounce":false } }, "interactivity":{ "detect_on":"canvas", "events":{ "onhover":{ "enable":true, "mode":"grab" }, "onclick":{ "enable":true, "mode":"push" }, "resize":true }, "modes":{ "grab":{ "distance":140, "line_linked":{ "opacity":1 } }, "push":{ "particles_nb":4 } } }, "retina_detect":true };
+    };
+    const loadParticles = (isDark) => {
+        particlesJS('particles-js', particleConfig(isDark));
+    };
+
     // --- Theme Management ---
     const themeToggleBtn = document.getElementById('theme-toggle');
     const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
@@ -149,7 +140,7 @@
         if(themeToggleLightIcon) themeToggleLightIcon.style.display = 'none';
         if(themeToggleDarkIcon) themeToggleDarkIcon.style.display = 'block';
       }
-      // The loadParticles() function is no longer needed here
+      loadParticles(isDark);
     };
 
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
