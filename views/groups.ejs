@@ -12,32 +12,59 @@
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
-      #particles-js {
-        position: fixed;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
-        z-index: -1;
+    #particles-js {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      z-index: -1;
+    }
+    .content-wrapper {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* --- NEW ANIMATION KEYFRAMES --- */
+    @keyframes scaleInFadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px) scale(0.95);
       }
-      .content-wrapper {
-        position: relative;
-        z-index: 1;
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
       }
-      .animate-on-load {
-        animation: fadeInUp 0.5s ease-out forwards;
-        animation-fill-mode: backwards;
-      }
-      @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-      }
+    }
+
+    /* --- NEW CSS CLASSES FOR ANIMATION & HOVER --- */
+    .group-card {
+      /* Apply the entrance animation */
+      animation: scaleInFadeUp 0.6s ease-out forwards;
+      animation-fill-mode: backwards; /* Start in the 'from' state */
+      
+      /* Add a smooth transition for the hover effect */
+      transition: all 0.3s ease;
+    }
+
+    .group-card .fa-chevron-right {
+      transition: transform 0.3s ease;
+    }
+
+    .group-card:hover {
+      /* Make the card lift and grow on hover */
+      transform: translateY(-5px) scale(1.03);
+      box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1), 0 6px 12px -6px rgba(0, 0, 0, 0.08);
+    }
+    
+    html.dark .group-card:hover {
+       box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.25);
+    }
+
+    .group-card:hover .fa-chevron-right {
+      /* Move the arrow to the right on hover */
+      transform: translateX(5px);
+    }
   </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
@@ -45,7 +72,6 @@
   <div id="particles-js"></div>
 
   <div class="content-wrapper flex flex-col lg:flex-row min-h-screen">
-    <!-- Left fixed panel -->
     <div class="w-full lg:w-96 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-6 shadow-lg flex flex-col space-y-6 lg:space-y-4">
       <div class="flex justify-between items-center">
         <h1 class="text-xl font-bold text-gray-800 dark:text-gray-200">Welcome, <%= user.username %>!</h1>
@@ -74,7 +100,6 @@
       </div>
     </div>
 
-    <!-- Right scrollable panel -->
     <div class="flex-1 overflow-y-auto p-6">
       <div class="mb-6">
         <h2 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Your Groups:</h2>
@@ -89,9 +114,9 @@
 
       <ul id="groupsList" class="flex flex-col space-y-4">
         <% groups.forEach((group, index) => { %>
-          <li class="w-full max-w-2xl animate-on-load" style="animation-delay: <%= (index * 100) + 100 %>ms">
+          <li class="w-full max-w-2xl" style="animation-delay: <%= (index * 100) + 100 %>ms; opacity: 0;">
             <a href="/chat/<%= group.id %>" class="block">
-                <div class="flex items-center justify-between bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 px-5 py-4">
+                <div class="group-card flex items-center justify-between bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-xl shadow-md px-5 py-4">
                   <div class="flex items-center space-x-4">
                     <div class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/50">
                       <span class="font-semibold text-xl text-blue-700 dark:text-blue-300">
