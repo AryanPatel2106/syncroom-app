@@ -58,17 +58,20 @@ app.get('/', (req, res) => {
 app.get('/login', (req, res) => res.render('login'));
 app.get('/register', (req, res) => res.render('register'));
 
-// Register
+// ✅ FIXED REGISTER ROUTE
 app.post('/register', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, email, password } = req.body; // include email
   try {
     const existing = await db.query("SELECT * FROM users WHERE username=$1", [username]);
     if (existing.rows.length > 0) return res.send("Username already taken");
 
     const hash = await bcrypt.hash(password, saltRounds);
-    await db.query("INSERT INTO users (username, password) VALUES ($1, $2)", [username, hash]);
+    await db.query(
+      "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)",
+      [username, email, hash]
+    );
 
-    res.redirect('/login');
+    res.redirect('/login'); // after register → go to login
   } catch (err) {
     console.error("Register error:", err);
     res.status(500).send("Server error");
