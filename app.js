@@ -15,15 +15,13 @@ const io = socketIO(server);
 const PORT = process.env.PORT || 5000;
 const saltRounds = 10;
 
-// Database connection using PostgreSQL
+// ----------------- DATABASE -----------------
 const db = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
+  ssl: { rejectUnauthorized: false }
 });
 
-// Multer config
+// ----------------- MULTER -----------------
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'public/uploads'),
   filename: (req, file, cb) => {
@@ -33,28 +31,26 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Middleware
+// ----------------- MIDDLEWARE -----------------
 app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
+
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || "fallback_secret",
   resave: false,
   saveUninitialized: false,
   cookie: { secure: process.env.NODE_ENV === 'production' }
 }));
 
-
-// Middleware to check if user is authenticated
+// Auth middleware
 const isAuthenticated = (req, res, next) => {
-  if (req.session.user) {
-    return next();
-  }
+  if (req.session.user) return next();
   res.redirect('/login');
 };
 
-
-// Routes
+// ----------------- ROUTES -----------------
 app.get('/', (req, res) => {
   res.render('home', { user: req.session.user });
 });
@@ -62,156 +58,167 @@ app.get('/', (req, res) => {
 app.get('/login', (req, res) => res.render('login'));
 app.get('/register', (req, res) => res.render('register'));
 
+// Register
+app.post('/register', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const existing = await db.query("SELECT * FROM users WHERE username=$1", [username]);
+    if (existing.rows.length > 0) return res.send("Username already taken");
+
+    const hash = await bcrypt.hash(password, saltRounds);
+    await db.query("INSERT INTO users (username, password) VALUES ($1, $2)", [username, hash]);
+
+    res.redirect('/login');
+  } catch (err) {
+    console.error("Register error:", err);
+    res.status(500).send("Server error");
+  }
+});
+
+// Login
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
   try {
-    const result = await db.query('SELECT * FROM users WHERE username = $1', [username]);
-    if (result.rows.length > 0) {
-      const user = result.rows[0];
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (isMatch) {
-        req.session.user = user;
-        res.redirect('/groups');
-      } else {
-        res.send('Invalid credentials');
-      }
-    } else {
-      res.send('Invalid credentials');
-    }
+    const result = await db.query("SELECT * FROM users WHERE username=$1", [username]);
+    if (result.rows.length === 0) return res.send("Invalid credentials");
+
+    const user = result.rows[0];
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.send("Invalid credentials");
+
+    req.session.user = user;
+    res.redirect('/groups');
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
+    console.error("Login error:", err);
+    res.status(500).send("Server error");
   }
 });
 
-app.post('/register', async (req, res) => {
-    const { username, password } = req.body;
-    try {
-        const existingUser = await db.query('SELECT * FROM users WHERE username = $1', [username]);
-        if (existingUser.rows.length > 0) {
-            return res.send('Username already taken');
-        }
-        const hash = await bcrypt.hash(password, saltRounds);
-        await db.query('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hash]);
-        res.redirect('/login');
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Server error');
-    }
-});
-
-
+// Groups page
 app.get('/groups', isAuthenticated, async (req, res) => {
-  const userId = req.session.user.id;
-  const query = `
-    SELECT g.* FROM groups g
-    JOIN group_members gm ON g.id = gm.group_id
-    WHERE gm.user_id = $1`;
   try {
-    const result = await db.query(query, [userId]);
+    const result = await db.query(`
+      SELECT g.* FROM groups g
+      JOIN group_members gm ON g.id = gm.group_id
+      WHERE gm.user_id = $1
+    `, [req.session.user.id]);
     res.render('groups', { user: req.session.user, groups: result.rows });
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
+    console.error("Groups fetch error:", err);
+    res.status(500).send("Server error");
   }
 });
 
+// Create group
 app.post('/groups/create', isAuthenticated, async (req, res) => {
   const { group_name, group_key } = req.body;
   try {
-    const result = await db.query('INSERT INTO groups (name, group_key) VALUES ($1, $2) RETURNING id', [group_name, group_key]);
+    const result = await db.query(
+      "INSERT INTO groups (name, group_key) VALUES ($1, $2) RETURNING id",
+      [group_name, group_key]
+    );
     const groupId = result.rows[0].id;
-    await db.query('INSERT INTO group_members (user_id, group_id) VALUES ($1, $2)', [req.session.user.id, groupId]);
+    await db.query("INSERT INTO group_members (user_id, group_id) VALUES ($1, $2)",
+      [req.session.user.id, groupId]);
     res.redirect('/groups');
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
+    console.error("Group create error:", err);
+    res.status(500).send("Server error");
   }
 });
 
+// Join group
 app.post('/groups/join', isAuthenticated, async (req, res) => {
-    const { group_name, group_key } = req.body;
-    try {
-        const result = await db.query('SELECT * FROM groups WHERE name = $1 AND group_key = $2', [group_name, group_key]);
-        if (result.rows.length > 0) {
-            const groupId = result.rows[0].id;
-            await db.query('INSERT INTO group_members (user_id, group_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [req.session.user.id, groupId]);
-            res.redirect('/groups');
-        } else {
-            res.send('Group not found or invalid key');
-        }
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Server error');
-    }
-});
-
-
-app.get('/chat/:groupId', isAuthenticated, async (req, res) => {
-  const groupId = req.params.groupId;
-  const userId = req.session.user.id;
+  const { group_name, group_key } = req.body;
   try {
-    const memberCheck = await db.query('SELECT * FROM group_members WHERE group_id = $1 AND user_id = $2', [groupId, userId]);
-    if (memberCheck.rows.length === 0) {
-      return res.status(403).send('Forbidden: You are not a member of this group.');
-    }
+    const result = await db.query(
+      "SELECT * FROM groups WHERE name=$1 AND group_key=$2",
+      [group_name, group_key]
+    );
+    if (result.rows.length === 0) return res.send("Group not found or invalid key");
 
-    const groupResult = await db.query('SELECT * FROM groups WHERE id = $1', [groupId]);
-    if (groupResult.rows.length > 0) {
-      const messagesQuery = `
-        SELECT m.*, u.username FROM messages m
-        JOIN users u ON m.user_id = u.id
-        WHERE m.group_id = $1 ORDER BY m.created_at ASC`;
-      const messagesResult = await db.query(messagesQuery, [groupId]);
-      const filesResult = await db.query('SELECT * FROM files WHERE group_id = $1', [groupId]);
-      
-      res.render('chat', {
-        user: req.session.user,
-        group: groupResult.rows[0],
-        messages: messagesResult.rows,
-        files: filesResult.rows
-      });
-    } else {
-      res.status(404).send('Group not found');
-    }
+    const groupId = result.rows[0].id;
+    await db.query(
+      "INSERT INTO group_members (user_id, group_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+      [req.session.user.id, groupId]
+    );
+    res.redirect('/groups');
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
+    console.error("Group join error:", err);
+    res.status(500).send("Server error");
   }
 });
 
-app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), (req, res) => {
+// Chat
+app.get('/chat/:groupId', isAuthenticated, async (req, res) => {
   const { groupId } = req.params;
-  const userId = req.session.user.id;
+  try {
+    const check = await db.query(
+      "SELECT * FROM group_members WHERE group_id=$1 AND user_id=$2",
+      [groupId, req.session.user.id]
+    );
+    if (check.rows.length === 0) return res.status(403).send("Not a member");
+
+    const group = await db.query("SELECT * FROM groups WHERE id=$1", [groupId]);
+    if (group.rows.length === 0) return res.status(404).send("Group not found");
+
+    const messages = await db.query(`
+      SELECT m.*, u.username FROM messages m
+      JOIN users u ON m.user_id=u.id
+      WHERE m.group_id=$1 ORDER BY m.created_at ASC
+    `, [groupId]);
+
+    const files = await db.query("SELECT * FROM files WHERE group_id=$1", [groupId]);
+
+    res.render('chat', {
+      user: req.session.user,
+      group: group.rows[0],
+      messages: messages.rows,
+      files: files.rows
+    });
+  } catch (err) {
+    console.error("Chat fetch error:", err);
+    res.status(500).send("Server error");
+  }
+});
+
+// File upload
+app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async (req, res) => {
+  const { groupId } = req.params;
   const filename = req.file.originalname;
   const filepath = '/uploads/' + req.file.filename;
 
-  db.query('INSERT INTO files (group_id, user_id, filename, filepath) VALUES ($1, $2, $3, $4)',
-    [groupId, userId, filename, filepath], err => {
-      if (err) throw err;
-      res.redirect('/chat/' + groupId);
-    });
+  try {
+    await db.query(
+      "INSERT INTO files (group_id, user_id, filename, filepath) VALUES ($1, $2, $3, $4)",
+      [groupId, req.session.user.id, filename, filepath]
+    );
+    res.redirect('/chat/' + groupId);
+  } catch (err) {
+    console.error("File upload error:", err);
+    res.status(500).send("Server error");
+  }
 });
 
+// Logout
 app.get('/logout', (req, res) => {
-  req.session.destroy(err => {
-    if (err) throw err;
-    res.redirect('/');
-  });
+  req.session.destroy(() => res.redirect('/'));
 });
 
-
-// Socket.IO
+// ----------------- SOCKET.IO -----------------
 io.on('connection', socket => {
   socket.on('joinRoom', room => socket.join(room));
   socket.on('chatMessage', async ({ room, userId, username, message }) => {
     try {
-      await db.query('INSERT INTO messages (group_id, user_id, message) VALUES ($1, $2, $3)', [room, userId, message]);
+      await db.query(
+        "INSERT INTO messages (group_id, user_id, message) VALUES ($1, $2, $3)",
+        [room, userId, message]
+      );
       io.to(room).emit('chatMessage', { user: username, message });
     } catch (err) {
-      console.error('Socket message insert error:', err);
+      console.error("Socket insert error:", err);
     }
   });
 });
 
-server.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
