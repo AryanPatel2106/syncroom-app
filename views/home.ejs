@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!-- Add class="dark" to this tag to manually enable dark mode -->
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -36,81 +37,119 @@
       height: 100%;
       top: 0;
       left: 0;
-      z-index: -1; /* Ensure it's behind all other content */
+      z-index: -1;
+      /* Ensure it's behind all other content */
     }
+
     /* Style to apply animation on load */
     .animate-on-load {
       animation-delay: 0.2s;
       animation-fill-mode: backwards;
     }
+
     /* Ensure main content is above the background */
-    nav, main, section, footer {
-        position: relative;
-        z-index: 1;
+    nav,
+    main,
+    section,
+    footer {
+      position: relative;
+      z-index: 1;
     }
   </style>
 </head>
+
 <body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex flex-col transition-colors duration-300">
 
   <!-- Particle.js Container -->
   <div id="particles-js"></div>
 
   <!-- Navigation -->
-  <nav class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm shadow px-4 sm:px-6 py-4 flex justify-between items-center sticky top-0">
+  <nav
+    class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm shadow px-4 sm:px-6 py-4 flex justify-between items-center sticky top-0">
     <div class="text-xl font-semibold text-gray-800 dark:text-gray-200">SyncRoom</div>
     <div class="flex items-center space-x-2 sm:space-x-4">
       <% if (user) { %>
-        <a href="/user/<%= user.id %>" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-transform transform hover:scale-105">Dashboard</a>
-        <a href="/logout" class="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-transform transform hover:scale-105">Logout</a>
-      <% } else { %>
-        <a href="/login" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-transform transform hover:scale-105">Login</a>
-        <a href="/register" class="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-transform transform hover:scale-105">Sign Up</a>
-      <% } %>
-      <!-- Theme Toggle Button -->
-      <button id="theme-toggle" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-transform transform hover:scale-110 p-2 rounded-full">
-        <i class="fas fa-moon" id="theme-toggle-dark-icon"></i>
-        <i class="fas fa-sun" id="theme-toggle-light-icon" style="display: none;"></i>
-      </button>
+        <a href="/user/<%= user.id %>"
+          class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-transform transform hover:scale-105">Dashboard</a>
+        <a href="/logout"
+          class="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-transform transform hover:scale-105">Logout</a>
+        <% } else { %>
+          <a href="/login"
+            class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-transform transform hover:scale-105">Login</a>
+          <a href="/register"
+            class="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-transform transform hover:scale-105">Sign
+            Up</a>
+          <% } %>
+            <!-- Theme Toggle Button -->
+            <button id="theme-toggle"
+              class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-transform transform hover:scale-110 p-2 rounded-full">
+              <i class="fas fa-moon" id="theme-toggle-dark-icon"></i>
+              <i class="fas fa-sun" id="theme-toggle-light-icon" style="display: none;"></i>
+            </button>
     </div>
   </nav>
 
   <!-- Hero section -->
-  <main class="flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 lg:px-8 animate-fadeInUp animate-on-load">
-    <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 dark:text-gray-100 mb-3">Welcome to SyncRoom</h1>
+  <main
+    class="flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 lg:px-8 animate-fadeInUp animate-on-load">
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 dark:text-gray-100 mb-3">Welcome to SyncRoom
+    </h1>
     <p class="text-gray-600 dark:text-gray-400 text-base sm:text-lg mb-6 max-w-xl" style="animation-delay: 0.4s;">
       Real‑time group chat and file sharing. Organize your team, share files securely, and stay connected anywhere.
     </p>
 
     <% if (user) { %>
-      <a href="/groups" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 dark:hover:bg-blue-500 transition-transform transform hover:-translate-y-1 hover:scale-105 text-lg" style="animation-delay: 0.6s;">
+      <a href="/groups"
+        class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 dark:hover:bg-blue-500 transition-transform transform hover:-translate-y-1 hover:scale-105 text-lg"
+        style="animation-delay: 0.6s;">
         Go to My Groups
       </a>
-    <% } else { %>
-      <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4" style="animation-delay: 0.6s;">
-        <a href="/register" class="bg-green-600 text-white px-6 py-3 rounded-lg shadow hover:bg-green-700 dark:hover:bg-green-500 transition-transform transform hover:-translate-y-1 hover:scale-105">Sign Up</a>
-        <a href="/login" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 dark:hover:bg-blue-500 transition-transform transform hover:-translate-y-1 hover:scale-105">Login</a>
-      </div>
-    <% } %>
+      <% } else { %>
+        <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4" style="animation-delay: 0.6s;">
+          <a href="/register"
+            class="bg-green-600 text-white px-6 py-3 rounded-lg shadow hover:bg-green-700 dark:hover:bg-green-500 transition-transform transform hover:-translate-y-1 hover:scale-105">Sign
+            Up</a>
+          <a href="/login"
+            class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 dark:hover:bg-blue-500 transition-transform transform hover:-translate-y-1 hover:scale-105">Login</a>
+        </div>
+        <% } %>
   </main>
 
   <!-- Features section -->
   <section class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 px-4 sm:px-6 lg:px-8 my-12">
-    <div class="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-md p-6 text-center transition-transform transform hover:-translate-y-2 animate-fadeInUp animate-on-load" style="animation-delay: 0.8s;">
+    <div
+      class="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-md p-6 text-center transition-transform transform hover:-translate-y-2 animate-fadeInUp animate-on-load"
+      style="animation-delay: 0.8s;">
       <h2 class="font-semibold text-lg text-gray-900 dark:text-gray-100 mb-2">Group Chat</h2>
-      <p class="text-gray-600 dark:text-gray-400 text-sm">Chat with your groups instantly and stay in sync in real time.</p>
+      <p class="text-gray-600 dark:text-gray-400 text-sm">Chat with your groups instantly and stay in sync in real time.
+      </p>
     </div>
-    <div class="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-md p-6 text-center transition-transform transform hover:-translate-y-2 animate-fadeInUp animate-on-load" style="animation-delay: 1s;">
+    <div
+      class="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-md p-6 text-center transition-transform transform hover:-translate-y-2 animate-fadeInUp animate-on-load"
+      style="animation-delay: 1s;">
       <h2 class="font-semibold text-lg text-gray-900 dark:text-gray-100 mb-2">File Sharing</h2>
       <p class="text-gray-600 dark:text-gray-400 text-sm">Upload and share files securely with your team members.</p>
     </div>
-    <div class="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-md p-6 text-center transition-transform transform hover:-translate-y-2 animate-fadeInUp animate-on-load" style="animation-delay: 1.2s;">
+    <div
+      class="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-md p-6 text-center transition-transform transform hover:-translate-y-2 animate-fadeInUp animate-on-load"
+      style="animation-delay: 1.2s;">
       <h2 class="font-semibold text-lg text-gray-900 dark:text-gray-100 mb-2">Easy Management</h2>
-      <p class="text-gray-600 dark:text-gray-400 text-sm">Create or join groups effortlessly and manage members easily.</p>
+      <p class="text-gray-600 dark:text-gray-400 text-sm">Create or join groups effortlessly and manage members easily.
+      </p>
     </div>
   </section>
-
+  <section class="bg-gray-200 dark:bg-gray-800 py-8 px-4 text-center">
+    <p class="text-gray-700 dark:text-gray-300 mb-3">
+      Looking for the developer? Visit my personal portfolio.
+    </p>
+    <a href="https://aryan-patel-2106-portfolio.netlify.app/" target="_blank" rel="noopener noreferrer"
+      class="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
+      View Portfolio &rarr;
+    </a>
+  </section>
   <!-- Footer -->
-  <footer class="text-center text-gray-500 dark:text-gray-400 text-sm py-4 border-t border-gray-200/50 dark:border-gray-700/50">
+  <footer
+    class="text-center text-gray-500 dark:text-gray-400 text-sm py-4 border-t border-gray-200/50 dark:border-gray-700/50">
     © 2025 SyncRoom by Aryan Patel
   </footer>
 
@@ -125,31 +164,31 @@
 
     // --- Particle.js Configuration ---
     const particleConfig = (isDark) => {
-        const particleColor = isDark ? "#ffffff" : "#374151"; // white for dark, gray for light
-        const lineColor = isDark ? "#ffffff" : "#374151";
-        
-        return {
-            "particles": {
-                "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
-                "color": { "value": particleColor },
-                "shape": { "type": "circle" },
-                "opacity": { "value": 0.5, "random": false },
-                "size": { "value": 3, "random": true },
-                "line_linked": { "enable": true, "distance": 150, "color": lineColor, "opacity": 0.4, "width": 1 },
-                "move": { "enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
-            },
-            "interactivity": {
-                "detect_on": "canvas",
-                "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" }, "resize": true },
-                "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 1 } }, "push": { "particles_nb": 4 } }
-            },
-            "retina_detect": true
-        };
+      const particleColor = isDark ? "#ffffff" : "#374151"; // white for dark, gray for light
+      const lineColor = isDark ? "#ffffff" : "#374151";
+
+      return {
+        "particles": {
+          "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+          "color": { "value": particleColor },
+          "shape": { "type": "circle" },
+          "opacity": { "value": 0.5, "random": false },
+          "size": { "value": 3, "random": true },
+          "line_linked": { "enable": true, "distance": 150, "color": lineColor, "opacity": 0.4, "width": 1 },
+          "move": { "enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
+        },
+        "interactivity": {
+          "detect_on": "canvas",
+          "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" }, "resize": true },
+          "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 1 } }, "push": { "particles_nb": 4 } }
+        },
+        "retina_detect": true
+      };
     };
 
     // Function to initialize or update particles
     const loadParticles = (isDark) => {
-        particlesJS('particles-js', particleConfig(isDark));
+      particlesJS('particles-js', particleConfig(isDark));
     };
 
     // --- Theme Management ---
@@ -173,7 +212,7 @@
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const savedTheme = localStorage.getItem('theme');
     const isInitiallyDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
-    
+
     setTheme(isInitiallyDark);
 
     // Event listener for the button
@@ -184,4 +223,5 @@
   </script>
 
 </body>
+
 </html>
