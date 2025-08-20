@@ -1,12 +1,10 @@
 <!DOCTYPE html>
-<!-- Add class="dark" to this tag to manually enable dark mode -->
 <html lang="en">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SyncRoom</title>
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Custom configuration for Tailwind to enable dark mode via a class
@@ -27,7 +25,6 @@
       }
     }
   </script>
-  <!-- Simple icon library for the theme toggle -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     /* Styles for the particle background */
@@ -60,27 +57,24 @@
 
 <body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex flex-col transition-colors duration-300">
 
-  <!-- Particle.js Container -->
   <div id="particles-js"></div>
 
-  <!-- Navigation -->
   <nav
     class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm shadow px-4 sm:px-6 py-4 flex justify-between items-center sticky top-0">
     <div class="text-xl font-semibold text-gray-800 dark:text-gray-200">SyncRoom</div>
     <div class="flex items-center space-x-2 sm:space-x-4">
       <% if (user) { %>
         <a href="/user/<%= user.id %>"
-          class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-transform transform hover:scale-105">Dashboard</a>
+          class="text-sm sm:text-base text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-transform transform hover:scale-105">Dashboard</a>
         <a href="/logout"
-          class="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-transform transform hover:scale-105">Logout</a>
+          class="text-sm sm:text-base text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-transform transform hover:scale-105">Logout</a>
         <% } else { %>
           <a href="/login"
-            class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-transform transform hover:scale-105">Login</a>
+            class="text-sm sm:text-base text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-transform transform hover:scale-105">Login</a>
           <a href="/register"
-            class="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-transform transform hover:scale-105">Sign
+            class="text-sm sm:text-base text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-transform transform hover:scale-105">Sign
             Up</a>
           <% } %>
-            <!-- Theme Toggle Button -->
             <button id="theme-toggle"
               class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-transform transform hover:scale-110 p-2 rounded-full">
               <i class="fas fa-moon" id="theme-toggle-dark-icon"></i>
@@ -89,12 +83,11 @@
     </div>
   </nav>
 
-  <!-- Hero section -->
   <main
     class="flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 lg:px-8 animate-fadeInUp animate-on-load">
-    <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 dark:text-gray-100 mb-3">Welcome to SyncRoom
+    <h1 class="text-4xl sm:text-5xl font-bold text-gray-800 dark:text-gray-100 mb-3">Welcome to SyncRoom
     </h1>
-    <p class="text-gray-600 dark:text-gray-400 text-base sm:text-lg mb-6 max-w-xl" style="animation-delay: 0.4s;">
+    <p class="text-base sm:text-lg text-gray-600 dark:text-gray-400 mb-6 max-w-xl" style="animation-delay: 0.4s;">
       Real‑time group chat and file sharing. Organize your team, share files securely, and stay connected anywhere.
     </p>
 
@@ -105,17 +98,16 @@
         Go to My Groups
       </a>
       <% } else { %>
-        <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4" style="animation-delay: 0.6s;">
+        <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto" style="animation-delay: 0.6s;">
           <a href="/register"
-            class="bg-green-600 text-white px-6 py-3 rounded-lg shadow hover:bg-green-700 dark:hover:bg-green-500 transition-transform transform hover:-translate-y-1 hover:scale-105">Sign
+            class="w-full sm:w-auto bg-green-600 text-white px-6 py-3 rounded-lg shadow hover:bg-green-700 dark:hover:bg-green-500 transition-transform transform hover:-translate-y-1 hover:scale-105">Sign
             Up</a>
           <a href="/login"
-            class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 dark:hover:bg-blue-500 transition-transform transform hover:-translate-y-1 hover:scale-105">Login</a>
+            class="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 dark:hover:bg-blue-500 transition-transform transform hover:-translate-y-1 hover:scale-105">Login</a>
         </div>
         <% } %>
   </main>
 
-  <!-- Features section -->
   <section class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 px-4 sm:px-6 lg:px-8 my-12">
     <div
       class="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-md p-6 text-center transition-transform transform hover:-translate-y-2 animate-fadeInUp animate-on-load"
@@ -147,16 +139,13 @@
       View Portfolio &rarr;
     </a>
   </section>
-  <!-- Footer -->
   <footer
     class="text-center text-gray-500 dark:text-gray-400 text-sm py-4 border-t border-gray-200/50 dark:border-gray-700/50">
     © 2025 SyncRoom by Aryan Patel
   </footer>
 
-  <!-- Particle.js library -->
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 
-  <!-- Theme Toggle and Particle Initialization Script -->
   <script>
     const themeToggleBtn = document.getElementById('theme-toggle');
     const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
