@@ -16,7 +16,6 @@
       .content-container { position: relative; z-index: 1; }
       @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
       .message-bubble { animation: slideIn 0.3s ease-out forwards; }
-      .emoji-picker { position: absolute; bottom: 50px; left: 0; z-index: 10; }
   </style>
 </head>
 
@@ -24,187 +23,219 @@
 
   <div id="particles-js"></div>
 
-  <header class="bg-white dark:bg-gray-800 shadow-md p-4 flex justify-between items-center z-10">
-    <div>
-        <h1 class="text-xl font-bold"><%= group.name %></h1>
-        <span class="text-sm">Logged in as: <%= user.username %></span>
-    </div>
-    <div>
-        <% if (userRole === 'owner' || userRole === 'admin') { %>
-            <a href="/chat/<%= group.id %>/manage" class="px-3 py-2 text-sm rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
-                <i class="fas fa-users-cog"></i> Manage Group
-            </a>
-        <% } %>
-        <button id="file-panel-toggle" class="px-3 py-2 text-sm rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
-            <i class="fas fa-folder"></i> Shared Files
-        </button>
-        <button id="theme-toggle" class="px-3 py-2 text-sm rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
-            <i id="theme-toggle-dark-icon" class="fas fa-moon"></i>
-            <i id="theme-toggle-light-icon" class="fas fa-sun" style="display: none;"></i>
-        </button>
-    </div>
-  </header>
-
-  <div class="flex flex-grow overflow-hidden">
-    <aside id="user-list-panel" class="w-48 bg-gray-200 dark:bg-gray-800 p-4 overflow-y-auto">
-        <h2 class="font-bold mb-2">Online Users</h2>
-        <ul id="user-list">
-            </ul>
-    </aside>
-
-    <main class="flex-grow flex flex-col p-4">
-        <div id="message-container" class="flex-grow overflow-y-auto mb-4 space-y-4 pr-2">
-            <% messages.forEach(msg => { %>
-                <div class="message-bubble w-full flex <%= msg.user_id === user.id ? 'justify-end' : 'justify-start' %>" data-message-id="<%= msg.id %>">
-                    <div class="max-w-md">
-                        <div class="rounded-lg px-4 py-2 <%= msg.user_id === user.id ? 'bg-blue-500 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white' %>">
-                            <div class="font-bold text-sm"><%= msg.username %></div>
-                            <% if (msg.parent_message_id) { %>
-                                <div class="border-l-2 border-gray-400 pl-2 text-xs opacity-80 mb-1">
-                                    <strong><%= msg.parent_username %></strong>: <%= msg.parent_content.substring(0, 50) %>...
-                                </div>
-                            <% } %>
-                            <p class="text-sm"><%= msg.content %></p>
-                            <div class="reactions-container flex gap-1 mt-1">
-                                </div>
-                        </div>
-                        <div class="flex items-center gap-2 mt-1 px-2 <%= msg.user_id === user.id ? 'justify-end' : '' %>">
-                            <span class="text-xs text-gray-500"><%= new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></span>
-                            <button class="reply-btn text-xs text-gray-400 hover:text-blue-500" data-parent-id="<%= msg.id %>" data-parent-username="<%= msg.username %>" data-parent-content="<%= msg.content %>"><i class="fas fa-reply"></i></button>
-                             <button class="react-btn text-xs text-gray-400 hover:text-yellow-500"><i class="fas fa-smile"></i></button>
-                        </div>
-                    </div>
-                </div>
-            <% }) %>
-        </div>
-        
-        <div id="typing-indicator" class="h-5 text-sm text-gray-500 italic"></div>
-
-        <div id="reply-info" class="hidden bg-gray-200 dark:bg-gray-700 p-2 rounded-t-lg text-sm">
-            Replying to <strong id="reply-username"></strong>: "<span id="reply-content"></span>"
-            <button id="cancel-reply" class="float-right font-bold text-red-500">X</button>
-        </div>
-
-        <form id="message-form" class="flex items-center gap-2 relative">
-            <textarea id="message-input" class="flex-grow p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type a message..." rows="1"></textarea>
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"><i class="fas fa-paper-plane"></i></button>
-        </form>
-    </main>
-  </div>
-  
-  <div id="file-panel-container" class="hidden fixed inset-0 z-20">
+  <div class="content-container flex flex-col h-full">
+    <header class="bg-white dark:bg-gray-800 shadow-md p-4 flex justify-between items-center z-10 flex-shrink-0">
+      <div>
+          <h1 class="text-xl font-bold"><%= group.name %></h1>
+          <span class="text-sm">Logged in as: <%= user.username %></span>
       </div>
+      <div>
+          <% if (userRole === 'owner' || userRole === 'admin') { %>
+              <a href="/chat/<%= group.id %>/manage" class="px-3 py-2 text-sm rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
+                  <i class="fas fa-users-cog"></i> Manage
+              </a>
+          <% } %>
+          <button id="file-panel-toggle" class="px-3 py-2 text-sm rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
+              <i class="fas fa-folder"></i> Files
+          </button>
+          <button id="theme-toggle" class="px-3 py-2 text-sm rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
+              <i id="theme-toggle-dark-icon" class="fas fa-moon"></i>
+              <i id="theme-toggle-light-icon" class="fas fa-sun" style="display: none;"></i>
+          </button>
+      </div>
+    </header>
+
+    <div class="flex flex-grow overflow-hidden">
+      <aside id="user-list-panel" class="w-48 bg-gray-200 dark:bg-gray-800 p-4 overflow-y-auto flex-shrink-0">
+          <h2 class="font-bold mb-2">Online Users</h2>
+          <ul id="user-list" class="space-y-1 text-sm">
+          </ul>
+      </aside>
+
+      <main class="flex-grow flex flex-col p-4">
+          <div id="message-container" class="flex-grow overflow-y-auto mb-4 space-y-4 pr-2">
+              <% messages.forEach(msg => { %>
+                  <div class="message-bubble w-full flex <%= msg.user_id == user.id ? 'justify-end' : 'justify-start' %>" data-message-id="<%= msg.id %>">
+                      <div class="max-w-md">
+                          <div class="rounded-lg px-4 py-2 <%= msg.user_id == user.id ? 'bg-blue-500 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white' %>">
+                              <div class="font-bold text-sm"><%= msg.username %></div>
+                              <% if (msg.parent_message_id) { %>
+                                  <div class="border-l-2 border-gray-400 pl-2 text-xs opacity-80 mb-1">
+                                      <strong><%= msg.parent_username %></strong>: <%= msg.parent_content.substring(0, 50) %>...
+                                  </div>
+                              <% } %>
+                              <p class="text-sm break-words"><%= msg.content %></p>
+                              <div class="reactions-container flex gap-1 mt-1">
+                                <% reactions.filter(r => r.message_id === msg.id).forEach(reaction => { %>
+                                    <span class="bg-gray-200 dark:bg-gray-600 text-xs px-2 py-1 rounded-full"><%= reaction.emoji %></span>
+                                <% }) %>
+                              </div>
+                          </div>
+                          <div class="flex items-center gap-2 mt-1 px-2 <%= msg.user_id == user.id ? 'justify-end' : '' %>">
+                              <span class="text-xs text-gray-500"><%= new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></span>
+                              <button class="reply-btn text-xs text-gray-400 hover:text-blue-500" data-parent-id="<%= msg.id %>" data-parent-username="<%= msg.username %>" data-parent-content="<%= msg.content %>"><i class="fas fa-reply"></i></button>
+                               <button class="react-btn text-xs text-gray-400 hover:text-yellow-500"><i class="fas fa-smile"></i></button>
+                          </div>
+                      </div>
+                  </div>
+              <% }) %>
+          </div>
+          
+          <div id="typing-indicator" class="h-5 text-sm text-gray-500 italic"></div>
+          <div id="reply-info" class="hidden bg-gray-200 dark:bg-gray-700 p-2 rounded-t-lg text-sm">
+              Replying to <strong id="reply-username"></strong>: "<span id="reply-content"></span>"
+              <button id="cancel-reply" class="float-right font-bold text-red-500">X</button>
+          </div>
+          <form id="message-form" class="flex items-center gap-2 relative">
+              <textarea id="message-input" class="flex-grow p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type a message..." rows="1"></textarea>
+              <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"><i class="fas fa-paper-plane"></i></button>
+          </form>
+      </main>
+
+       <aside id="file-panel-container" class="hidden fixed inset-0 z-20">
+            <div id="file-panel-backdrop" class="absolute inset-0 bg-black opacity-50"></div>
+            <div id="file-panel" class="absolute right-0 top-0 bottom-0 w-80 bg-white dark:bg-gray-800 shadow-lg transform translate-x-full transition-transform duration-300 ease-in-out p-4 flex flex-col">
+                <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                    <h2 class="text-lg font-bold">Shared Files</h2>
+                    <button id="close-file-panel" class="text-gray-500 dark:text-gray-400 hover:text-red-500">&times;</button>
+                </div>
+                <div id="file-list" class="overflow-y-auto flex-grow space-y-2">
+                    <% files.forEach(file => { %>
+                        <div class="file-item p-2 rounded-md bg-gray-100 dark:bg-gray-700">
+                             <% if (file.mimetype && file.mimetype.startsWith('image/')) { %>
+                                <img src="<%= file.filepath %>" alt="<%= file.filename %>" class="w-full h-auto rounded-md mb-2">
+                            <% } %>
+                            <a href="<%= file.filepath %>" target="_blank" class="text-blue-500 hover:underline break-all"><%= file.filename %></a>
+                        </div>
+                    <% }) %>
+                </div>
+                <form action="/chat/<%= group.id %>/upload" method="POST" enctype="multipart/form-data" class="mt-4 flex-shrink-0">
+                    <input type="file" name="file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
+                    <button type="submit" class="w-full mt-2 bg-green-500 text-white py-2 rounded-md hover:bg-green-600">Upload</button>
+                </form>
+            </div>
+        </aside>
+    </div>
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tsparticles@1.37.5/dist/tsparticles.min.js"></script>
-  <script type="module">
-    import 'https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js';
-  </script>
-
+  
   <script>
-    const socket = io({
-        query: {
-            userId: '<%= user.id %>',
-            username: '<%= user.username %>'
-        }
-    });
-    const room = 'group-<%= group.id %>';
-    const currentUserId = '<%= user.id %>';
-    const currentUsername = '<%= user.username %>';
-    
-    const messageContainer = document.getElementById('message-container');
-    const messageForm = document.getElementById('message-form');
-    const messageInput = document.getElementById('message-input');
-    const typingIndicator = document.getElementById('typing-indicator');
-    const userList = document.getElementById('user-list');
+    // YOUR ORIGINAL DESIGN AND NEW FEATURES SCRIPT
+    document.addEventListener('DOMContentLoaded', () => {
+        const socket = io({ query: { userId: '<%= user.id %>', username: '<%= user.username %>' } });
+        const room = 'group-<%= group.id %>';
+        const currentUserId = '<%= user.id %>';
+        const currentUsername = '<%= user.username %>';
+        
+        const messageContainer = document.getElementById('message-container');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const userList = document.getElementById('user-list');
 
-    // --- Join Room & Online Users ---
-    socket.emit('joinRoom', room);
-    socket.on('updateUserList', (users) => {
-        userList.innerHTML = users.map(user => `<li>${user}</li>`).join('');
-    });
+        // --- Theme & Particles (YOUR ORIGINAL CODE) ---
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+        const particleConfig = (isDark) => { const color = isDark ? "#ffffff" : "#000000"; return { particles: { number: { value: 80 }, color: { value: color }, shape: { type: "circle" }, opacity: { value: 0.5 }, size: { value: 3, random: true }, line_linked: { enable: true, distance: 150, color: color, opacity: 0.4, width: 1 }, move: { enable: true, speed: 2 } }, interactivity: { events: { onhover: { enable: true, mode: "grab" }, onclick: { enable: true, mode: "push" } } }, retina_detect: true }; };
+        const loadParticles = (isDark) => { if (window.particlesJS) particlesJS('particles-js', particleConfig(isDark)); };
+        const setTheme = (isDark) => { document.documentElement.classList.toggle('dark', isDark); localStorage.setItem('theme', isDark ? 'dark' : 'light'); if(themeToggleLightIcon) themeToggleLightIcon.style.display = isDark ? 'block' : 'none'; if(themeToggleDarkIcon) themeToggleDarkIcon.style.display = isDark ? 'none' : 'block'; loadParticles(isDark); };
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const savedTheme = localStorage.getItem('theme');
+        const isInitiallyDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+        setTheme(isInitiallyDark);
+        themeToggleBtn.addEventListener('click', () => setTheme(!document.documentElement.classList.contains('dark')));
 
-    // --- Message Sending & Receiving ---
-    let currentParentId = null; // For replies
-    messageForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const message = messageInput.value.trim();
-        if (message) {
-            socket.emit('chatMessage', { room, userId: currentUserId, username: currentUsername, message, parentId: currentParentId });
-            messageInput.value = '';
-            cancelReply(); // Clear reply state
-        }
-    });
+        // --- File Panel (YOUR ORIGINAL CODE) ---
+        const filePanelContainer = document.getElementById('file-panel-container');
+        const filePanel = document.getElementById('file-panel');
+        const filePanelToggleBtn = document.getElementById('file-panel-toggle');
+        const closeFilePanelBtn = document.getElementById('close-file-panel');
+        const filePanelBackdrop = document.getElementById('file-panel-backdrop');
+        const openFilePanel = () => { filePanelContainer.classList.remove('hidden'); setTimeout(() => filePanel.classList.remove('translate-x-full'), 10); };
+        const closeFilePanel = () => { filePanel.classList.add('translate-x-full'); setTimeout(() => filePanelContainer.classList.add('hidden'), 300); };
+        filePanelToggleBtn.addEventListener('click', openFilePanel);
+        closeFilePanelBtn.addEventListener('click', closeFilePanel);
+        filePanelBackdrop.addEventListener('click', closeFilePanel);
 
-    socket.on('chatMessage', (msg) => {
-        // You would dynamically create the message HTML here. This is a simplified example.
-        // For a full implementation, you'd create the same div structure as in the EJS loop.
-        const div = document.createElement('div');
-        div.innerHTML = `<p><strong>${msg.username}:</strong> ${msg.message}</p>`;
-        messageContainer.appendChild(div);
-        messageContainer.scrollTop = messageContainer.scrollHeight;
-    });
+        // --- NEW FEATURES LOGIC ---
+        socket.emit('joinRoom', room);
+        socket.on('updateUserList', (users) => { userList.innerHTML = users.map(user => `<li><i class="fas fa-circle text-green-500 text-xs mr-2"></i>${user}</li>`).join(''); });
+        
+        messageContainer.scrollTop = messageContainer.scrollHeight; // Scroll to bottom on load
 
-    // --- Typing Indicator ---
-    let typingTimeout;
-    messageInput.addEventListener('input', () => {
-        socket.emit('typing', { room, username: currentUsername });
-        clearTimeout(typingTimeout);
-        typingTimeout = setTimeout(() => {
-            // You can emit a 'stopTyping' event if needed
-        }, 3000);
-    });
+        let currentParentId = null;
+        messageForm.addEventListener('submit', (e) => { e.preventDefault(); const message = messageInput.value.trim(); if (message) { socket.emit('chatMessage', { room, userId: currentUserId, username: currentUsername, message, parentId: currentParentId }); messageInput.value = ''; cancelReply(); } });
+        socket.on('chatMessage', (msg) => { appendMessage(msg); });
+        
+        let typingTimeout;
+        messageInput.addEventListener('input', () => { socket.emit('typing', { room, username: currentUsername }); clearTimeout(typingTimeout); });
+        socket.on('typing', ({ username }) => { typingIndicator.textContent = `${username} is typing...`; clearTimeout(typingTimeout); typingTimeout = setTimeout(() => typingIndicator.textContent = '', 3000); });
 
-    socket.on('typing', ({ username }) => {
-        typingIndicator.textContent = `${username} is typing...`;
-        setTimeout(() => typingIndicator.textContent = '', 3000);
-    });
+        const replyInfo = document.getElementById('reply-info');
+        messageContainer.addEventListener('click', (e) => {
+            const replyBtn = e.target.closest('.reply-btn');
+            if (replyBtn) { currentParentId = replyBtn.dataset.parentId; document.getElementById('reply-username').textContent = replyBtn.dataset.parentUsername; document.getElementById('reply-content').textContent = replyBtn.dataset.parentContent.substring(0, 50) + '...'; replyInfo.classList.remove('hidden'); messageInput.focus(); }
+            const reactBtn = e.target.closest('.react-btn');
+            if(reactBtn) { const messageId = reactBtn.closest('.message-bubble').dataset.messageId; const emoji = prompt("React with an emoji:"); if (emoji) { socket.emit('addReaction', { messageId, userId: currentUserId, emoji }); } }
+        });
+        document.getElementById('cancel-reply').addEventListener('click', cancelReply);
+        function cancelReply() { currentParentId = null; replyInfo.classList.add('hidden'); }
 
-    // --- Message Replies ---
-    const replyInfo = document.getElementById('reply-info');
-    messageContainer.addEventListener('click', (e) => {
-        const replyBtn = e.target.closest('.reply-btn');
-        if (replyBtn) {
-            currentParentId = replyBtn.dataset.parentId;
-            document.getElementById('reply-username').textContent = replyBtn.dataset.parentUsername;
-            document.getElementById('reply-content').textContent = replyBtn.dataset.parentContent.substring(0, 50) + '...';
-            replyInfo.classList.remove('hidden');
-            messageInput.focus();
-        }
-    });
-    document.getElementById('cancel-reply').addEventListener('click', cancelReply);
-    function cancelReply() {
-        currentParentId = null;
-        replyInfo.classList.add('hidden');
-    }
-
-    // --- Emojis and Reactions ---
-    // This is a simplified implementation. A real one would use a picker library.
-    messageContainer.addEventListener('click', (e) => {
-        const reactBtn = e.target.closest('.react-btn');
-        if(reactBtn) {
-            const messageId = reactBtn.closest('.message-bubble').dataset.messageId;
-            const emoji = prompt("Enter an emoji to react with:");
-            if (emoji) {
-                socket.emit('addReaction', { messageId, userId: currentUserId, emoji });
+        socket.on('reactionAdded', ({ messageId, emoji }) => {
+            const messageBubble = document.querySelector(`.message-bubble[data-message-id='${messageId}']`);
+            if (messageBubble) {
+                const reactionsContainer = messageBubble.querySelector('.reactions-container');
+                const reactionEl = document.createElement('span');
+                reactionEl.className = 'bg-gray-200 dark:bg-gray-600 text-xs px-2 py-1 rounded-full';
+                reactionEl.textContent = emoji;
+                reactionsContainer.appendChild(reactionEl);
             }
-        }
-    });
+        });
+        
+        socket.on('newFile', (file) => {
+            const fileList = document.getElementById('file-list');
+            const fileDiv = document.createElement('div');
+            fileDiv.className = 'file-item p-2 rounded-md bg-gray-100 dark:bg-gray-700';
+            let content = `<a href="${file.filepath}" target="_blank" class="text-blue-500 hover:underline break-all">${file.filename}</a>`;
+            if (file.mimetype && file.mimetype.startsWith('image/')) {
+                 content = `<img src="${file.filepath}" alt="${file.filename}" class="w-full h-auto rounded-md mb-2">` + content;
+            }
+            fileDiv.innerHTML = content;
+            fileList.appendChild(fileDiv);
+        });
 
-    socket.on('reactionAdded', ({ messageId, userId, emoji }) => {
-        const messageBubble = document.querySelector(`.message-bubble[data-message-id='${messageId}']`);
-        if (messageBubble) {
-            const reactionsContainer = messageBubble.querySelector('.reactions-container');
-            // Logic to add or update reaction count
-            const reactionEl = document.createElement('span');
-            reactionEl.className = 'bg-gray-200 dark:bg-gray-600 text-xs px-2 py-1 rounded-full';
-            reactionEl.textContent = emoji;
-            reactionsContainer.appendChild(reactionEl);
+        function appendMessage(msg) {
+            const div = document.createElement('div');
+            div.className = `message-bubble w-full flex ${msg.user_id == currentUserId ? 'justify-end' : 'justify-start'}`;
+            div.dataset.messageId = msg.id;
+            let replyHtml = '';
+            if (msg.parent_message_id) {
+                replyHtml = `<div class="border-l-2 border-gray-400 pl-2 text-xs opacity-80 mb-1">
+                                <strong>${msg.parent_username}</strong>: ${msg.parent_content.substring(0, 50)}...
+                             </div>`;
+            }
+            div.innerHTML = `
+                <div class="max-w-md">
+                    <div class="rounded-lg px-4 py-2 ${msg.user_id == currentUserId ? 'bg-blue-500 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white'}">
+                        <div class="font-bold text-sm">${msg.username}</div>
+                        ${replyHtml}
+                        <p class="text-sm break-words">${msg.content}</p>
+                        <div class="reactions-container flex gap-1 mt-1"></div>
+                    </div>
+                    <div class="flex items-center gap-2 mt-1 px-2 ${msg.user_id == currentUserId ? 'justify-end' : ''}">
+                        <span class="text-xs text-gray-500">${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        <button class="reply-btn text-xs text-gray-400 hover:text-blue-500" data-parent-id="${msg.id}" data-parent-username="${msg.username}" data-parent-content="${msg.content}"><i class="fas fa-reply"></i></button>
+                        <button class="react-btn text-xs text-gray-400 hover:text-yellow-500"><i class="fas fa-smile"></i></button>
+                    </div>
+                </div>
+            `;
+            messageContainer.appendChild(div);
+            messageContainer.scrollTop = messageContainer.scrollHeight;
         }
     });
-    
-    // Theme and particles logic (unchanged)
-    // ... (your existing theme toggle and particles.js script) ...
   </script>
 </body>
 </html>
