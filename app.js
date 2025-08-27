@@ -10,6 +10,10 @@ const bcrypt = require('bcrypt');
 const { Pool } = require('pg');
 const connectPgSimple = require('connect-pg-simple');
 
+// NEW: Add the Cloudinary packages
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
@@ -25,15 +29,27 @@ if (process.env.NODE_ENV === 'production') {
 }
 const db = new Pool(dbConfig);
 
-// MULTER CONFIGURATION
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'public/uploads'),
-  filename: (req, file, cb) => {
-    const unique = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, unique + '-' + file.originalname);
-  }
+// --- CLOUDINARY CONFIGURATION ---
+// This connects to your Cloudinary account using the environment variables from Render
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
-const upload = multer({ storage });
+
+// This replaces your old diskStorage with CloudinaryStorage
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'syncroom_uploads', // A folder name in your Cloudinary account
+    format: async (req, file) => 'jpg', // You can also use 'png', 'gif' etc.
+    public_id: (req, file) => Date.now() + '-' + file.originalname,
+  },
+});
+
+const upload = multer({ storage: storage });
+// --- END OF CLOUDINARY SETUP ---
+
 
 // MIDDLEWARE
 app.use(express.urlencoded({ extended: false }));
@@ -158,7 +174,6 @@ app.get('/chat/:groupId', isAuthenticated, checkGroupRole(['owner', 'admin', 'me
     const groupResult = await db.query("SELECT * FROM groups WHERE id = $1", [groupId]);
     if (groupResult.rows.length === 0) { return res.status(404).send("Group not found"); }
     
-    // **FIX APPLIED HERE**: Changed p.content to p.message
     const messages = await db.query( `SELECT m.*, u.username, p.message as parent_message, p_u.username as parent_username FROM messages m JOIN users u ON m.user_id = u.id LEFT JOIN messages p ON m.parent_message_id = p.id LEFT JOIN users p_u ON p.user_id = p_u.id WHERE m.group_id = $1 ORDER BY m.created_at ASC`, [groupId] );
     const reactions = await db.query( `SELECT r.* FROM reactions r JOIN messages m ON r.message_id = m.id WHERE m.group_id = $1`, [groupId] );
     const files = await db.query("SELECT * FROM files WHERE group_id = $1", [groupId]);
@@ -177,12 +192,18 @@ app.get('/chat/:groupId', isAuthenticated, checkGroupRole(['owner', 'admin', 'me
   }
 });
 
+// --- UPDATED UPLOAD ROUTE ---
+// This route now uses the Cloudinary `upload` middleware.
 app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async (req, res) => {
   const { groupId } = req.params;
-  const { originalname, filename, mimetype } = req.file;
-  const filepath = '/uploads/' + filename;
+  
+  // After a successful upload, `req.file.path` will be the secure URL from Cloudinary.
+  const filepath = req.file.path;
+  const filename = req.file.originalname;
+  const mimetype = req.file.mimetype;
+  
   try {
-    const result = await db.query( "INSERT INTO files (group_id, user_id, filename, filepath, mimetype) VALUES ($1, $2, $3, $4, $5) RETURNING *", [groupId, req.session.user.id, originalname, filepath, mimetype] );
+    const result = await db.query( "INSERT INTO files (group_id, user_id, filename, filepath, mimetype) VALUES ($1, $2, $3, $4, $5) RETURNING *", [groupId, req.session.user.id, filename, filepath, mimetype] );
     io.to(`group-${groupId}`).emit('newFile', result.rows[0]);
     res.redirect('/chat/' + groupId);
   } catch (err) {
@@ -190,6 +211,7 @@ app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async 
     res.status(500).send("Server error");
   }
 });
+// --- END OF UPDATED ROUTE ---
 
 app.get('/chat/:groupId/manage', isAuthenticated, checkGroupRole(['owner', 'admin']), async (req, res) => {
     const { groupId } = req.params;
@@ -240,11 +262,9 @@ io.on('connection', socket => {
 
   socket.on('chatMessage', async ({ room, userId, username, message, parentId }) => {
     try {
-      // **FIX APPLIED HERE**: Changed content to message
       const result = await db.query( "INSERT INTO messages (group_id, user_id, message, parent_message_id) VALUES ($1, $2, $3, $4) RETURNING id, created_at", [room.replace('group-', ''), userId, message, parentId] );
       let parentData = { parent_message: null, parent_username: null };
       if (parentId) {
-          // **FIX APPLIED HERE**: Changed m.content to m.message
           const parentResult = await db.query(`SELECT m.message, u.username FROM messages m JOIN users u ON m.user_id = u.id WHERE m.id = $1`, [parentId]);
           if(parentResult.rows.length > 0) {
               parentData.parent_message = parentResult.rows[0].message;
