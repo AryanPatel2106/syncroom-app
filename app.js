@@ -17,10 +17,17 @@ const PORT = process.env.PORT || 5000;
 const saltRounds = 10;
 
 // ----------------- DATABASE -----------------
-const db = new Pool({
+// THIS IS THE FIX: We make the SSL setting conditional.
+// It will only be applied when in a production environment like Render.
+const dbConfig = {
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
+};
+if (process.env.NODE_ENV === 'production') {
+  dbConfig.ssl = { rejectUnauthorized: false };
+}
+const db = new Pool(dbConfig);
+// ----------------- END OF FIX -----------------
+
 
 // ----------------- MULTER -----------------
 const storage = multer.diskStorage({
@@ -120,7 +127,7 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Groups dashboard - MODIFIED to include user role
+// Groups dashboard
 app.get('/groups', isAuthenticated, async (req, res) => {
   try {
     const result = await db.query(
@@ -289,7 +296,6 @@ app.post('/chat/:groupId/manage/promote', isAuthenticated, checkGroupRole(['owne
         res.status(500).send("Server error");
     }
 });
-
 
 // Logout
 app.get('/logout', (req, res) => {
