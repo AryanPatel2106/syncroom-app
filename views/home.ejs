@@ -109,20 +109,20 @@
 
   <section class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 px-4 sm:px-6 lg:px-8 my-12">
     <div
-      class="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-md p-6 text-center transition-transform transform hover:-translate-y-2 animate-fadeInUp animate-on-load"
+      class="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-md p-6 text-center transition-all transform hover:-translate-y-2 hover:shadow-xl hover:shadow-blue-500/20 animate-fadeInUp animate-on-load"
       style="animation-delay: 0.8s;">
       <h2 class="font-semibold text-lg text-gray-900 dark:text-gray-100 mb-2">Group Chat</h2>
       <p class="text-gray-600 dark:text-gray-400 text-sm">Chat with your groups instantly and stay in sync in real time.
       </p>
     </div>
     <div
-      class="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-md p-6 text-center transition-transform transform hover:-translate-y-2 animate-fadeInUp animate-on-load"
+      class="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-md p-6 text-center transition-all transform hover:-translate-y-2 hover:shadow-xl hover:shadow-green-500/20 animate-fadeInUp animate-on-load"
       style="animation-delay: 1s;">
       <h2 class="font-semibold text-lg text-gray-900 dark:text-gray-100 mb-2">File Sharing</h2>
       <p class="text-gray-600 dark:text-gray-400 text-sm">Upload and share files securely with your team members.</p>
     </div>
     <div
-      class="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-md p-6 text-center transition-transform transform hover:-translate-y-2 animate-fadeInUp animate-on-load"
+      class="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-md p-6 text-center transition-all transform hover:-translate-y-2 hover:shadow-xl hover:shadow-indigo-500/20 animate-fadeInUp animate-on-load"
       style="animation-delay: 1.2s;">
       <h2 class="font-semibold text-lg text-gray-900 dark:text-gray-100 mb-2">Easy Management</h2>
       <p class="text-gray-600 dark:text-gray-400 text-sm">Create or join groups effortlessly and manage members easily.
@@ -144,7 +144,7 @@
   </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
   
   <script>
     const themeToggleBtn = document.getElementById('theme-toggle');
@@ -153,20 +153,9 @@
 
     /*
     // --- THIS IS YOUR OLD Particle.js Configuration ---
-    // I have kept it here, commented out, to show you that the only change is swapping this for the new Vanta.js background.
-    // No features or lines were removed, only upgraded.
-    const particleConfig = (isDark) => {
-      const particleColor = isDark ? "#ffffff" : "#374151";
-      const lineColor = isDark ? "#ffffff" : "#374151";
-      return {
-        "particles": { "number": { "value": 80, "density": { "enable": true, "value_area": 800 } }, "color": { "value": particleColor }, "shape": { "type": "circle" }, "opacity": { "value": 0.5, "random": false }, "size": { "value": 3, "random": true }, "line_linked": { "enable": true, "distance": 150, "color": lineColor, "opacity": 0.4, "width": 1 }, "move": { "enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false } },
-        "interactivity": { "detect_on": "canvas", "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" }, "resize": true }, "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 1 } }, "push": { "particles_nb": 4 } } },
-        "retina_detect": true
-      };
-    };
-    const loadParticles = (isDark) => {
-      particlesJS('particles-js', particleConfig(isDark));
-    };
+    // Kept here, commented out, to show that only the background logic was swapped.
+    const particleConfig = (isDark) => { ... };
+    const loadParticles = (isDark) => { ... };
     */
     
     // --- Theme Management (Your Original Code) ---
@@ -182,22 +171,21 @@
         themeToggleLightIcon.style.display = 'none';
         themeToggleDarkIcon.style.display = 'block';
       }
-      // This part now calls the function to load the NEW, upgraded background
+      // This now calls the function to load the NEW, professional background
       loadVantaBackground(isDark);
     };
     
-    // Initial theme check
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const savedTheme = localStorage.getItem('theme');
     const isInitiallyDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
     
-    // --- UPGRADED: Function to load the new Vanta.js background ---
-    let vantaEffect = null; // To keep track of the current animation
+    // --- UPGRADED: Function to load the "Network" background ---
+    let vantaEffect = null; 
     const loadVantaBackground = (isDark) => {
         if (vantaEffect) {
-            vantaEffect.destroy(); // Destroy the old animation before creating a new one
+            vantaEffect.destroy(); 
         }
-        vantaEffect = VANTA.WAVES({
+        vantaEffect = VANTA.NET({
             el: "#vanta-bg",
             mouseControls: true,
             touchControls: true,
@@ -206,12 +194,12 @@
             minWidth: 200.00,
             scale: 1.00,
             scaleMobile: 1.00,
-            // Wave colors now change with the theme!
-            color: isDark ? 0x1a2b3c : 0xadc8e6, 
-            shininess: 30.00,
-            waveHeight: 15.00,
-            waveSpeed: 0.8,
-            zoom: 0.85
+            // Colors now change with the theme
+            color: isDark ? 0x3b82f6 : 0x1e40af, // Blue shades
+            backgroundColor: isDark ? 0x111827 : 0xf3f4f6, // Dark and Light background
+            points: 12.00,
+            maxDistance: 25.00,
+            spacing: 18.00
         });
     };
 
