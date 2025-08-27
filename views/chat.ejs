@@ -5,178 +5,245 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat - <%= group.name %></title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = { darkMode: 'class' }
-  </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
-      #particles-js { position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: -1; }
-      .content-container { position: relative; z-index: 1; }
-      @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-      .message-bubble { animation: slideIn 0.3s ease-out forwards; }
+    body { font-family: 'Inter', sans-serif; }
+    .glass-ui { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    .message-bubble { animation: slideIn 0.3s ease-out forwards; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    /* Custom scrollbar for a modern look */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
   </style>
 </head>
 
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 h-screen flex flex-col">
-  <div id="particles-js"></div>
-  <div class="content-container flex flex-col h-full">
-    <header class="bg-white dark:bg-gray-800 shadow-md p-4 flex justify-between items-center z-10 flex-shrink-0">
-      <div>
-          <h1 class="text-xl font-bold"><%= group.name %></h1>
-          <span class="text-sm">Logged in as: <%= user.username %></span>
-      </div>
-      <div>
-          <% if (userRole === 'owner' || userRole === 'admin') { %>
-              <a href="/chat/<%= group.id %>/manage" class="px-3 py-2 text-sm rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"><i class="fas fa-users-cog"></i> Manage</a>
-          <% } %>
-          <button id="file-panel-toggle" class="px-3 py-2 text-sm rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"><i class="fas fa-folder"></i> Files</button>
-          <button id="theme-toggle" class="px-3 py-2 text-sm rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
-              <i id="theme-toggle-dark-icon" class="fas fa-moon"></i><i id="theme-toggle-light-icon" class="fas fa-sun" style="display: none;"></i>
-          </button>
-      </div>
-    </header>
+<body class="bg-gray-900 text-white h-screen overflow-hidden">
+  <div id="vanta-bg" class="fixed top-0 left-0 w-full h-full z-0"></div>
 
-    <div class="flex flex-grow overflow-hidden">
-      <aside id="user-list-panel" class="w-48 bg-gray-200 dark:bg-gray-800 p-4 overflow-y-auto flex-shrink-0">
-          <h2 class="font-bold mb-2">Online Users</h2>
-          <ul id="user-list" class="space-y-1 text-sm"></ul>
+  <div class="relative z-10 h-full p-4">
+    <div class="glass-ui rounded-2xl shadow-2xl h-full flex">
+      <aside class="w-72 border-r border-white border-opacity-10 p-4 flex flex-col">
+        <h1 class="text-2xl font-bold mb-1"><%= group.name %></h1>
+        <p class="text-sm text-gray-400 mb-6">Logged in as: <%= user.username %></p>
+
+        <div class="mb-6">
+          <h2 class="font-bold text-gray-300 mb-3">Online Users</h2>
+          <ul id="user-list" class="space-y-2 text-sm text-gray-300"></ul>
+        </div>
+        
+        <div class="flex-grow overflow-y-auto mb-4">
+          <h2 class="font-bold text-gray-300 mb-3">Shared Files</h2>
+          <div id="file-list" class="space-y-2">
+            <% files.forEach(file => { %>
+                <div class="file-item p-2 rounded-lg bg-black bg-opacity-20">
+                     <% if (file.mimetype && file.mimetype.startsWith('image/')) { %>
+                        <img src="<%= file.filepath %>" alt="<%= file.filename %>" class="w-full h-auto rounded-md mb-2">
+                    <% } %>
+                    <a href="<%= file.filepath %>" target="_blank" class="text-blue-400 hover:underline text-sm break-all"><%= file.filename %></a>
+                </div>
+            <% }) %>
+          </div>
+        </div>
+        
+        <form action="/chat/<%= group.id %>/upload" method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" class="w-full text-xs text-gray-400 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-800 file:text-blue-200 hover:file:bg-blue-700" required>
+            <button type="submit" class="w-full mt-2 text-sm bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Upload File</button>
+        </form>
+
+        <% if (userRole === 'owner' || userRole === 'admin') { %>
+            <a href="/chat/<%= group.id %>/manage" class="mt-4 text-center text-sm bg-gray-700 text-white py-2 rounded-lg hover:bg-gray-600"><i class="fas fa-users-cog mr-2"></i>Manage Group</a>
+        <% } %>
       </aside>
 
-      <main class="flex-grow flex flex-col p-4">
-          <div id="message-container" class="flex-grow overflow-y-auto mb-4 space-y-4 pr-2">
+      <main class="flex-grow flex flex-col">
+          <div id="message-container" class="flex-grow overflow-y-auto p-6 space-y-6">
               <% messages.forEach(msg => { %>
                   <div class="message-bubble w-full flex <%= msg.user_id == user.id ? 'justify-end' : 'justify-start' %>" data-message-id="<%= msg.id %>">
-                      <div class="max-w-md">
-                          <div class="rounded-lg px-4 py-2 <%= msg.user_id == user.id ? 'bg-blue-500 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white' %>">
+                      <div class="max-w-xl">
+                          <div class="rounded-xl px-4 py-2 <%= msg.user_id == user.id ? 'bg-blue-600 text-white' : 'bg-gray-700 bg-opacity-50 text-gray-200' %>">
                               <div class="font-bold text-sm"><%= msg.username %></div>
-                              <% if (msg.parent_message_id) { %>
-                                  <div class="border-l-2 border-gray-400 pl-2 text-xs opacity-80 mb-1">
-                                      <strong><%= msg.parent_username %></strong>: <%= msg.parent_message.substring(0, 50) %>...
+                               <% if (msg.parent_message_id) { %>
+                                  <div class="border-l-2 border-blue-300 pl-2 text-xs opacity-80 mb-1 mt-1">
+                                      <strong><%= msg.parent_username %></strong>: <%= msg.message.substring(0, 50) %>...
                                   </div>
                               <% } %>
-                              <p class="text-sm break-words"><%= msg.message %></p>
-                              <div class="reactions-container flex gap-1 mt-1">
+                              <p class="text-base break-words mt-1"><%= msg.message %></p>
+                              <div class="reactions-container flex gap-1 mt-2">
                                 <% reactions.filter(r => r.message_id === msg.id).forEach(reaction => { %>
-                                    <span class="bg-gray-200 dark:bg-gray-600 text-xs px-2 py-1 rounded-full"><%= reaction.emoji %></span>
+                                    <span class="bg-gray-800 bg-opacity-50 text-xs px-2 py-1 rounded-full cursor-pointer"><%= reaction.emoji %></span>
                                 <% }) %>
                               </div>
                           </div>
-                          <div class="flex items-center gap-2 mt-1 px-2 <%= msg.user_id == user.id ? 'justify-end' : '' %>">
-                              <span class="text-xs text-gray-500"><%= new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></span>
-                              <button class="reply-btn text-xs text-gray-400 hover:text-blue-500" data-parent-id="<%= msg.id %>" data-parent-username="<%= msg.username %>" data-parent-message="<%= msg.message %>"><i class="fas fa-reply"></i></button>
-                               <button class="react-btn text-xs text-gray-400 hover:text-yellow-500"><i class="fas fa-smile"></i></button>
+                          <div class="flex items-center gap-2 mt-1 px-2 text-xs text-gray-500 <%= msg.user_id == user.id ? 'justify-end' : '' %>">
+                              <span><%= new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></span>
+                              <button class="reply-btn hover:text-blue-400" data-parent-id="<%= msg.id %>" data-parent-username="<%= msg.username %>" data-parent-message="<%= msg.message %>"><i class="fas fa-reply"></i></button>
+                              <button class="react-btn hover:text-yellow-400"><i class="fas fa-smile"></i></button>
                           </div>
                       </div>
                   </div>
               <% }) %>
           </div>
           
-          <div id="typing-indicator" class="h-5 text-sm text-gray-500 italic"></div>
-          <div id="reply-info" class="hidden bg-gray-200 dark:bg-gray-700 p-2 rounded-t-lg text-sm">
-              Replying to <strong id="reply-username"></strong>: "<span id="reply-message"></span>"
-              <button id="cancel-reply" class="float-right font-bold text-red-500">X</button>
-          </div>
-          <form id="message-form" class="flex items-center gap-2 relative">
-              <textarea id="message-input" class="flex-grow p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type a message..." rows="1"></textarea>
-              <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"><i class="fas fa-paper-plane"></i></button>
-          </form>
-      </main>
-
-       <aside id="file-panel-container" class="hidden fixed inset-0 z-20">
-            <div id="file-panel-backdrop" class="absolute inset-0 bg-black opacity-50"></div>
-            <div id="file-panel" class="absolute right-0 top-0 bottom-0 w-80 bg-white dark:bg-gray-800 shadow-lg transform translate-x-full transition-transform duration-300 ease-in-out p-4 flex flex-col">
-                <div class="flex justify-between items-center mb-4 flex-shrink-0">
-                    <h2 class="text-lg font-bold">Shared Files</h2><button id="close-file-panel" class="text-gray-500 dark:text-gray-400 hover:text-red-500">&times;</button>
-                </div>
-                <div id="file-list" class="overflow-y-auto flex-grow space-y-2">
-                    <% files.forEach(file => { %>
-                        <div class="file-item p-2 rounded-md bg-gray-100 dark:bg-gray-700">
-                             <% if (file.mimetype && file.mimetype.startsWith('image/')) { %><img src="<%= file.filepath %>" alt="<%= file.filename %>" class="w-full h-auto rounded-md mb-2"><% } %>
-                            <a href="<%= file.filepath %>" target="_blank" class="text-blue-500 hover:underline break-all"><%= file.filename %></a>
-                        </div>
-                    <% }) %>
-                </div>
-                <form action="/chat/<%= group.id %>/upload" method="POST" enctype="multipart/form-data" class="mt-4 flex-shrink-0">
-                    <input type="file" name="file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
-                    <button type="submit" class="w-full mt-2 bg-green-500 text-white py-2 rounded-md hover:bg-green-600">Upload</button>
-                </form>
+          <div class="p-6 border-t border-white border-opacity-10">
+            <div id="typing-indicator" class="h-5 text-sm text-gray-400 italic"></div>
+            <div id="reply-info" class="hidden bg-black bg-opacity-20 p-2 rounded-t-lg text-sm mb-2">
+                Replying to <strong id="reply-username"></strong>: "<span id="reply-message"></span>"
+                <button id="cancel-reply" class="float-right font-bold text-red-500 hover:text-red-400">×</button>
             </div>
-        </aside>
+            <form id="message-form" class="flex items-center gap-4">
+                <input id="message-input" class="flex-grow p-3 bg-gray-800 bg-opacity-50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type a message..." autocomplete="off">
+                <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"><i class="fas fa-paper-plane"></i></button>
+            </form>
+          </div>
+      </main>
     </div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tsparticles@1.37.5/dist/tsparticles.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const socket = io({ query: { userId: '<%= user.id %>', username: '<%= user.username %>' } });
-        const room = 'group-<%= group.id %>';
-        const currentUserId = '<%= user.id %>';
-        const currentUsername = '<%= user.username %>';
-        const messageContainer = document.getElementById('message-container');
-        const messageForm = document.getElementById('message-form');
-        const messageInput = document.getElementById('message-input');
-        const typingIndicator = document.getElementById('typing-indicator');
-        const userList = document.getElementById('user-list');
-        const themeToggleBtn = document.getElementById('theme-toggle');
-        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-        const particleConfig = (isDark) => { const color = isDark ? "#ffffff" : "#000000"; return { particles: { number: { value: 80 }, color: { value: color }, shape: { type: "circle" }, opacity: { value: 0.5 }, size: { value: 3, random: true }, line_linked: { enable: true, distance: 150, color: color, opacity: 0.4, width: 1 }, move: { enable: true, speed: 2 } }, interactivity: { events: { onhover: { enable: true, mode: "grab" }, onclick: { enable: true, mode: "push" } } }, retina_detect: true }; };
-        const loadParticles = (isDark) => { if (window.particlesJS) particlesJS('particles-js', particleConfig(isDark)); };
-        const setTheme = (isDark) => { document.documentElement.classList.toggle('dark', isDark); localStorage.setItem('theme', isDark ? 'dark' : 'light'); if(themeToggleLightIcon) themeToggleLightIcon.style.display = isDark ? 'block' : 'none'; if(themeToggleDarkIcon) themeToggleDarkIcon.style.display = isDark ? 'none' : 'block'; loadParticles(isDark); };
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const savedTheme = localStorage.getItem('theme');
-        const isInitiallyDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
-        setTheme(isInitiallyDark);
-        themeToggleBtn.addEventListener('click', () => setTheme(!document.documentElement.classList.contains('dark')));
-        const filePanelContainer = document.getElementById('file-panel-container');
-        const filePanel = document.getElementById('file-panel');
-        const filePanelToggleBtn = document.getElementById('file-panel-toggle');
-        const closeFilePanelBtn = document.getElementById('close-file-panel');
-        const filePanelBackdrop = document.getElementById('file-panel-backdrop');
-        const openFilePanel = () => { filePanelContainer.classList.remove('hidden'); setTimeout(() => filePanel.classList.remove('translate-x-full'), 10); };
-        const closeFilePanel = () => { filePanel.classList.add('translate-x-full'); setTimeout(() => filePanelContainer.classList.add('hidden'), 300); };
-        filePanelToggleBtn.addEventListener('click', openFilePanel);
-        closeFilePanelBtn.addEventListener('click', closeFilePanel);
-        filePanelBackdrop.addEventListener('click', closeFilePanel);
-        socket.emit('joinRoom', room);
-        socket.on('updateUserList', (users) => { userList.innerHTML = users.map(user => `<li><i class="fas fa-circle text-green-500 text-xs mr-2"></i>${user}</li>`).join(''); });
-        messageContainer.scrollTop = messageContainer.scrollHeight;
-        let currentParentId = null;
-        messageForm.addEventListener('submit', (e) => { e.preventDefault(); const message = messageInput.value.trim(); if (message) { socket.emit('chatMessage', { room, userId: currentUserId, username: currentUsername, message, parentId: currentParentId }); messageInput.value = ''; cancelReply(); } });
-        socket.on('chatMessage', (msg) => { appendMessage(msg); });
-        let typingTimeout;
-        messageInput.addEventListener('input', () => { socket.emit('typing', { room, username: currentUsername }); clearTimeout(typingTimeout); });
-        socket.on('typing', ({ username }) => { typingIndicator.textContent = `${username} is typing...`; clearTimeout(typingTimeout); typingTimeout = setTimeout(() => typingIndicator.textContent = '', 3000); });
-        const replyInfo = document.getElementById('reply-info');
-        messageContainer.addEventListener('click', (e) => {
-            const replyBtn = e.target.closest('.reply-btn');
-            if (replyBtn) { currentParentId = replyBtn.dataset.parentId; document.getElementById('reply-username').textContent = replyBtn.dataset.parentUsername; document.getElementById('reply-message').textContent = replyBtn.dataset.parentMessage.substring(0, 50) + '...'; replyInfo.classList.remove('hidden'); messageInput.focus(); }
-            const reactBtn = e.target.closest('.react-btn');
-            if(reactBtn) { const messageId = reactBtn.closest('.message-bubble').dataset.messageId; const emoji = prompt("React with an emoji:"); if (emoji) { socket.emit('addReaction', { messageId, userId: currentUserId, emoji }); } }
-        });
-        document.getElementById('cancel-reply').addEventListener('click', cancelReply);
-        function cancelReply() { currentParentId = null; replyInfo.classList.add('hidden'); }
-        socket.on('reactionAdded', ({ messageId, emoji }) => {
-            const messageBubble = document.querySelector(`.message-bubble[data-message-id='${messageId}']`);
-            if (messageBubble) { const reactionsContainer = messageBubble.querySelector('.reactions-container'); const reactionEl = document.createElement('span'); reactionEl.className = 'bg-gray-200 dark:bg-gray-600 text-xs px-2 py-1 rounded-full'; reactionEl.textContent = emoji; reactionsContainer.appendChild(reactionEl); }
-        });
-        socket.on('newFile', (file) => {
-            const fileList = document.getElementById('file-list'); const fileDiv = document.createElement('div'); fileDiv.className = 'file-item p-2 rounded-md bg-gray-100 dark:bg-gray-700';
-            let contentHtml = `<a href="${file.filepath}" target="_blank" class="text-blue-500 hover:underline break-all">${file.filename}</a>`;
-            if (file.mimetype && file.mimetype.startsWith('image/')) { contentHtml = `<img src="${file.filepath}" alt="${file.filename}" class="w-full h-auto rounded-md mb-2">` + contentHtml; }
-            fileDiv.innerHTML = contentHtml; fileList.appendChild(fileDiv);
-        });
-        function appendMessage(msg) {
-            const div = document.createElement('div');
-            div.className = `message-bubble w-full flex ${msg.user_id == currentUserId ? 'justify-end' : 'justify-start'}`;
-            div.dataset.messageId = msg.id;
-            let replyHtml = '';
-            if (msg.parent_message_id) { replyHtml = `<div class="border-l-2 border-gray-400 pl-2 text-xs opacity-80 mb-1"><strong>${msg.parent_username}</strong>: ${msg.parent_message.substring(0, 50)}...</div>`; }
-            div.innerHTML = `<div class="max-w-md"> <div class="rounded-lg px-4 py-2 ${msg.user_id == currentUserId ? 'bg-blue-500 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white'}"> <div class="font-bold text-sm">${msg.username}</div> ${replyHtml} <p class="text-sm break-words">${msg.message}</p> <div class="reactions-container flex gap-1 mt-1"></div> </div> <div class="flex items-center gap-2 mt-1 px-2 ${msg.user_id == currentUserId ? 'justify-end' : ''}"> <span class="text-xs text-gray-500">${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span> <button class="reply-btn text-xs text-gray-400 hover:text-blue-500" data-parent-id="${msg.id}" data-parent-username="${msg.username}" data-parent-message="${msg.message}"><i class="fas fa-reply"></i></button> <button class="react-btn text-xs text-gray-400 hover:text-yellow-500"><i class="fas fa-smile"></i></button> </div> </div>`;
-            messageContainer.appendChild(div);
-            messageContainer.scrollTop = messageContainer.scrollHeight;
-        }
+      // Initialize Vanta.js Background
+      VANTA.WAVES({ el: "#vanta-bg", mouseControls: true, touchControls: true, gyroControls: false, minHeight: 200.00, minWidth: 200.00, scale: 1.00, scaleMobile: 1.00, color: 0x1a2b3c, shininess: 30.00, waveHeight: 15.00, waveSpeed: 0.8, zoom: 0.75 });
+      
+      // Socket.IO and Chat Logic
+      const socket = io({ query: { userId: '<%= user.id %>', username: '<%= user.username %>' } });
+      const room = 'group-<%= group.id %>';
+      const currentUserId = '<%= user.id %>';
+      const currentUsername = '<%= user.username %>';
+      
+      const messageContainer = document.getElementById('message-container');
+      const messageForm = document.getElementById('message-form');
+      const messageInput = document.getElementById('message-input');
+      const typingIndicator = document.getElementById('typing-indicator');
+      const userList = document.getElementById('user-list');
+      const fileList = document.getElementById('file-list');
+
+      // --- Core Socket Listeners ---
+      socket.emit('joinRoom', room);
+
+      socket.on('updateUserList', (users) => {
+          userList.innerHTML = users.map(user => `<li><i class="fas fa-circle text-green-500 text-xs mr-2"></i>${user}</li>`).join('');
+      });
+
+      socket.on('chatMessage', (msg) => {
+          appendMessage(msg);
+      });
+
+      socket.on('newFile', (file) => {
+          const fileDiv = document.createElement('div');
+          fileDiv.className = 'file-item p-2 rounded-lg bg-black bg-opacity-20';
+          let contentHtml = `<a href="${file.filepath}" target="_blank" class="text-blue-400 hover:underline text-sm break-all">${file.filename}</a>`;
+          if (file.mimetype && file.mimetype.startsWith('image/')) {
+              contentHtml = `<img src="${file.filepath}" alt="${file.filename}" class="w-full h-auto rounded-md mb-2">` + contentHtml;
+          }
+          fileDiv.innerHTML = contentHtml;
+          fileList.appendChild(fileDiv);
+      });
+
+      socket.on('reactionAdded', ({ messageId, emoji }) => {
+          const messageBubble = document.querySelector(`.message-bubble[data-message-id='${messageId}']`);
+          if (messageBubble) {
+              const reactionsContainer = messageBubble.querySelector('.reactions-container');
+              const reactionEl = document.createElement('span');
+              reactionEl.className = 'bg-gray-800 bg-opacity-50 text-xs px-2 py-1 rounded-full cursor-pointer';
+              reactionEl.textContent = emoji;
+              reactionsContainer.appendChild(reactionEl);
+          }
+      });
+      
+      // --- Message Form and Input Handling ---
+      messageContainer.scrollTop = messageContainer.scrollHeight;
+      let currentParentId = null;
+
+      messageForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const message = messageInput.value.trim();
+          if (message) {
+              socket.emit('chatMessage', { room, userId: currentUserId, username: currentUsername, message, parentId: currentParentId });
+              messageInput.value = '';
+              cancelReply();
+          }
+      });
+
+      let typingTimeout;
+      messageInput.addEventListener('input', () => {
+          socket.emit('typing', { room, username: currentUsername });
+          clearTimeout(typingTimeout);
+      });
+      socket.on('typing', ({ username }) => {
+          typingIndicator.textContent = `${username} is typing...`;
+          clearTimeout(typingTimeout);
+          typingTimeout = setTimeout(() => typingIndicator.textContent = '', 3000);
+      });
+
+      // --- Reply and Reaction Click Handling ---
+      const replyInfo = document.getElementById('reply-info');
+      const replyUsernameEl = document.getElementById('reply-username');
+      const replyMessageEl = document.getElementById('reply-message');
+      
+      messageContainer.addEventListener('click', (e) => {
+          const replyBtn = e.target.closest('.reply-btn');
+          if (replyBtn) {
+              currentParentId = replyBtn.dataset.parentId;
+              replyUsernameEl.textContent = replyBtn.dataset.parentUsername;
+              replyMessageEl.textContent = replyBtn.dataset.parentMessage.substring(0, 50) + '...';
+              replyInfo.classList.remove('hidden');
+              messageInput.focus();
+          }
+
+          const reactBtn = e.target.closest('.react-btn');
+          if (reactBtn) {
+              const messageId = reactBtn.closest('.message-bubble').dataset.messageId;
+              const emoji = prompt("React with an emoji:");
+              if (emoji) {
+                  socket.emit('addReaction', { messageId, userId: currentUserId, emoji });
+              }
+          }
+      });
+
+      document.getElementById('cancel-reply').addEventListener('click', cancelReply);
+      
+      function cancelReply() {
+          currentParentId = null;
+          replyInfo.classList.add('hidden');
+      }
+      
+      // --- Helper function to append new messages ---
+      function appendMessage(msg) {
+          const div = document.createElement('div');
+          div.className = `message-bubble w-full flex ${msg.user_id == currentUserId ? 'justify-end' : 'justify-start'}`;
+          div.dataset.messageId = msg.id;
+          
+          let replyHtml = '';
+          if (msg.parent_message_id) {
+              replyHtml = `<div class="border-l-2 border-blue-300 pl-2 text-xs opacity-80 mb-1 mt-1">
+                             <strong>${msg.parent_username}</strong>: ${msg.parent_message.substring(0, 50)}...
+                           </div>`;
+          }
+
+          div.innerHTML = `
+              <div class="max-w-xl">
+                  <div class="rounded-xl px-4 py-2 ${msg.user_id == currentUserId ? 'bg-blue-600 text-white' : 'bg-gray-700 bg-opacity-50 text-gray-200'}">
+                      <div class="font-bold text-sm">${msg.username}</div>
+                      ${replyHtml}
+                      <p class="text-base break-words mt-1">${msg.message}</p>
+                      <div class="reactions-container flex gap-1 mt-2"></div>
+                  </div>
+                  <div class="flex items-center gap-2 mt-1 px-2 text-xs text-gray-500 ${msg.user_id == currentUserId ? 'justify-end' : ''}">
+                      <span>${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                      <button class="reply-btn hover:text-blue-400" data-parent-id="${msg.id}" data-parent-username="${msg.username}" data-parent-message="${msg.message}"><i class="fas fa-reply"></i></button>
+                      <button class="react-btn hover:text-yellow-400"><i class="fas fa-smile"></i></button>
+                  </div>
+              </div>`;
+              
+          messageContainer.appendChild(div);
+          messageContainer.scrollTop = messageContainer.scrollHeight;
+      }
     });
   </script>
 </body>
