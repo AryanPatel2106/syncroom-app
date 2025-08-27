@@ -12,6 +12,7 @@
     .glass-ui { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
     .message-bubble { animation: slideIn 0.3s ease-out forwards; }
     @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    /* Custom scrollbar for a modern look */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 3px; }
@@ -22,21 +23,11 @@
 <body class="bg-gray-900 text-white h-screen overflow-hidden">
   <div id="vanta-bg" class="fixed top-0 left-0 w-full h-full z-0"></div>
 
-  <div class="relative z-10 h-full p-2 sm:p-4">
-    <div class="glass-ui rounded-2xl shadow-2xl h-full flex overflow-hidden">
-      <aside id="chat-sidebar" class="w-72 border-r border-white border-opacity-10 p-4 flex-col flex-shrink-0
-        absolute md:relative inset-y-0 left-0 z-20 bg-gray-900 bg-opacity-50 glass-ui
-        transform -translate-x-full md:transform-none transition-transform duration-300 ease-in-out">
-        
-        <div class="flex justify-between items-center mb-6">
-          <div>
-            <h1 class="text-2xl font-bold"><%= group.name %></h1>
-            <p class="text-sm text-gray-400">Logged in as: <%= user.username %></p>
-          </div>
-          <button id="close-sidebar-btn" class="md:hidden text-gray-400 hover:text-white">
-            <i class="fas fa-times text-xl"></i>
-          </button>
-        </div>
+  <div class="relative z-10 h-full p-4">
+    <div class="glass-ui rounded-2xl shadow-2xl h-full flex">
+      <aside class="w-72 border-r border-white border-opacity-10 p-4 flex flex-col">
+        <h1 class="text-2xl font-bold mb-1"><%= group.name %></h1>
+        <p class="text-sm text-gray-400 mb-6">Logged in as: <%= user.username %></p>
 
         <div class="mb-6">
           <h2 class="font-bold text-gray-300 mb-3">Online Users</h2>
@@ -68,13 +59,6 @@
       </aside>
 
       <main class="flex-grow flex flex-col">
-          <header class="md:hidden p-4 border-b border-white border-opacity-10 flex items-center">
-            <button id="sidebar-toggle-btn" class="text-gray-300 mr-4">
-              <i class="fas fa-bars text-xl"></i>
-            </button>
-            <h1 class="text-xl font-bold"><%= group.name %></h1>
-          </header>
-
           <div id="message-container" class="flex-grow overflow-y-auto p-6 space-y-6">
               <% messages.forEach(msg => { %>
                   <div class="message-bubble w-full flex <%= msg.user_id == user.id ? 'justify-end' : 'justify-start' %>" data-message-id="<%= msg.id %>">
@@ -103,15 +87,15 @@
               <% }) %>
           </div>
           
-          <div class="p-4 sm:p-6 border-t border-white border-opacity-10">
+          <div class="p-6 border-t border-white border-opacity-10">
             <div id="typing-indicator" class="h-5 text-sm text-gray-400 italic"></div>
             <div id="reply-info" class="hidden bg-black bg-opacity-20 p-2 rounded-t-lg text-sm mb-2">
                 Replying to <strong id="reply-username"></strong>: "<span id="reply-message"></span>"
                 <button id="cancel-reply" class="float-right font-bold text-red-500 hover:text-red-400">×</button>
             </div>
-            <form id="message-form" class="flex items-center gap-2 sm:gap-4">
+            <form id="message-form" class="flex items-center gap-4">
                 <input id="message-input" class="flex-grow p-3 bg-gray-800 bg-opacity-50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type a message..." autocomplete="off">
-                <button type="submit" class="bg-blue-600 text-white px-4 sm:px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"><i class="fas fa-paper-plane"></i></button>
+                <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"><i class="fas fa-paper-plane"></i></button>
             </form>
           </div>
       </main>
@@ -123,31 +107,33 @@
   <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // Initialize Vanta.js Background
       VANTA.WAVES({ el: "#vanta-bg", mouseControls: true, touchControls: true, gyroControls: false, minHeight: 200.00, minWidth: 200.00, scale: 1.00, scaleMobile: 1.00, color: 0x1a2b3c, shininess: 30.00, waveHeight: 15.00, waveSpeed: 0.8, zoom: 0.75 });
       
+      // Socket.IO and Chat Logic
       const socket = io({ query: { userId: '<%= user.id %>', username: '<%= user.username %>' } });
-      
-      // **NEW: Mobile Sidebar Logic**
-      const sidebar = document.getElementById('chat-sidebar');
-      const openBtn = document.getElementById('sidebar-toggle-btn');
-      const closeBtn = document.getElementById('close-sidebar-btn');
-      
-      openBtn.addEventListener('click', () => sidebar.classList.remove('-translate-x-full'));
-      closeBtn.addEventListener('click', () => sidebar.classList.add('-translate-x-full'));
-
-      // (The rest of your chat script remains the same)
       const room = 'group-<%= group.id %>';
       const currentUserId = '<%= user.id %>';
       const currentUsername = '<%= user.username %>';
+      
       const messageContainer = document.getElementById('message-container');
       const messageForm = document.getElementById('message-form');
       const messageInput = document.getElementById('message-input');
       const typingIndicator = document.getElementById('typing-indicator');
       const userList = document.getElementById('user-list');
       const fileList = document.getElementById('file-list');
+
+      // --- Core Socket Listeners ---
       socket.emit('joinRoom', room);
-      socket.on('updateUserList', (users) => { userList.innerHTML = users.map(user => `<li><i class="fas fa-circle text-green-500 text-xs mr-2"></i>${user}</li>`).join(''); });
-      socket.on('chatMessage', (msg) => { appendMessage(msg); });
+
+      socket.on('updateUserList', (users) => {
+          userList.innerHTML = users.map(user => `<li><i class="fas fa-circle text-green-500 text-xs mr-2"></i>${user}</li>`).join('');
+      });
+
+      socket.on('chatMessage', (msg) => {
+          appendMessage(msg);
+      });
+
       socket.on('newFile', (file) => {
           const fileDiv = document.createElement('div');
           fileDiv.className = 'file-item p-2 rounded-lg bg-black bg-opacity-20';
@@ -158,6 +144,7 @@
           fileDiv.innerHTML = contentHtml;
           fileList.appendChild(fileDiv);
       });
+
       socket.on('reactionAdded', ({ messageId, emoji }) => {
           const messageBubble = document.querySelector(`.message-bubble[data-message-id='${messageId}']`);
           if (messageBubble) {
@@ -168,8 +155,11 @@
               reactionsContainer.appendChild(reactionEl);
           }
       });
+      
+      // --- Message Form and Input Handling ---
       messageContainer.scrollTop = messageContainer.scrollHeight;
       let currentParentId = null;
+
       messageForm.addEventListener('submit', (e) => {
           e.preventDefault();
           const message = messageInput.value.trim();
@@ -179,6 +169,7 @@
               cancelReply();
           }
       });
+
       let typingTimeout;
       messageInput.addEventListener('input', () => {
           socket.emit('typing', { room, username: currentUsername });
@@ -189,9 +180,12 @@
           clearTimeout(typingTimeout);
           typingTimeout = setTimeout(() => typingIndicator.textContent = '', 3000);
       });
+
+      // --- Reply and Reaction Click Handling ---
       const replyInfo = document.getElementById('reply-info');
       const replyUsernameEl = document.getElementById('reply-username');
       const replyMessageEl = document.getElementById('reply-message');
+      
       messageContainer.addEventListener('click', (e) => {
           const replyBtn = e.target.closest('.reply-btn');
           if (replyBtn) {
@@ -201,6 +195,7 @@
               replyInfo.classList.remove('hidden');
               messageInput.focus();
           }
+
           const reactBtn = e.target.closest('.react-btn');
           if (reactBtn) {
               const messageId = reactBtn.closest('.message-bubble').dataset.messageId;
@@ -210,21 +205,27 @@
               }
           }
       });
+
       document.getElementById('cancel-reply').addEventListener('click', cancelReply);
+      
       function cancelReply() {
           currentParentId = null;
           replyInfo.classList.add('hidden');
       }
+      
+      // --- Helper function to append new messages ---
       function appendMessage(msg) {
           const div = document.createElement('div');
           div.className = `message-bubble w-full flex ${msg.user_id == currentUserId ? 'justify-end' : 'justify-start'}`;
           div.dataset.messageId = msg.id;
+          
           let replyHtml = '';
           if (msg.parent_message_id) {
               replyHtml = `<div class="border-l-2 border-blue-300 pl-2 text-xs opacity-80 mb-1 mt-1">
                              <strong>${msg.parent_username}</strong>: ${msg.parent_message.substring(0, 50)}...
                            </div>`;
           }
+
           div.innerHTML = `
               <div class="max-w-xl">
                   <div class="rounded-xl px-4 py-2 ${msg.user_id == currentUserId ? 'bg-blue-600 text-white' : 'bg-gray-700 bg-opacity-50 text-gray-200'}">
@@ -239,6 +240,7 @@
                       <button class="react-btn hover:text-yellow-400"><i class="fas fa-smile"></i></button>
                   </div>
               </div>`;
+              
           messageContainer.appendChild(div);
           messageContainer.scrollTop = messageContainer.scrollHeight;
       }
