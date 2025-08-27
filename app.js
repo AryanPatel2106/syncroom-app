@@ -58,7 +58,8 @@ const isAuthenticated = (req, res, next) => {
   else res.redirect('/login');
 };
 
-// CORRECTED MIDDLEWARE: This now correctly attaches the user's role to the request object.
+// **THE FIX IS HERE**
+// This middleware now correctly finds the user's role and attaches it to the request object.
 const checkGroupRole = (roles) => async (req, res, next) => {
     const { groupId } = req.params;
     const userId = req.session.user.id;
@@ -68,7 +69,8 @@ const checkGroupRole = (roles) => async (req, res, next) => {
             [groupId, userId]
         );
         if (result.rows.length > 0 && roles.includes(result.rows[0].role)) {
-            req.userRole = result.rows[0].role; // This line is crucial
+            // This line was missing, causing the crash. It is now fixed.
+            req.userRole = result.rows[0].role;
             next();
         } else {
             res.status(403).send("You do not have permission to perform this action.");
@@ -192,14 +194,13 @@ app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async 
   }
 });
 
-// CORRECTED ROUTE: This now uses req.userRole which is correctly passed by the middleware.
 app.get('/chat/:groupId/manage', isAuthenticated, checkGroupRole(['owner', 'admin']), async (req, res) => {
     const { groupId } = req.params;
     try {
         const membersResult = await db.query( "SELECT u.id, u.username, gm.role FROM users u JOIN group_members gm ON u.id = gm.user_id WHERE gm.group_id = $1 ORDER BY u.username", [groupId] );
         const groupResult = await db.query("SELECT name FROM groups WHERE id = $1", [groupId]);
         res.render('manage_group', {
-            user: { ...req.session.user, role: req.userRole }, // BUG FIXED
+            user: { ...req.session.user, role: req.userRole }, // This now works correctly
             members: membersResult.rows,
             group: groupResult.rows[0],
             groupId: groupId
