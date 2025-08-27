@@ -8,6 +8,7 @@ const socketIO = require('socket.io');
 const multer = require('multer');
 const bcrypt = require('bcrypt');
 const { Pool } = require('pg');
+const connectPgSimple = require('connect-pg-simple');
 
 const app = express();
 const server = http.createServer(app);
@@ -37,87 +38,95 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 
+const sessionStore = new (connectPgSimple(session))({
+    pool: db,
+    createTableIfMissing: true,
+});
+
 app.use(session({
-  secret: process.env.SESSION_SECRET || "fallback_secret",
+  store: sessionStore,
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  // ✅ THE KEY FIX: 'secure: false' allows the session cookie to be saved on http://localhost
-  cookie: { secure: false }
+  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
 }));
 
-// Auth middleware
 const isAuthenticated = (req, res, next) => {
-  if (req.session.user) return next();
-  res.redirect('/login');
+  if (req.session.user) next();
+  else res.redirect('/login');
+};
+
+// Middleware to check user's role in a group
+const checkGroupRole = (roles) => async (req, res, next) => {
+    const { groupId } = req.params;
+    const userId = req.session.user.id;
+    try {
+        const result = await db.query(
+            "SELECT role FROM group_members WHERE group_id = $1 AND user_id = $2",
+            [groupId, userId]
+        );
+        if (result.rows.length > 0 && roles.includes(result.rows[0].role)) {
+            next();
+        } else {
+            res.status(403).send("You do not have permission to perform this action.");
+        }
+    } catch (err) {
+        console.error("Role check error:", err);
+        res.status(500).send("Server error");
+    }
 };
 
 // ----------------- ROUTES -----------------
-app.get('/', (req, res) => {
-  res.render('home', { user: req.session.user });
-});
+app.get('/', (req, res) => res.render('home', { user: req.session.user }));
+app.get('/login', (req, res) => res.render('login', { user: req.session.user }));
+app.get('/register', (req, res) => res.render('register', { user: req.session.user }));
 
-// Pass error query parameter to the login view
-app.get('/login', (req, res) => {
-  res.render('login', { error: req.query.error });
-});
-
-app.get('/register', (req, res) => res.render('register'));
-
+// Register
 app.post('/register', async (req, res) => {
   const { username, email, password } = req.body;
   try {
-    const existing = await db.query("SELECT * FROM users WHERE username=$1 OR email=$2", [username, email]);
-    if (existing.rows.length > 0) {
-        return res.status(400).send("Username or email already taken");
-    }
-
     const hash = await bcrypt.hash(password, saltRounds);
-    await db.query(
-      "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)",
+    const result = await db.query(
+      "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id, username",
       [username, email, hash]
     );
-
-    res.redirect('/login');
+    req.session.user = result.rows[0];
+    res.redirect('/groups');
   } catch (err) {
-    console.error("Register error:", err);
-    res.status(500).send("Server error");
+    console.error("Registration error:", err);
+    res.redirect('/register');
   }
 });
 
-// Redirect with an error on failure instead of sending text
+// Login
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
   try {
-    const result = await db.query("SELECT * FROM users WHERE username=$1", [username]);
-    // If user not found, redirect back to login with an error message
-    if (result.rows.length === 0) {
-        return res.redirect('/login?error=Invalid credentials');
+    const result = await db.query("SELECT * FROM users WHERE username = $1", [username]);
+    if (result.rows.length > 0) {
+      const user = result.rows[0];
+      if (await bcrypt.compare(password, user.password)) {
+        req.session.user = { id: user.id, username: user.username };
+        res.redirect('/groups');
+      } else {
+        res.send("Incorrect password");
+      }
+    } else {
+      res.send("User not found");
     }
-
-    const user = result.rows[0];
-    const match = await bcrypt.compare(password, user.password);
-    // If password doesn't match, redirect back to login with an error message
-    if (!match) {
-        return res.redirect('/login?error=Invalid credentials');
-    }
-
-    // On success, save user to session and redirect
-    req.session.user = user;
-    res.redirect('/groups');
   } catch (err) {
     console.error("Login error:", err);
-    res.status(500).send("Server error");
+    res.redirect('/login');
   }
 });
 
-// Groups page
+// Groups dashboard - MODIFIED to include user role
 app.get('/groups', isAuthenticated, async (req, res) => {
   try {
-    const result = await db.query(`
-      SELECT g.* FROM groups g
-      JOIN group_members gm ON g.id = gm.group_id
-      WHERE gm.user_id = $1
-    `, [req.session.user.id]);
+    const result = await db.query(
+      "SELECT g.id, g.name, gm.role FROM groups g JOIN group_members gm ON g.id = gm.group_id WHERE gm.user_id = $1",
+      [req.session.user.id]
+    );
     res.render('groups', { user: req.session.user, groups: result.rows });
   } catch (err) {
     console.error("Groups fetch error:", err);
@@ -127,70 +136,83 @@ app.get('/groups', isAuthenticated, async (req, res) => {
 
 // Create group
 app.post('/groups/create', isAuthenticated, async (req, res) => {
-  const { group_name, group_key } = req.body;
-  try {
-    const result = await db.query(
-      "INSERT INTO groups (name, group_key) VALUES ($1, $2) RETURNING id",
-      [group_name, group_key]
-    );
-    const groupId = result.rows[0].id;
-    await db.query("INSERT INTO group_members (user_id, group_id) VALUES ($1, $2)",
-      [req.session.user.id, groupId]);
-    res.redirect('/groups');
-  } catch (err) {
-    console.error("Group create error:", err);
-    res.status(500).send("Server error");
-  }
+    const { name, key } = req.body;
+    const userId = req.session.user.id;
+    try {
+        const hash = await bcrypt.hash(key, saltRounds);
+        const groupResult = await db.query(
+            "INSERT INTO groups (name, key) VALUES ($1, $2) RETURNING id",
+            [name, hash]
+        );
+        const groupId = groupResult.rows[0].id;
+        await db.query(
+            "INSERT INTO group_members (group_id, user_id, role) VALUES ($1, $2, 'owner')",
+            [groupId, userId]
+        );
+        res.redirect('/groups');
+    } catch (err) {
+        console.error("Group creation error:", err);
+        res.status(500).send("Server error");
+    }
 });
 
 // Join group
 app.post('/groups/join', isAuthenticated, async (req, res) => {
-  const { group_name, group_key } = req.body;
+  const { name, key } = req.body;
   try {
-    const result = await db.query(
-      "SELECT * FROM groups WHERE name=$1 AND group_key=$2",
-      [group_name, group_key]
-    );
-    if (result.rows.length === 0) return res.send("Group not found or invalid key");
-
-    const groupId = result.rows[0].id;
-    await db.query(
-      "INSERT INTO group_members (user_id, group_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-      [req.session.user.id, groupId]
-    );
-    res.redirect('/groups');
+    const result = await db.query("SELECT * FROM groups WHERE name = $1", [name]);
+    if (result.rows.length > 0) {
+      const group = result.rows[0];
+      if (await bcrypt.compare(key, group.key)) {
+        await db.query(
+          "INSERT INTO group_members (group_id, user_id, role) VALUES ($1, $2, 'member') ON CONFLICT (group_id, user_id) DO NOTHING",
+          [group.id, req.session.user.id]
+        );
+        res.redirect('/groups');
+      } else {
+        res.send("Incorrect key");
+      }
+    } else {
+      res.send("Group not found");
+    }
   } catch (err) {
     console.error("Group join error:", err);
     res.status(500).send("Server error");
   }
 });
 
-// Chat
+// Chat room
 app.get('/chat/:groupId', isAuthenticated, async (req, res) => {
   const { groupId } = req.params;
   try {
-    const check = await db.query(
-      "SELECT * FROM group_members WHERE group_id=$1 AND user_id=$2",
+    const group = await db.query("SELECT * FROM groups WHERE id = $1", [groupId]);
+    const messages = await db.query(
+        `SELECT m.*, u.username, p.content as parent_content, p_u.username as parent_username
+         FROM messages m
+         JOIN users u ON m.user_id = u.id
+         LEFT JOIN messages p ON m.parent_message_id = p.id
+         LEFT JOIN users p_u ON p.user_id = p_u.id
+         WHERE m.group_id = $1 ORDER BY m.created_at ASC`,
+        [groupId]
+    );
+    const reactions = await db.query(
+        `SELECT r.* FROM reactions r JOIN messages m ON r.message_id = m.id WHERE m.group_id = $1`,
+        [groupId]
+    );
+    const files = await db.query("SELECT * FROM files WHERE group_id = $1", [groupId]);
+    const roleResult = await db.query(
+      "SELECT role FROM group_members WHERE group_id = $1 AND user_id = $2",
       [groupId, req.session.user.id]
     );
-    if (check.rows.length === 0) return res.status(403).send("Not a member");
-
-    const group = await db.query("SELECT * FROM groups WHERE id=$1", [groupId]);
-    if (group.rows.length === 0) return res.status(404).send("Group not found");
-
-    const messages = await db.query(`
-      SELECT m.*, u.username FROM messages m
-      JOIN users u ON m.user_id=u.id
-      WHERE m.group_id=$1 ORDER BY m.created_at ASC
-    `, [groupId]);
-
-    const files = await db.query("SELECT * FROM files WHERE group_id=$1", [groupId]);
+    const userRole = roleResult.rows.length > 0 ? roleResult.rows[0].role : 'member';
 
     res.render('chat', {
       user: req.session.user,
       group: group.rows[0],
       messages: messages.rows,
-      files: files.rows
+      files: files.rows,
+      reactions: reactions.rows,
+      userRole: userRole
     });
   } catch (err) {
     console.error("Chat fetch error:", err);
@@ -198,17 +220,19 @@ app.get('/chat/:groupId', isAuthenticated, async (req, res) => {
   }
 });
 
-// File upload
+// File upload with MIME type
 app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async (req, res) => {
   const { groupId } = req.params;
   const filename = req.file.originalname;
   const filepath = '/uploads/' + req.file.filename;
+  const mimetype = req.file.mimetype;
 
   try {
-    await db.query(
-      "INSERT INTO files (group_id, user_id, filename, filepath) VALUES ($1, $2, $3, $4)",
-      [groupId, req.session.user.id, filename, filepath]
+    const result = await db.query(
+      "INSERT INTO files (group_id, user_id, filename, filepath, mimetype) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [groupId, req.session.user.id, filename, filepath, mimetype]
     );
+     io.to(`group-${groupId}`).emit('newFile', result.rows[0]);
     res.redirect('/chat/' + groupId);
   } catch (err) {
     console.error("File upload error:", err);
@@ -216,25 +240,137 @@ app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async 
   }
 });
 
+// Group management page
+app.get('/chat/:groupId/manage', isAuthenticated, checkGroupRole(['owner', 'admin']), async (req, res) => {
+    const { groupId } = req.params;
+    try {
+        const members = await db.query(
+            "SELECT u.id, u.username, gm.role FROM users u JOIN group_members gm ON u.id = gm.user_id WHERE gm.group_id = $1 ORDER BY u.username",
+            [groupId]
+        );
+        const group = await db.query("SELECT name FROM groups WHERE id = $1", [groupId]);
+        res.render('manage_group', {
+            user: { ...req.session.user, role: req.userRole }, // Pass user with role
+            members: members.rows,
+            group: group.rows[0],
+            groupId: groupId
+        });
+    } catch (err) {
+        console.error("Manage group error:", err);
+        res.status(500).send("Server error");
+    }
+});
+
+// Kick user from group
+app.post('/chat/:groupId/manage/kick', isAuthenticated, checkGroupRole(['owner', 'admin']), async (req, res) => {
+    const { groupId } = req.params;
+    const { userIdToKick } = req.body;
+    try {
+        await db.query("DELETE FROM group_members WHERE group_id = $1 AND user_id = $2 AND role <> 'owner'", [groupId, userIdToKick]);
+        res.redirect(`/chat/${groupId}/manage`);
+    } catch (err) {
+        console.error("Kick user error:", err);
+        res.status(500).send("Server error");
+    }
+});
+
+// Promote user to admin
+app.post('/chat/:groupId/manage/promote', isAuthenticated, checkGroupRole(['owner']), async (req, res) => {
+    const { groupId } = req.params;
+    const { userIdToPromote } = req.body;
+    try {
+        await db.query(
+            "UPDATE group_members SET role = 'admin' WHERE group_id = $1 AND user_id = $2 AND role = 'member'",
+            [groupId, userIdToPromote]
+        );
+        res.redirect(`/chat/${groupId}/manage`);
+    } catch (err) {
+        console.error("Promote user error:", err);
+        res.status(500).send("Server error");
+    }
+});
+
+
 // Logout
 app.get('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/'));
 });
 
 // ----------------- SOCKET.IO -----------------
+const activeUsers = {};
+
 io.on('connection', socket => {
-  socket.on('joinRoom', room => socket.join(room));
-  socket.on('chatMessage', async ({ room, userId, username, message }) => {
+  const userId = socket.handshake.query.userId;
+  const username = socket.handshake.query.username;
+
+  socket.on('joinRoom', room => {
+    socket.join(room);
+    if (!activeUsers[room]) activeUsers[room] = {};
+    activeUsers[room][userId] = username;
+    io.to(room).emit('updateUserList', Object.values(activeUsers[room]));
+  });
+
+  socket.on('chatMessage', async ({ room, userId, username, message, parentId }) => {
     try {
-      await db.query(
-        "INSERT INTO messages (group_id, user_id, message) VALUES ($1, $2, $3)",
-        [room, userId, message]
+      const result = await db.query(
+        "INSERT INTO messages (group_id, user_id, content, parent_message_id) VALUES ($1, $2, $3, $4) RETURNING id, created_at",
+        [room.replace('group-', ''), userId, message, parentId]
       );
-      io.to(room).emit('chatMessage', { user: username, message });
+      
+      let parentData = { parent_content: null, parent_username: null };
+      if (parentId) {
+          const parentResult = await db.query(`
+              SELECT m.content, u.username FROM messages m JOIN users u ON m.user_id = u.id WHERE m.id = $1
+          `, [parentId]);
+          if(parentResult.rows.length > 0) {
+              parentData.parent_content = parentResult.rows[0].content;
+              parentData.parent_username = parentResult.rows[0].username;
+          }
+      }
+
+      const newMsg = {
+          id: result.rows[0].id,
+          content: message,
+          user_id: userId,
+          username,
+          created_at: result.rows[0].created_at,
+          parent_message_id: parentId,
+          ...parentData
+      };
+      io.to(room).emit('chatMessage', newMsg);
     } catch (err) {
-      console.error("Socket insert error:", err);
+      console.error("Socket chat message error:", err);
+    }
+  });
+
+  socket.on('typing', ({ room, username }) => {
+    socket.to(room).emit('typing', { username });
+  });
+
+  socket.on('addReaction', async ({ messageId, userId, emoji }) => {
+    try {
+        await db.query(
+            "INSERT INTO reactions (message_id, user_id, emoji) VALUES ($1, $2, $3) ON CONFLICT (message_id, user_id, emoji) DO NOTHING",
+            [messageId, userId, emoji]
+        );
+        const groupResult = await db.query("SELECT group_id FROM messages WHERE id = $1", [messageId]);
+        if (groupResult.rows.length > 0) {
+            const room = `group-${groupResult.rows[0].group_id}`;
+            io.to(room).emit('reactionAdded', { messageId, userId, emoji });
+        }
+    } catch (err) {
+        console.error("Add reaction error:", err);
+    }
+  });
+
+  socket.on('disconnect', () => {
+    for (const room in activeUsers) {
+      if (activeUsers[room] && activeUsers[room][userId]) {
+        delete activeUsers[room][userId];
+        io.to(room).emit('updateUserList', Object.values(activeUsers[room]));
+      }
     }
   });
 });
 
-server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

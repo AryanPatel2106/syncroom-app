@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage <%= group.name %></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 p-8">
+    <div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+        <h1 class="text-2xl font-bold mb-4">Manage Group: <%= group.name %></h1>
+        <a href="/chat/<%= groupId %>" class="text-blue-500 hover:underline mb-6 block">&larr; Back to Chat</a>
+
+        <h2 class="text-xl font-semibold mb-2">Members</h2>
+        <div class="space-y-4">
+            <% members.forEach(member => { %>
+                <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
+                    <div>
+                        <p class="font-bold"><%= member.username %></p>
+                        <p class="text-sm text-gray-500 capitalize"><%= member.role %></p>
+                    </div>
+                    <div class="flex gap-2">
+                        <% if (user.role === 'owner' && member.role === 'member') { %>
+                            <form action="/chat/<%= groupId %>/manage/promote" method="POST">
+                                <input type="hidden" name="userIdToPromote" value="<%= member.id %>">
+                                <button type="submit" class="bg-green-500 text-white px-3 py-1 rounded-md text-sm hover:bg-green-600">Promote to Admin</button>
+                            </form>
+                        <% } %>
+
+                        <% if ((user.role === 'owner' || user.role === 'admin') && member.role !== 'owner' && member.id !== user.id) { %>
+                            <form action="/chat/<%= groupId %>/manage/kick" method="POST">
+                                <input type="hidden" name="userIdToKick" value="<%= member.id %>">
+                                <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600">Kick User</button>
+                            </form>
+                        <% } %>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+</body>
+</html>

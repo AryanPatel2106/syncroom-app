@@ -40,94 +40,81 @@
       }
   </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
-  
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+
   <div id="particles-js"></div>
 
-  <div class="content-wrapper flex flex-col lg:flex-row min-h-screen">
-    <!-- Left fixed panel -->
-    <div class="w-full lg:w-96 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-6 shadow-lg flex flex-col space-y-6 lg:space-y-4">
-      <div class="flex justify-between items-center">
-        <h1 class="text-xl font-bold text-gray-800 dark:text-gray-200">Welcome, <%= user.username %>!</h1>
-        <button id="theme-toggle" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-transform transform hover:scale-110 p-2 rounded-full">
-            <i class="fas fa-moon" id="theme-toggle-dark-icon"></i>
-            <i class="fas fa-sun" id="theme-toggle-light-icon" style="display: none;"></i>
+  <div class="content-wrapper container mx-auto p-4 md:p-8">
+
+    <header class="flex justify-between items-center mb-8 animate-on-load" style="animation-delay: 0.1s;">
+      <h1 class="text-3xl font-bold">Welcome, <%= user.username %>!</h1>
+      <div>
+        <a href="/logout" class="mr-4 text-sm text-gray-600 dark:text-gray-400 hover:underline">Logout</a>
+        <button id="theme-toggle" class="px-3 py-2 text-sm rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600">
+          <i id="theme-toggle-dark-icon" class="fas fa-moon"></i>
+          <i id="theme-toggle-light-icon" class="fas fa-sun" style="display: none;"></i>
         </button>
       </div>
+    </header>
 
-      <form action="/groups/create" method="POST" class="bg-gray-50/80 dark:bg-gray-700/80 p-4 rounded-lg shadow-inner">
-        <h2 class="font-semibold mb-3 text-gray-800 dark:text-gray-200">Create Group</h2>
-        <input name="group_name" placeholder="Group name" class="border dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-3 py-2 mb-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-        <input name="group_key" placeholder="Group key" class="border dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-3 py-2 mb-3 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-        <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md w-full transition-transform transform hover:scale-105">Create</button>
-      </form>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg animate-on-load" style="animation-delay: 0.2s;">
+        <h2 class="text-2xl font-semibold mb-4">Create a New Group</h2>
+        <form action="/groups/create" method="POST" class="space-y-4">
+          <input type="text" name="name" placeholder="Group Name" class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+          <input type="password" name="key" placeholder="Group Key (Password)" class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+          <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors">Create Group</button>
+        </form>
+      </div>
 
-      <form action="/groups/join" method="POST" class="bg-gray-50/80 dark:bg-gray-700/80 p-4 rounded-lg shadow-inner">
-        <h2 class="font-semibold mb-3 text-gray-800 dark:text-gray-200">Join Group</h2>
-        <input name="group_name" placeholder="Group name" class="border dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-3 py-2 mb-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" required>
-        <input name="group_key" placeholder="Group key" class="border dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-3 py-2 mb-3 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" required>
-        <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md w-full transition-transform transform hover:scale-105">Join</button>
-      </form>
-
-      <div class="text-center mt-auto pt-4">
-        <a href="/logout" class="text-red-500 dark:text-red-400 hover:underline">Logout</a>
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg animate-on-load" style="animation-delay: 0.3s;">
+        <h2 class="text-2xl font-semibold mb-4">Join an Existing Group</h2>
+        <form action="/groups/join" method="POST" class="space-y-4">
+          <input type="text" name="name" placeholder="Group Name" class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500" required>
+          <input type="password" name="key" placeholder="Group Key (Password)" class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500" required>
+          <button type="submit" class="w-full bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition-colors">Join Group</button>
+        </form>
       </div>
     </div>
 
-    <!-- Right scrollable panel -->
-    <div class="flex-1 overflow-y-auto p-6">
-      <div class="mb-6">
-        <h2 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Your Groups:</h2>
-        <div class="relative mt-4 w-full max-w-lg">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <i class="fas fa-search text-gray-500 dark:text-gray-400"></i>
-          </div>
-          <input id="searchInput" type="text" placeholder="Search groups..."
-            class="pl-10 pr-4 py-2 w-full rounded-full border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg animate-on-load" style="animation-delay: 0.4s;">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-semibold">Your Groups</h2>
+        <input type="text" id="searchInput" placeholder="Search groups..." class="p-2 border rounded dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
       </div>
-
-      <ul id="groupsList" class="flex flex-col space-y-4">
-        <% groups.forEach((group, index) => { %>
-          <li class="w-full max-w-2xl animate-on-load" style="animation-delay: <%= (index * 100) + 100 %>ms">
-            <a href="/chat/<%= group.id %>" class="block">
-                <div class="flex items-center justify-between bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 px-5 py-4">
-                  <div class="flex items-center space-x-4">
-                    <div class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/50">
-                      <span class="font-semibold text-xl text-blue-700 dark:text-blue-300">
-                        <%= group.name.charAt(0).toUpperCase() %>
-                      </span>
-                    </div>
-                    <span class="text-lg font-medium text-gray-800 dark:text-gray-200 group-name">
-                      <%= group.name %>
-                    </span>
-                  </div>
-                  <i class="fas fa-chevron-right text-gray-400 dark:text-gray-500"></i>
-                </div>
-            </a>
-          </li>
-        <% }) %>
+      <ul id="groupsList" class="space-y-3">
+        <% if (groups.length === 0) { %>
+          <p class="text-gray-500 dark:text-gray-400">You haven't joined or created any groups yet.</p>
+        <% } else { %>
+          <% groups.forEach(group => { %>
+            <li class="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-sm hover:shadow-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-300">
+              <div class="flex items-center gap-3">
+                <h3 class="font-bold group-name text-lg"><%= group.name %></h3>
+                <span class="text-xs capitalize bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full font-medium"><%= group.role %></span>
+              </div>
+              <a href="/chat/<%= group.id %>" class="bg-indigo-500 text-white px-4 py-2 rounded-md hover:bg-indigo-600 transition-colors">Enter Chat</a>
+            </li>
+          <% }) %>
+        <% } %>
       </ul>
     </div>
-  </div>
-  
-  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-  <script>
-    // --- Particle.js Configuration ---
-    const particleConfig = (isDark) => {
-        const particleColor = isDark ? "#ffffff" : "#374151";
-        const lineColor = isDark ? "#ffffff" : "#374151";
-        return { "particles":{ "number":{ "value":80, "density":{ "enable":true, "value_area":800 } }, "color":{ "value":particleColor }, "shape":{ "type":"circle" }, "opacity":{ "value":0.5, "random":false }, "size":{ "value":3, "random":true }, "line_linked":{ "enable":true, "distance":150, "color":lineColor, "opacity":0.4, "width":1 }, "move":{ "enable":true, "speed":2, "direction":"none", "random":false, "straight":false, "out_mode":"out", "bounce":false } }, "interactivity":{ "detect_on":"canvas", "events":{ "onhover":{ "enable":true, "mode":"grab" }, "onclick":{ "enable":true, "mode":"push" }, "resize":true }, "modes":{ "grab":{ "distance":140, "line_linked":{ "opacity":1 } }, "push":{ "particles_nb":4 } } }, "retina_detect":true };
-    };
-    const loadParticles = (isDark) => {
-        particlesJS('particles-js', particleConfig(isDark));
-    };
 
-    // --- Theme Management ---
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/tsparticles@1.37.5/dist/tsparticles.min.js"></script>
+  <script>
+    // --- Particle and Theme Logic (Unchanged) ---
     const themeToggleBtn = document.getElementById('theme-toggle');
     const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
     const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
 
+    const particleConfig = (isDark) => {
+      const color = isDark ? "#ffffff" : "#000000";
+      return { particles: { number: { value: 80, density: { enable: true, value_area: 800 } }, color: { value: color }, shape: { type: "circle" }, opacity: { value: 0.5, random: false }, size: { value: 3, random: true }, line_linked: { enable: true, distance: 150, color: color, opacity: 0.4, width: 1 }, move: { enable: true, speed: 2, direction: "none", random: false, straight: false, out_mode: "out", bounce: false } }, interactivity: { detect_on: "canvas", events: { onhover: { enable: true, mode: "grab" }, onclick: { enable: true, mode: "push" }, resize: true }, modes: { grab: { distance: 140, line_linked: { opacity: 1 } }, push: { particles_nb: 4 } } }, retina_detect: true };
+    };
+    const loadParticles = (isDark) => {
+        particlesJS('particles-js', particleConfig(isDark));
+    };
     const setTheme = (isDark) => {
       if (isDark) {
         document.documentElement.classList.add('dark');
@@ -153,7 +140,7 @@
       setTheme(!isCurrentlyDark);
     });
 
-    // --- Search Functionality ---
+    // --- Search Functionality (Unchanged) ---
     const searchInput = document.getElementById('searchInput');
     const groupsList = document.getElementById('groupsList');
     searchInput.addEventListener('keyup', () => {
