@@ -17,63 +17,20 @@
     ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
 
-    /* --- NEW: CSS FOR RESPONSIVE LAYOUT --- */
-    .chat-container {
-        display: flex;
-        height: 100%;
-    }
-    .sidebar {
-        width: 288px; /* 18rem or w-72 */
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
-        flex-shrink: 0;
-    }
-    .main-chat {
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-    }
-    .mobile-header, .sidebar-close-btn, .sidebar-backdrop {
-        display: none; /* Hidden by default */
-    }
+    .chat-container { display: flex; height: 100%; }
+    .sidebar { width: 288px; border-right: 1px solid rgba(255, 255, 255, 0.1); padding: 1rem; display: flex; flex-direction: column; flex-shrink: 0; }
+    .main-chat { flex-grow: 1; display: flex; flex-direction: column; }
+    .mobile-header, .sidebar-close-btn, .sidebar-backdrop { display: none; }
 
-    /* Media Query for mobile devices (screens smaller than 768px) */
     @media (max-width: 767px) {
-        .sidebar {
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            z-index: 40;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease-in-out;
-            background: #111827; /* bg-gray-900 */
-        }
-        .sidebar.is-open {
-            transform: translateX(0);
-        }
-        .sidebar-backdrop {
-            position: fixed;
-            inset: 0;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 30;
-        }
-        .sidebar-backdrop.is-open {
-            display: block;
-        }
-        .main-chat {
-            width: 100%;
-        }
-        .mobile-header {
-            display: flex;
-        }
-        .sidebar-close-btn {
-            display: block;
-        }
+        .sidebar { position: absolute; left: 0; top: 0; bottom: 0; z-index: 40; transform: translateX(-100%); transition: transform 0.3s ease-in-out; background: #111827; }
+        .sidebar.is-open { transform: translateX(0); }
+        .sidebar-backdrop { position: fixed; inset: 0; background-color: rgba(0,0,0,0.5); z-index: 30; }
+        .sidebar-backdrop.is-open { display: block; }
+        .main-chat { width: 100%; }
+        .mobile-header { display: flex; }
+        .sidebar-close-btn { display: block; }
     }
-    /* --- END OF NEW CSS --- */
   </style>
 </head>
 
@@ -102,9 +59,23 @@
             <% files.forEach(file => { %>
                 <div class="file-item p-2 rounded-lg bg-black bg-opacity-20">
                      <% if (file.mimetype && file.mimetype.startsWith('image/')) { %>
-                        <img src="<%= file.filepath %>" alt="<%= file.filename %>" class="w-full h-auto rounded-md mb-2">
-                    <% } %>
-                    <a href="<%= file.filepath %>" target="_blank" class="text-blue-400 hover:underline text-sm break-all"><%= file.filename %></a>
+                        <img 
+                          src="<%= file.filepath %>" 
+                          alt="<%= file.filename %>" 
+                          class="w-full h-auto rounded-md mb-2">
+                     <% } %>
+                     <a 
+                       href="<%= file.filepath %>" 
+                       target="_blank" 
+                       class="text-blue-400 hover:underline text-sm break-all">
+                       <%= file.filename %>
+                     </a>
+                     <a 
+                       href="<%= file.filepath %>" 
+                       download 
+                       class="block text-green-400 hover:text-green-300 text-sm mt-1">
+                       <i class="fas fa-download"></i> Download
+                     </a>
                 </div>
             <% }) %>
           </div>
@@ -176,26 +147,15 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       VANTA.WAVES({ el: "#vanta-bg", mouseControls: true, touchControls: true, gyroControls: false, minHeight: 200.00, minWidth: 200.00, scale: 1.00, scaleMobile: 1.00, color: 0x1a2b3c, shininess: 30.00, waveHeight: 15.00, waveSpeed: 0.8, zoom: 0.75 });
-      
-      // --- NEW: JAVASCRIPT FOR RESPONSIVE SIDEBAR ---
+
       const sidebar = document.getElementById('chat-sidebar');
       const openBtn = document.getElementById('sidebar-toggle-btn');
       const closeBtn = document.getElementById('close-sidebar-btn');
       const backdrop = document.getElementById('sidebar-backdrop');
 
-      openBtn.addEventListener('click', () => {
-        sidebar.classList.add('is-open');
-        backdrop.classList.add('is-open');
-      });
-      closeBtn.addEventListener('click', () => {
-        sidebar.classList.remove('is-open');
-        backdrop.classList.remove('is-open');
-      });
-      backdrop.addEventListener('click', () => {
-        sidebar.classList.remove('is-open');
-        backdrop.classList.remove('is-open');
-      });
-      // --- END OF NEW JAVASCRIPT ---
+      openBtn.addEventListener('click', () => { sidebar.classList.add('is-open'); backdrop.classList.add('is-open'); });
+      closeBtn.addEventListener('click', () => { sidebar.classList.remove('is-open'); backdrop.classList.remove('is-open'); });
+      backdrop.addEventListener('click', () => { sidebar.classList.remove('is-open'); backdrop.classList.remove('is-open'); });
 
       const socket = io({ query: { userId: '<%= user.id %>', username: '<%= user.username %>' } });
       const room = 'group-<%= group.id %>';
@@ -207,19 +167,42 @@
       const typingIndicator = document.getElementById('typing-indicator');
       const userList = document.getElementById('user-list');
       const fileList = document.getElementById('file-list');
+
       socket.emit('joinRoom', room);
+
       socket.on('updateUserList', (users) => { userList.innerHTML = users.map(user => `<li><i class="fas fa-circle text-green-500 text-xs mr-2"></i>${user}</li>`).join(''); });
       socket.on('chatMessage', (msg) => { appendMessage(msg); });
+
       socket.on('newFile', (file) => {
           const fileDiv = document.createElement('div');
           fileDiv.className = 'file-item p-2 rounded-lg bg-black bg-opacity-20';
-          let contentHtml = `<a href="${file.filepath}" target="_blank" class="text-blue-400 hover:underline text-sm break-all">${file.filename}</a>`;
+
+          let contentHtml = `
+              <a 
+                href="${file.filepath}" 
+                target="_blank" 
+                class="text-blue-400 hover:underline text-sm break-all">
+                ${file.filename}
+              </a>
+              <a 
+                href="${file.filepath}" 
+                download 
+                class="block text-green-400 hover:text-green-300 text-sm mt-1">
+                <i class="fas fa-download"></i> Download
+              </a>
+          `;
+
           if (file.mimetype && file.mimetype.startsWith('image/')) {
-              contentHtml = `<img src="${file.filepath}" alt="${file.filename}" class="w-full h-auto rounded-md mb-2">` + contentHtml;
+              contentHtml = `
+                  <img src="${file.filepath}" alt="${file.filename}" class="w-full h-auto rounded-md mb-2">
+                  ${contentHtml}
+              `;
           }
+
           fileDiv.innerHTML = contentHtml;
           fileList.appendChild(fileDiv);
       });
+
       socket.on('reactionAdded', ({ messageId, emoji }) => {
           const messageBubble = document.querySelector(`.message-bubble[data-message-id='${messageId}']`);
           if (messageBubble) {
@@ -230,8 +213,10 @@
               reactionsContainer.appendChild(reactionEl);
           }
       });
+
       messageContainer.scrollTop = messageContainer.scrollHeight;
       let currentParentId = null;
+
       messageForm.addEventListener('submit', (e) => {
           e.preventDefault();
           const message = messageInput.value.trim();
@@ -241,6 +226,7 @@
               cancelReply();
           }
       });
+
       let typingTimeout;
       messageInput.addEventListener('input', () => {
           socket.emit('typing', { room, username: currentUsername });
@@ -251,9 +237,11 @@
           clearTimeout(typingTimeout);
           typingTimeout = setTimeout(() => typingIndicator.textContent = '', 3000);
       });
+
       const replyInfo = document.getElementById('reply-info');
       const replyUsernameEl = document.getElementById('reply-username');
       const replyMessageEl = document.getElementById('reply-message');
+
       messageContainer.addEventListener('click', (e) => {
           const replyBtn = e.target.closest('.reply-btn');
           if (replyBtn) {
@@ -272,11 +260,10 @@
               }
           }
       });
+
       document.getElementById('cancel-reply').addEventListener('click', cancelReply);
-      function cancelReply() {
-          currentParentId = null;
-          replyInfo.classList.add('hidden');
-      }
+      function cancelReply() { currentParentId = null; replyInfo.classList.add('hidden'); }
+
       function appendMessage(msg) {
           const div = document.createElement('div');
           div.className = `message-bubble w-full flex ${msg.user_id == currentUserId ? 'justify-end' : 'justify-start'}`;
