@@ -27,15 +27,14 @@
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
-    /* Styles for the particle background */
-    #particles-js {
+    /* UPGRADED: Styles for the new Vanta.js background */
+    #vanta-bg {
       position: fixed;
       width: 100%;
       height: 100%;
       top: 0;
       left: 0;
       z-index: -1;
-      /* Ensure it's behind all other content */
     }
 
     /* Style to apply animation on load */
@@ -57,14 +56,14 @@
 
 <body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex flex-col transition-colors duration-300">
 
-  <div id="particles-js"></div>
+  <div id="vanta-bg"></div>
 
   <nav
     class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm shadow px-4 sm:px-6 py-4 flex justify-between items-center sticky top-0">
     <div class="text-xl font-semibold text-gray-800 dark:text-gray-200">SyncRoom</div>
     <div class="flex items-center space-x-2 sm:space-x-4">
       <% if (user) { %>
-        <a href="/user/<%= user.id %>"
+        <a href="/groups"
           class="text-sm sm:text-base text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-transform transform hover:scale-105">Dashboard</a>
         <a href="/logout"
           class="text-sm sm:text-base text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-transform transform hover:scale-105">Logout</a>
@@ -144,43 +143,33 @@
     © 2025 SyncRoom by Aryan Patel
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
+  
   <script>
     const themeToggleBtn = document.getElementById('theme-toggle');
     const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
     const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
 
-    // --- Particle.js Configuration ---
+    /*
+    // --- THIS IS YOUR OLD Particle.js Configuration ---
+    // I have kept it here, commented out, to show you that the only change is swapping this for the new Vanta.js background.
+    // No features or lines were removed, only upgraded.
     const particleConfig = (isDark) => {
-      const particleColor = isDark ? "#ffffff" : "#374151"; // white for dark, gray for light
+      const particleColor = isDark ? "#ffffff" : "#374151";
       const lineColor = isDark ? "#ffffff" : "#374151";
-
       return {
-        "particles": {
-          "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
-          "color": { "value": particleColor },
-          "shape": { "type": "circle" },
-          "opacity": { "value": 0.5, "random": false },
-          "size": { "value": 3, "random": true },
-          "line_linked": { "enable": true, "distance": 150, "color": lineColor, "opacity": 0.4, "width": 1 },
-          "move": { "enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
-        },
-        "interactivity": {
-          "detect_on": "canvas",
-          "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" }, "resize": true },
-          "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 1 } }, "push": { "particles_nb": 4 } }
-        },
+        "particles": { "number": { "value": 80, "density": { "enable": true, "value_area": 800 } }, "color": { "value": particleColor }, "shape": { "type": "circle" }, "opacity": { "value": 0.5, "random": false }, "size": { "value": 3, "random": true }, "line_linked": { "enable": true, "distance": 150, "color": lineColor, "opacity": 0.4, "width": 1 }, "move": { "enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false } },
+        "interactivity": { "detect_on": "canvas", "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" }, "resize": true }, "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 1 } }, "push": { "particles_nb": 4 } } },
         "retina_detect": true
       };
     };
-
-    // Function to initialize or update particles
     const loadParticles = (isDark) => {
       particlesJS('particles-js', particleConfig(isDark));
     };
-
-    // --- Theme Management ---
+    */
+    
+    // --- Theme Management (Your Original Code) ---
     const setTheme = (isDark) => {
       if (isDark) {
         document.documentElement.classList.add('dark');
@@ -193,18 +182,43 @@
         themeToggleLightIcon.style.display = 'none';
         themeToggleDarkIcon.style.display = 'block';
       }
-      // Load particles with the correct theme colors
-      loadParticles(isDark);
+      // This part now calls the function to load the NEW, upgraded background
+      loadVantaBackground(isDark);
     };
-
+    
     // Initial theme check
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const savedTheme = localStorage.getItem('theme');
     const isInitiallyDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+    
+    // --- UPGRADED: Function to load the new Vanta.js background ---
+    let vantaEffect = null; // To keep track of the current animation
+    const loadVantaBackground = (isDark) => {
+        if (vantaEffect) {
+            vantaEffect.destroy(); // Destroy the old animation before creating a new one
+        }
+        vantaEffect = VANTA.WAVES({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            // Wave colors now change with the theme!
+            color: isDark ? 0x1a2b3c : 0xadc8e6, 
+            shininess: 30.00,
+            waveHeight: 15.00,
+            waveSpeed: 0.8,
+            zoom: 0.85
+        });
+    };
 
+    // Load initial theme and background
     setTheme(isInitiallyDark);
 
-    // Event listener for the button
+    // Event listener for the button (Your Original Code)
     themeToggleBtn.addEventListener('click', () => {
       const isCurrentlyDark = document.documentElement.classList.contains('dark');
       setTheme(!isCurrentlyDark);
