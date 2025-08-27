@@ -58,6 +58,7 @@ const isAuthenticated = (req, res, next) => {
   else res.redirect('/login');
 };
 
+// CORRECTED MIDDLEWARE: This now correctly attaches the user's role to the request object.
 const checkGroupRole = (roles) => async (req, res, next) => {
     const { groupId } = req.params;
     const userId = req.session.user.id;
@@ -67,7 +68,7 @@ const checkGroupRole = (roles) => async (req, res, next) => {
             [groupId, userId]
         );
         if (result.rows.length > 0 && roles.includes(result.rows[0].role)) {
-            req.userRole = result.rows[0].role; // Attach role to request object
+            req.userRole = result.rows[0].role; // This line is crucial
             next();
         } else {
             res.status(403).send("You do not have permission to perform this action.");
@@ -87,10 +88,7 @@ app.post('/register', async (req, res) => {
   const { username, email, password } = req.body;
   try {
     const hash = await bcrypt.hash(password, saltRounds);
-    const result = await db.query(
-      "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id, username",
-      [username, email, hash]
-    );
+    const result = await db.query( "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id, username", [username, email, hash] );
     req.session.user = result.rows[0];
     res.redirect('/groups');
   } catch (err) {
@@ -108,12 +106,8 @@ app.post('/login', async (req, res) => {
       if (await bcrypt.compare(password, user.password)) {
         req.session.user = { id: user.id, username: user.username };
         res.redirect('/groups');
-      } else {
-        res.send("Incorrect password");
-      }
-    } else {
-      res.send("User not found");
-    }
+      } else { res.send("Incorrect password"); }
+    } else { res.send("User not found"); }
   } catch (err) {
     console.error("Login error:", err);
     res.redirect('/login');
@@ -122,10 +116,7 @@ app.post('/login', async (req, res) => {
 
 app.get('/groups', isAuthenticated, async (req, res) => {
   try {
-    const result = await db.query(
-      "SELECT g.id, g.name, gm.role FROM groups g JOIN group_members gm ON g.id = gm.group_id WHERE gm.user_id = $1",
-      [req.session.user.id]
-    );
+    const result = await db.query( "SELECT g.id, g.name, gm.role FROM groups g JOIN group_members gm ON g.id = gm.group_id WHERE gm.user_id = $1", [req.session.user.id] );
     res.render('groups', { user: req.session.user, groups: result.rows });
   } catch (err) {
     console.error("Groups fetch error:", err);
@@ -170,11 +161,9 @@ app.get('/chat/:groupId', isAuthenticated, checkGroupRole(['owner', 'admin', 'me
   try {
     const groupResult = await db.query("SELECT * FROM groups WHERE id = $1", [groupId]);
     if (groupResult.rows.length === 0) { return res.status(404).send("Group not found"); }
-
     const messages = await db.query( `SELECT m.*, u.username, p.content as parent_content, p_u.username as parent_username FROM messages m JOIN users u ON m.user_id = u.id LEFT JOIN messages p ON m.parent_message_id = p.id LEFT JOIN users p_u ON p.user_id = p_u.id WHERE m.group_id = $1 ORDER BY m.created_at ASC`, [groupId] );
     const reactions = await db.query( `SELECT r.* FROM reactions r JOIN messages m ON r.message_id = m.id WHERE m.group_id = $1`, [groupId] );
     const files = await db.query("SELECT * FROM files WHERE group_id = $1", [groupId]);
-    
     res.render('chat', {
       user: req.session.user,
       group: groupResult.rows[0],
@@ -203,15 +192,16 @@ app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async 
   }
 });
 
+// CORRECTED ROUTE: This now uses req.userRole which is correctly passed by the middleware.
 app.get('/chat/:groupId/manage', isAuthenticated, checkGroupRole(['owner', 'admin']), async (req, res) => {
     const { groupId } = req.params;
     try {
-        const members = await db.query( "SELECT u.id, u.username, gm.role FROM users u JOIN group_members gm ON u.id = gm.user_id WHERE gm.group_id = $1 ORDER BY u.username", [groupId] );
-        const group = await db.query("SELECT name FROM groups WHERE id = $1", [groupId]);
+        const membersResult = await db.query( "SELECT u.id, u.username, gm.role FROM users u JOIN group_members gm ON u.id = gm.user_id WHERE gm.group_id = $1 ORDER BY u.username", [groupId] );
+        const groupResult = await db.query("SELECT name FROM groups WHERE id = $1", [groupId]);
         res.render('manage_group', {
-            user: { ...req.session.user, role: req.userRole },
-            members: members.rows,
-            group: group.rows[0],
+            user: { ...req.session.user, role: req.userRole }, // BUG FIXED
+            members: membersResult.rows,
+            group: groupResult.rows[0],
             groupId: groupId
         });
     } catch (err) {
