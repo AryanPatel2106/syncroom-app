@@ -42,7 +42,7 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'syncroom_uploads', // A folder name in your Cloudinary account
-    format: async (req, file) => 'jpg', // You can also use 'png', 'gif' etc.
+    resource_type: "auto", // Automatically detect the resource type
     public_id: (req, file) => Date.now() + '-' + file.originalname,
   },
 });
@@ -176,7 +176,7 @@ app.get('/chat/:groupId', isAuthenticated, checkGroupRole(['owner', 'admin', 'me
     
     const messages = await db.query( `SELECT m.*, u.username, p.message as parent_message, p_u.username as parent_username FROM messages m JOIN users u ON m.user_id = u.id LEFT JOIN messages p ON m.parent_message_id = p.id LEFT JOIN users p_u ON p.user_id = p_u.id WHERE m.group_id = $1 ORDER BY m.created_at ASC`, [groupId] );
     const reactions = await db.query( `SELECT r.* FROM reactions r JOIN messages m ON r.message_id = m.id WHERE m.group_id = $1`, [groupId] );
-    const files = await db.query("SELECT * FROM files WHERE group_id = $1", [groupId]);
+    const files = await db.query("SELECT * FROM files WHERE group_id = $1 ORDER BY created_at DESC", [groupId]);
     
     res.render('chat', {
       user: req.session.user,
@@ -192,26 +192,22 @@ app.get('/chat/:groupId', isAuthenticated, checkGroupRole(['owner', 'admin', 'me
   }
 });
 
-// --- UPDATED UPLOAD ROUTE ---
-// This route now uses the Cloudinary `upload` middleware.
 app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async (req, res) => {
   const { groupId } = req.params;
-  
-  // After a successful upload, `req.file.path` will be the secure URL from Cloudinary.
   const filepath = req.file.path;
   const filename = req.file.originalname;
   const mimetype = req.file.mimetype;
   
   try {
     const result = await db.query( "INSERT INTO files (group_id, user_id, filename, filepath, mimetype) VALUES ($1, $2, $3, $4, $5) RETURNING *", [groupId, req.session.user.id, filename, filepath, mimetype] );
-    io.to(`group-${groupId}`).emit('newFile', result.rows[0]);
+    const newFile = { ...result.rows[0], username: req.session.user.username };
+    io.to(`group-${groupId}`).emit('newFile', newFile);
     res.redirect('/chat/' + groupId);
   } catch (err) {
     console.error("File upload error:", err);
     res.status(500).send("Server error");
   }
 });
-// --- END OF UPDATED ROUTE ---
 
 app.get('/chat/:groupId/manage', isAuthenticated, checkGroupRole(['owner', 'admin']), async (req, res) => {
     const { groupId } = req.params;
@@ -289,6 +285,61 @@ io.on('connection', socket => {
             io.to(room).emit('reactionAdded', { messageId, userId, emoji });
         }
     } catch (err) { console.error("Add reaction error:", err); }
+  });
+
+  // --- NEW: SERVER-SIDE LOGIC FOR DELETING A MESSAGE ---
+  socket.on('deleteMessage', async ({ room, messageId }) => {
+    const groupId = room.replace('group-', '');
+    try {
+      // Security Check: Verify user has permission to delete this message
+      const messageResult = await db.query("SELECT user_id FROM messages WHERE id = $1", [messageId]);
+      if (messageResult.rows.length === 0) return; // Message doesn't exist
+
+      const messageAuthorId = messageResult.rows[0].user_id;
+      const memberResult = await db.query("SELECT role FROM group_members WHERE group_id = $1 AND user_id = $2", [groupId, userId]);
+      if (memberResult.rows.length === 0) return; // User is not in the group
+
+      const userRole = memberResult.rows[0].role;
+
+      // Allow deletion if the user is the author, or if they are an owner/admin
+      if (userId == messageAuthorId || ['owner', 'admin'].includes(userRole)) {
+        await db.query("DELETE FROM messages WHERE id = $1", [messageId]);
+        io.to(room).emit('messageDeleted', messageId);
+      }
+    } catch (err) {
+      console.error("Delete message error:", err);
+    }
+  });
+
+  // --- NEW: SERVER-SIDE LOGIC FOR DELETING A FILE ---
+  socket.on('deleteFile', async ({ room, fileId, filepath }) => {
+    const groupId = room.replace('group-', '');
+    try {
+        // Security Check: Verify user has permission
+        const fileResult = await db.query("SELECT user_id FROM files WHERE id = $1", [fileId]);
+        if (fileResult.rows.length === 0) return;
+
+        const fileAuthorId = fileResult.rows[0].user_id;
+        const memberResult = await db.query("SELECT role FROM group_members WHERE group_id = $1 AND user_id = $2", [groupId, userId]);
+        if (memberResult.rows.length === 0) return;
+
+        const userRole = memberResult.rows[0].role;
+
+        if (userId == fileAuthorId || ['owner', 'admin'].includes(userRole)) {
+            // 1. Delete from Cloudinary
+            // Extract public_id from the full URL (e.g., 'syncroom_uploads/167...-filename.jpg')
+            const publicId = filepath.split('/').slice(-2).join('/').split('.')[0];
+            await cloudinary.uploader.destroy(publicId);
+
+            // 2. Delete from database
+            await db.query("DELETE FROM files WHERE id = $1", [fileId]);
+
+            // 3. Notify clients
+            io.to(room).emit('fileDeleted', { fileId, filepath });
+        }
+    } catch (err) {
+        console.error("Delete file error:", err);
+    }
   });
 
   socket.on('disconnect', () => {
