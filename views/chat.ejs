@@ -100,19 +100,9 @@
           <ul id="user-list" class="space-y-2 text-sm text-gray-300"></ul>
         </div>
         
-        <div class="flex-grow overflow-y-auto px-4 mb-4">
-          <h2 class="font-bold text-gray-300 mb-3 text-sm tracking-wider uppercase">Shared Files</h2>
-          <div id="file-list" class="space-y-3">
-            <% files.forEach(file => { %>
-              <div class="file-item p-3 rounded-lg bg-black bg-opacity-20 hover:bg-opacity-30 transition">
-                <% if (file.mimetype && file.mimetype.startsWith('image/')) { %>
-                  <img src="<%= file.filepath %>" alt="<%= file.filename %>" class="w-full h-auto rounded-md mb-2">
-                <% } %>
-                <a href="<%= file.filepath %>" target="_blank" class="text-blue-400 hover:underline text-sm break-all font-medium"><%= file.filename %></a>
-                <a href="<%= file.filepath.replace('/upload/', '/upload/fl_attachment/') %>" class="block text-green-400 hover:text-green-300 text-xs mt-1"><i class="fas fa-download mr-1"></i> Download</a>
-              </div>
-            <% }) %>
-          </div>
+        <div class="flex-grow p-4">
+            <h2 class="font-bold text-gray-300 mb-3 text-sm tracking-wider uppercase">Group Files</h2>
+            <button id="view-files-btn" class="w-full text-sm bg-gray-700 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"><i class="fas fa-folder-open mr-2"></i>View All Files</button>
         </div>
         
         <div class="p-4 border-t border-white/10">
@@ -187,15 +177,38 @@
     </div>
   </div>
 
+  <!-- All Files Modal -->
+  <div id="files-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
+    <div class="glass-ui rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col m-4">
+        <header class="p-4 border-b border-white/10 flex justify-between items-center">
+            <h2 class="text-xl font-bold">All Shared Files</h2>
+            <button id="close-files-modal-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times text-2xl"></i></button>
+        </header>
+        <div id="modal-file-list" class="p-6 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <% files.forEach(file => { %>
+              <div class="file-item p-3 rounded-lg bg-black bg-opacity-20 hover:bg-opacity-30 transition">
+                <% if (file.mimetype && file.mimetype.startsWith('image/')) { %>
+                  <img src="<%= file.filepath %>" alt="<%= file.filename %>" class="w-full h-32 object-cover rounded-md mb-2">
+                <% } else { %>
+                  <div class="w-full h-32 rounded-md mb-2 bg-gray-700 flex items-center justify-center">
+                    <i class="fas fa-file-alt text-4xl text-gray-500"></i>
+                  </div>
+                <% } %>
+                <a href="<%= file.filepath %>" target="_blank" class="text-blue-400 hover:underline text-sm break-all font-medium"><%= file.filename %></a>
+                <a href="<%= file.filepath.replace('/upload/', '/upload/fl_attachment/') %>" class="block text-green-400 hover:text-green-300 text-xs mt-1"><i class="fas fa-download mr-1"></i> Download</a>
+              </div>
+            <% }) %>
+        </div>
+    </div>
+  </div>
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tsparticles@1.37.5/dist/tsparticles.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // --- Particle Background ---
       const particleConfig = { particles: { number: { value: 50, density: { enable: true, value_area: 800 } }, color: { value: "#ffffff" }, shape: { type: "circle" }, opacity: { value: 0.3, random: true }, size: { value: 2, random: true }, line_linked: { enable: false }, move: { enable: true, speed: 1.5, direction: "none", random: true, straight: false, out_mode: "out" } }, interactivity: { detect_on: "canvas", events: { onhover: { enable: true, mode: "bubble" }, onclick: { enable: false } }, modes: { bubble: { distance: 200, size: 4, duration: 2, opacity: 0.8 } } }, retina_detect: true };
-      if (window.particlesJS) {
-        particlesJS('particles-js', particleConfig);
-      }
+      if (window.particlesJS) { particlesJS('particles-js', particleConfig); }
       
       // --- Responsive Sidebar ---
       const sidebar = document.getElementById('chat-sidebar');
@@ -216,23 +229,22 @@
           const emojiSpan = document.createElement('span');
           emojiSpan.className = 'emoji';
           emojiSpan.textContent = emoji;
-          emojiSpan.addEventListener('click', () => {
-              messageInput.value += emoji;
-              messageInput.focus();
-          });
+          emojiSpan.addEventListener('click', () => { messageInput.value += emoji; messageInput.focus(); });
           emojiGrid.appendChild(emojiSpan);
       });
-      emojiBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          emojiPicker.classList.toggle('hidden');
-      });
-      document.addEventListener('click', (e) => {
-          if (!emojiPicker.contains(e.target) && !emojiBtn.contains(e.target)) {
-              emojiPicker.classList.add('hidden');
-          }
-      });
+      emojiBtn.addEventListener('click', (e) => { e.stopPropagation(); emojiPicker.classList.toggle('hidden'); });
+      document.addEventListener('click', (e) => { if (!emojiPicker.contains(e.target) && !emojiBtn.contains(e.target)) { emojiPicker.classList.add('hidden'); } });
 
-      // --- ALL EXISTING CHAT LOGIC (UNCHANGED) ---
+      // --- All Files Modal Logic ---
+      const filesModal = document.getElementById('files-modal');
+      const openFilesModalBtn = document.getElementById('view-files-btn');
+      const closeFilesModalBtn = document.getElementById('close-files-modal-btn');
+      const modalFileList = document.getElementById('modal-file-list');
+      openFilesModalBtn.addEventListener('click', () => filesModal.classList.remove('hidden'));
+      closeFilesModalBtn.addEventListener('click', () => filesModal.classList.add('hidden'));
+      filesModal.addEventListener('click', (e) => { if (e.target === filesModal) { filesModal.classList.add('hidden'); } });
+
+      // --- ALL EXISTING CHAT LOGIC (WITH MODIFICATIONS FOR FILES) ---
       const socket = io({ query: { userId: '<%= user.id %>', username: '<%= user.username %>' } });
       const room = 'group-<%= group.id %>';
       const currentUserId = '<%= user.id %>';
@@ -241,21 +253,18 @@
       const messageForm = document.getElementById('message-form');
       const typingIndicator = document.getElementById('typing-indicator');
       const userList = document.getElementById('user-list');
-      const fileList = document.getElementById('file-list');
+      
       socket.emit('joinRoom', room);
       socket.on('updateUserList', (users) => { userList.innerHTML = users.map(user => `<li><i class="fas fa-circle text-green-500 text-xs mr-2"></i>${user}</li>`).join(''); });
       socket.on('chatMessage', (msg) => { appendMessage(msg); });
+      
       socket.on('newFile', (file) => {
-          const fileDiv = document.createElement('div');
-          fileDiv.className = 'file-item p-3 rounded-lg bg-black bg-opacity-20 hover:bg-opacity-30 transition';
-          let contentHtml = `<a href="${file.filepath}" target="_blank" class="text-blue-400 hover:underline text-sm break-all font-medium">${file.filename}</a>`;
-          if (file.mimetype && file.mimetype.startsWith('image/')) {
-            contentHtml = `<img src="${file.filepath}" alt="${file.filename}" class="w-full h-auto rounded-md mb-2">` + contentHtml;
-          }
-          contentHtml += `<a href="${file.filepath.replace('/upload/', '/upload/fl_attachment/')}" class="block text-green-400 hover:text-green-300 text-xs mt-1"><i class="fas fa-download mr-1"></i> Download</a>`;
-          fileDiv.innerHTML = contentHtml;
-          fileList.appendChild(fileDiv);
+          // Add file to the modal list
+          addFileToModal(file);
+          // Add file as a message in the chat
+          appendFileMessage(file);
       });
+
       socket.on('reactionAdded', ({ messageId, emoji }) => {
           const messageBubble = document.querySelector(`.message-bubble[data-message-id='${messageId}']`);
           if (messageBubble) {
@@ -337,6 +346,45 @@
                   <button class="react-btn hover:text-yellow-400"><i class="fas fa-smile"></i></button>
                 </div>
               </div>`;
+          messageContainer.appendChild(div);
+          messageContainer.scrollTop = messageContainer.scrollHeight;
+      }
+      // --- NEW HELPER FUNCTIONS FOR FILES ---
+      function addFileToModal(file) {
+        const fileDiv = document.createElement('div');
+        fileDiv.className = 'file-item p-3 rounded-lg bg-black bg-opacity-20 hover:bg-opacity-30 transition';
+        let imagePreview = `<div class="w-full h-32 rounded-md mb-2 bg-gray-700 flex items-center justify-center"><i class="fas fa-file-alt text-4xl text-gray-500"></i></div>`;
+        if (file.mimetype && file.mimetype.startsWith('image/')) {
+            imagePreview = `<img src="${file.filepath}" alt="${file.filename}" class="w-full h-32 object-cover rounded-md mb-2">`;
+        }
+        fileDiv.innerHTML = `
+            ${imagePreview}
+            <a href="${file.filepath}" target="_blank" class="text-blue-400 hover:underline text-sm break-all font-medium">${file.filename}</a>
+            <a href="${file.filepath.replace('/upload/', '/upload/fl_attachment/')}" class="block text-green-400 hover:text-green-300 text-xs mt-1"><i class="fas fa-download mr-1"></i> Download</a>
+        `;
+        modalFileList.appendChild(fileDiv);
+      }
+      function appendFileMessage(file) {
+          const div = document.createElement('div');
+          // NOTE: Since the 'newFile' event doesn't include sender info, we display this as a neutral, centered message.
+          div.className = 'message-bubble w-full flex justify-center'; 
+          let filePreview = '';
+          if (file.mimetype && file.mimetype.startsWith('image/')) {
+            filePreview = `<img src="${file.filepath}" alt="${file.filename}" class="w-full h-auto rounded-lg mt-2 max-w-xs">`;
+          }
+          div.innerHTML = `
+            <div class="max-w-md">
+                <div class="rounded-xl px-4 py-3 bg-gray-800 text-gray-300 text-center">
+                    <div class="font-semibold text-sm">New File Shared</div>
+                    <div class="text-base break-words mt-1 font-bold text-white">${file.filename}</div>
+                    ${filePreview}
+                    <div class="mt-3">
+                        <a href="${file.filepath.replace('/upload/', '/upload/fl_attachment/')}" class="text-green-400 hover:text-green-300 text-sm font-semibold">
+                            <i class="fas fa-download mr-1"></i> Download File
+                        </a>
+                    </div>
+                </div>
+            </div>`;
           messageContainer.appendChild(div);
           messageContainer.scrollTop = messageContainer.scrollHeight;
       }
