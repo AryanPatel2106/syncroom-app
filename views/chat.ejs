@@ -148,6 +148,9 @@
                   <span><%= new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></span>
                   <button class="reply-btn hover:text-blue-400" data-parent-id="<%= msg.id %>" data-parent-username="<%= msg.username %>" data-parent-message="<%= msg.message %>"><i class="fas fa-reply"></i></button>
                   <button class="react-btn hover:text-yellow-400"><i class="fas fa-smile"></i></button>
+                  <% if (msg.user_id == user.id || ['owner', 'admin'].includes(userRole)) { %>
+                    <button class="delete-btn hover:text-red-400" data-message-id="<%= msg.id %>"><i class="fas fa-trash"></i></button>
+                  <% } %>
                 </div>
               </div>
             </div>
@@ -186,7 +189,7 @@
         </header>
         <div id="modal-file-list" class="p-6 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <% files.forEach(file => { %>
-              <div class="file-item p-3 rounded-lg bg-black bg-opacity-20 hover:bg-opacity-30 transition">
+              <div class="file-item p-3 rounded-lg bg-black bg-opacity-20 hover:bg-opacity-30 transition" data-file-id="<%= file.id %>">
                 <% if (file.mimetype && file.mimetype.startsWith('image/')) { %>
                   <img src="<%= file.filepath %>" alt="<%= file.filename %>" class="w-full h-32 object-cover rounded-md mb-2">
                 <% } else { %>
@@ -195,7 +198,12 @@
                   </div>
                 <% } %>
                 <a href="<%= file.filepath %>" target="_blank" class="text-blue-400 hover:underline text-sm break-all font-medium"><%= file.filename %></a>
-                <a href="<%= file.filepath.replace('/upload/', '/upload/fl_attachment/') %>" class="block text-green-400 hover:text-green-300 text-xs mt-1"><i class="fas fa-download mr-1"></i> Download</a>
+                <div class="flex justify-between items-center mt-2">
+                    <a href="<%= file.filepath.replace('/upload/', '/upload/fl_attachment/') %>" class="text-green-400 hover:text-green-300 text-xs"><i class="fas fa-download mr-1"></i> Download</a>
+                    <% if (file.user_id == user.id || ['owner', 'admin'].includes(userRole)) { %>
+                        <button data-file-id="<%= file.id %>" data-filepath="<%= file.filepath %>" class="delete-file-btn text-red-500 hover:text-red-400 text-xs"><i class="fas fa-trash mr-1"></i> Delete</button>
+                    <% } %>
+                </div>
               </div>
             <% }) %>
         </div>
@@ -244,11 +252,12 @@
       closeFilesModalBtn.addEventListener('click', () => filesModal.classList.add('hidden'));
       filesModal.addEventListener('click', (e) => { if (e.target === filesModal) { filesModal.classList.add('hidden'); } });
 
-      // --- ALL EXISTING CHAT LOGIC (WITH MODIFICATIONS FOR FILES) ---
+      // --- ALL EXISTING CHAT LOGIC (WITH MODIFICATIONS FOR FILES & DELETE) ---
       const socket = io({ query: { userId: '<%= user.id %>', username: '<%= user.username %>' } });
       const room = 'group-<%= group.id %>';
       const currentUserId = '<%= user.id %>';
       const currentUsername = '<%= user.username %>';
+      const currentUserRole = '<%= userRole %>';
       const messageContainer = document.getElementById('message-container');
       const messageForm = document.getElementById('message-form');
       const typingIndicator = document.getElementById('typing-indicator');
@@ -257,14 +266,7 @@
       socket.emit('joinRoom', room);
       socket.on('updateUserList', (users) => { userList.innerHTML = users.map(user => `<li><i class="fas fa-circle text-green-500 text-xs mr-2"></i>${user}</li>`).join(''); });
       socket.on('chatMessage', (msg) => { appendMessage(msg); });
-      
-      socket.on('newFile', (file) => {
-          // Add file to the modal list
-          addFileToModal(file);
-          // Add file as a message in the chat
-          appendFileMessage(file);
-      });
-
+      socket.on('newFile', (file) => { addFileToModal(file); appendFileMessage(file); });
       socket.on('reactionAdded', ({ messageId, emoji }) => {
           const messageBubble = document.querySelector(`.message-bubble[data-message-id='${messageId}']`);
           if (messageBubble) {
@@ -275,6 +277,19 @@
             reactionsContainer.appendChild(reactionEl);
           }
       });
+      
+      // --- NEW: LISTENERS FOR DELETION ---
+      socket.on('messageDeleted', (messageId) => {
+          const messageEl = document.querySelector(`.message-bubble[data-message-id='${messageId}']`);
+          if (messageEl) messageEl.remove();
+      });
+      socket.on('fileDeleted', ({ fileId, filepath }) => {
+          const fileInModal = document.querySelector(`.file-item[data-file-id='${fileId}']`);
+          if (fileInModal) fileInModal.remove();
+          const fileInChat = document.querySelector(`.message-bubble[data-filepath='${filepath}']`);
+          if (fileInChat) fileInChat.remove();
+      });
+
       messageContainer.scrollTop = messageContainer.scrollHeight;
       let currentParentId = null;
       messageForm.addEventListener('submit', (e) => {
@@ -316,7 +331,27 @@
               socket.emit('addReaction', { messageId, userId: currentUserId, emoji });
             }
           }
+          // --- NEW: DELETE MESSAGE LOGIC ---
+          const deleteBtn = e.target.closest('.delete-btn');
+          if (deleteBtn) {
+              const messageId = deleteBtn.dataset.messageId;
+              if (confirm('Are you sure you want to delete this message?')) {
+                  socket.emit('deleteMessage', { room, messageId });
+              }
+          }
       });
+      // --- NEW: DELETE FILE LOGIC ---
+      modalFileList.addEventListener('click', (e) => {
+          const deleteBtn = e.target.closest('.delete-file-btn');
+          if (deleteBtn) {
+              const fileId = deleteBtn.dataset.fileId;
+              const filepath = deleteBtn.dataset.filepath;
+              if (confirm('Are you sure you want to delete this file?')) {
+                  socket.emit('deleteFile', { room, fileId, filepath });
+              }
+          }
+      });
+
       document.getElementById('cancel-reply').addEventListener('click', cancelReply);
       function cancelReply() {
           currentParentId = null;
@@ -332,6 +367,10 @@
                             <strong>${msg.parent_username}</strong>: ${msg.parent_message.substring(0, 50)}...
                           </div>`;
           }
+          let deleteBtnHtml = '';
+          if (msg.user_id == currentUserId || ['owner', 'admin'].includes(currentUserRole)) {
+              deleteBtnHtml = `<button class="delete-btn hover:text-red-400" data-message-id="${msg.id}"><i class="fas fa-trash"></i></button>`;
+          }
           div.innerHTML = `
               <div class="max-w-md md:max-w-lg">
                 <div class="rounded-xl px-4 py-2 ${msg.user_id == currentUserId ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white' : 'bg-gray-700 bg-opacity-50 text-gray-200'}">
@@ -344,30 +383,38 @@
                   <span>${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                   <button class="reply-btn hover:text-blue-400" data-parent-id="${msg.id}" data-parent-username="${msg.username}" data-parent-message="${msg.message}"><i class="fas fa-reply"></i></button>
                   <button class="react-btn hover:text-yellow-400"><i class="fas fa-smile"></i></button>
+                  ${deleteBtnHtml}
                 </div>
               </div>`;
           messageContainer.appendChild(div);
           messageContainer.scrollTop = messageContainer.scrollHeight;
       }
-      // --- NEW HELPER FUNCTIONS FOR FILES ---
       function addFileToModal(file) {
         const fileDiv = document.createElement('div');
         fileDiv.className = 'file-item p-3 rounded-lg bg-black bg-opacity-20 hover:bg-opacity-30 transition';
+        fileDiv.dataset.fileId = file.id;
         let imagePreview = `<div class="w-full h-32 rounded-md mb-2 bg-gray-700 flex items-center justify-center"><i class="fas fa-file-alt text-4xl text-gray-500"></i></div>`;
         if (file.mimetype && file.mimetype.startsWith('image/')) {
             imagePreview = `<img src="${file.filepath}" alt="${file.filename}" class="w-full h-32 object-cover rounded-md mb-2">`;
         }
+        let deleteBtnHtml = '';
+        if (file.user_id == currentUserId || ['owner', 'admin'].includes(currentUserRole)) {
+            deleteBtnHtml = `<button data-file-id="${file.id}" data-filepath="${file.filepath}" class="delete-file-btn text-red-500 hover:text-red-400 text-xs"><i class="fas fa-trash mr-1"></i> Delete</button>`;
+        }
         fileDiv.innerHTML = `
             ${imagePreview}
             <a href="${file.filepath}" target="_blank" class="text-blue-400 hover:underline text-sm break-all font-medium">${file.filename}</a>
-            <a href="${file.filepath.replace('/upload/', '/upload/fl_attachment/')}" class="block text-green-400 hover:text-green-300 text-xs mt-1"><i class="fas fa-download mr-1"></i> Download</a>
+            <div class="flex justify-between items-center mt-2">
+                <a href="${file.filepath.replace('/upload/', '/upload/fl_attachment/')}" class="text-green-400 hover:text-green-300 text-xs"><i class="fas fa-download mr-1"></i> Download</a>
+                ${deleteBtnHtml}
+            </div>
         `;
         modalFileList.appendChild(fileDiv);
       }
       function appendFileMessage(file) {
           const div = document.createElement('div');
-          // NOTE: Since the 'newFile' event doesn't include sender info, we display this as a neutral, centered message.
           div.className = 'message-bubble w-full flex justify-center'; 
+          div.dataset.filepath = file.filepath; // Important for finding and deleting later
           let filePreview = '';
           if (file.mimetype && file.mimetype.startsWith('image/')) {
             filePreview = `<img src="${file.filepath}" alt="${file.filename}" class="w-full h-auto rounded-lg mt-2 max-w-xs">`;
@@ -375,7 +422,7 @@
           div.innerHTML = `
             <div class="max-w-md">
                 <div class="rounded-xl px-4 py-3 bg-gray-800 text-gray-300 text-center">
-                    <div class="font-semibold text-sm">New File Shared</div>
+                    <div class="font-semibold text-sm">New File Shared by <strong>${file.username}</strong></div>
                     <div class="text-base break-words mt-1 font-bold text-white">${file.filename}</div>
                     ${filePreview}
                     <div class="mt-3">
