@@ -42,7 +42,7 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'syncroom_uploads', // A folder name in your Cloudinary account
-    resource_type: "auto", // Automatically detect the resource type
+    format: async (req, file) => 'jpg', // You can also use 'png', 'gif' etc.
     public_id: (req, file) => Date.now() + '-' + file.originalname,
   },
 });
@@ -168,6 +168,18 @@ app.post('/groups/join', isAuthenticated, async (req, res) => {
   }
 });
 
+app.post('/groups/leave/:groupId', isAuthenticated, async (req, res) => {
+    const { groupId } = req.params;
+    const userId = req.session.user.id;
+    try {
+        await db.query("DELETE FROM group_members WHERE group_id = $1 AND user_id = $2", [groupId, userId]);
+        res.redirect('/groups');
+    } catch (err) {
+        console.error("Leave group error:", err);
+        res.status(500).send("Server error");
+    }
+});
+
 app.get('/chat/:groupId', isAuthenticated, checkGroupRole(['owner', 'admin', 'member']), async (req, res) => {
   const { groupId } = req.params;
   try {
@@ -176,7 +188,7 @@ app.get('/chat/:groupId', isAuthenticated, checkGroupRole(['owner', 'admin', 'me
     
     const messages = await db.query( `SELECT m.*, u.username, p.message as parent_message, p_u.username as parent_username FROM messages m JOIN users u ON m.user_id = u.id LEFT JOIN messages p ON m.parent_message_id = p.id LEFT JOIN users p_u ON p.user_id = p_u.id WHERE m.group_id = $1 ORDER BY m.created_at ASC`, [groupId] );
     const reactions = await db.query( `SELECT r.* FROM reactions r JOIN messages m ON r.message_id = m.id WHERE m.group_id = $1`, [groupId] );
-    const files = await db.query("SELECT * FROM files WHERE group_id = $1 ORDER BY created_at DESC", [groupId]);
+    const files = await db.query("SELECT * FROM files WHERE group_id = $1", [groupId]);
     
     res.render('chat', {
       user: req.session.user,
@@ -200,8 +212,7 @@ app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async 
   
   try {
     const result = await db.query( "INSERT INTO files (group_id, user_id, filename, filepath, mimetype) VALUES ($1, $2, $3, $4, $5) RETURNING *", [groupId, req.session.user.id, filename, filepath, mimetype] );
-    const newFile = { ...result.rows[0], username: req.session.user.username };
-    io.to(`group-${groupId}`).emit('newFile', newFile);
+    io.to(`group-${groupId}`).emit('newFile', result.rows[0]);
     res.redirect('/chat/' + groupId);
   } catch (err) {
     console.error("File upload error:", err);
@@ -327,7 +338,6 @@ io.on('connection', socket => {
 
         if (userId == fileAuthorId || ['owner', 'admin'].includes(userRole)) {
             // 1. Delete from Cloudinary
-            // Extract public_id from the full URL (e.g., 'syncroom_uploads/167...-filename.jpg')
             const publicId = filepath.split('/').slice(-2).join('/').split('.')[0];
             await cloudinary.uploader.destroy(publicId);
 

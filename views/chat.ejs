@@ -266,7 +266,14 @@
       socket.emit('joinRoom', room);
       socket.on('updateUserList', (users) => { userList.innerHTML = users.map(user => `<li><i class="fas fa-circle text-green-500 text-xs mr-2"></i>${user}</li>`).join(''); });
       socket.on('chatMessage', (msg) => { appendMessage(msg); });
-      socket.on('newFile', (file) => { addFileToModal(file); appendFileMessage(file); });
+      
+      socket.on('newFile', (file) => {
+          // Add file to the modal list
+          addFileToModal(file);
+          // Add file as a message in the chat
+          appendFileMessage(file);
+      });
+
       socket.on('reactionAdded', ({ messageId, emoji }) => {
           const messageBubble = document.querySelector(`.message-bubble[data-message-id='${messageId}']`);
           if (messageBubble) {
