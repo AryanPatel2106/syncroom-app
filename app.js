@@ -10,7 +10,6 @@ const bcrypt = require('bcrypt');
 const { Pool } = require('pg');
 const connectPgSimple = require('connect-pg-simple');
 
-// NEW: Add the Cloudinary packages
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
@@ -20,7 +19,6 @@ const io = socketIO(server);
 const PORT = process.env.PORT || 5000;
 const saltRounds = 10;
 
-// DATABASE CONFIGURATION
 const dbConfig = {
   connectionString: process.env.DATABASE_URL,
 };
@@ -29,29 +27,23 @@ if (process.env.NODE_ENV === 'production') {
 }
 const db = new Pool(dbConfig);
 
-// --- CLOUDINARY CONFIGURATION ---
-// This connects to your Cloudinary account using the environment variables from Render
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// This replaces your old diskStorage with CloudinaryStorage
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'syncroom_uploads', // A folder name in your Cloudinary account
-    format: async (req, file) => 'jpg', // You can also use 'png', 'gif' etc.
+    folder: 'syncroom_uploads',
+    resource_type: "auto",
     public_id: (req, file) => Date.now() + '-' + file.originalname,
   },
 });
 
 const upload = multer({ storage: storage });
-// --- END OF CLOUDINARY SETUP ---
 
-
-// MIDDLEWARE
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -91,7 +83,6 @@ const checkGroupRole = (roles) => async (req, res, next) => {
     }
 };
 
-// ROUTES
 app.get('/', (req, res) => res.render('home', { user: req.session.user }));
 app.get('/login', (req, res) => res.render('login', { user: req.session.user }));
 app.get('/register', (req, res) => res.render('register', { user: req.session.user }));
@@ -188,7 +179,7 @@ app.get('/chat/:groupId', isAuthenticated, checkGroupRole(['owner', 'admin', 'me
     
     const messages = await db.query( `SELECT m.*, u.username, p.message as parent_message, p_u.username as parent_username FROM messages m JOIN users u ON m.user_id = u.id LEFT JOIN messages p ON m.parent_message_id = p.id LEFT JOIN users p_u ON p.user_id = p_u.id WHERE m.group_id = $1 ORDER BY m.created_at ASC`, [groupId] );
     const reactions = await db.query( `SELECT r.* FROM reactions r JOIN messages m ON r.message_id = m.id WHERE m.group_id = $1`, [groupId] );
-    const files = await db.query("SELECT * FROM files WHERE group_id = $1", [groupId]);
+    const files = await db.query("SELECT * FROM files WHERE group_id = $1 ORDER BY created_at DESC", [groupId]);
     
     res.render('chat', {
       user: req.session.user,
@@ -212,7 +203,8 @@ app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async 
   
   try {
     const result = await db.query( "INSERT INTO files (group_id, user_id, filename, filepath, mimetype) VALUES ($1, $2, $3, $4, $5) RETURNING *", [groupId, req.session.user.id, filename, filepath, mimetype] );
-    io.to(`group-${groupId}`).emit('newFile', result.rows[0]);
+    const newFile = { ...result.rows[0], username: req.session.user.username };
+    io.to(`group-${groupId}`).emit('newFile', newFile);
     res.redirect('/chat/' + groupId);
   } catch (err) {
     console.error("File upload error:", err);
@@ -250,6 +242,36 @@ app.post('/chat/:groupId/manage/promote', isAuthenticated, checkGroupRole(['owne
     } catch (err) { console.error("Promote user error:", err); res.status(500).send("Server error"); }
 });
 
+// --- NEW: CALENDAR EVENT ROUTES ---
+app.get('/chat/:groupId/events', isAuthenticated, checkGroupRole(['owner', 'admin', 'member']), async (req, res) => {
+    const { groupId } = req.params;
+    try {
+        const events = await db.query("SELECT e.*, u.username FROM events e JOIN users u ON e.user_id = u.id WHERE e.group_id = $1 ORDER BY e.event_date ASC", [groupId]);
+        res.json(events.rows);
+    } catch (err) {
+        console.error("Fetch events error:", err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+app.post('/chat/:groupId/events/create', isAuthenticated, checkGroupRole(['owner', 'admin', 'member']), async (req, res) => {
+    const { groupId } = req.params;
+    const { title, description, event_date } = req.body;
+    const userId = req.session.user.id;
+    try {
+        const result = await db.query(
+            "INSERT INTO events (group_id, user_id, title, description, event_date) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+            [groupId, userId, title, description, event_date]
+        );
+        const newEvent = { ...result.rows[0], username: req.session.user.username };
+        io.to(`group-${groupId}`).emit('newEvent', newEvent);
+        res.status(201).json(newEvent);
+    } catch (err) {
+        console.error("Create event error:", err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
 app.get('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/'));
 });
@@ -267,9 +289,9 @@ io.on('connection', socket => {
     io.to(room).emit('updateUserList', Object.values(activeUsers[room]));
   });
 
-  socket.on('chatMessage', async ({ room, userId, username, message, parentId }) => {
+  socket.on('chatMessage', async ({ room, userId, username, message, parentId, isCodeSnippet, language }) => {
     try {
-      const result = await db.query( "INSERT INTO messages (group_id, user_id, message, parent_message_id) VALUES ($1, $2, $3, $4) RETURNING id, created_at", [room.replace('group-', ''), userId, message, parentId] );
+      const result = await db.query( "INSERT INTO messages (group_id, user_id, message, parent_message_id, is_code_snippet, language) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, created_at", [room.replace('group-', ''), userId, message, parentId, isCodeSnippet, language] );
       let parentData = { parent_message: null, parent_username: null };
       if (parentId) {
           const parentResult = await db.query(`SELECT m.message, u.username FROM messages m JOIN users u ON m.user_id = u.id WHERE m.id = $1`, [parentId]);
@@ -278,7 +300,7 @@ io.on('connection', socket => {
               parentData.parent_username = parentResult.rows[0].username;
           }
       }
-      const newMsg = { id: result.rows[0].id, message: message, user_id: userId, username, created_at: result.rows[0].created_at, parent_message_id: parentId, ...parentData };
+      const newMsg = { id: result.rows[0].id, message: message, user_id: userId, username, created_at: result.rows[0].created_at, parent_message_id: parentId, is_code_snippet: isCodeSnippet, language, ...parentData };
       io.to(room).emit('chatMessage', newMsg);
     } catch (err) { console.error("Socket chat message error:", err); }
   });
@@ -298,21 +320,15 @@ io.on('connection', socket => {
     } catch (err) { console.error("Add reaction error:", err); }
   });
 
-  // --- NEW: SERVER-SIDE LOGIC FOR DELETING A MESSAGE ---
   socket.on('deleteMessage', async ({ room, messageId }) => {
     const groupId = room.replace('group-', '');
     try {
-      // Security Check: Verify user has permission to delete this message
       const messageResult = await db.query("SELECT user_id FROM messages WHERE id = $1", [messageId]);
-      if (messageResult.rows.length === 0) return; // Message doesn't exist
-
+      if (messageResult.rows.length === 0) return;
       const messageAuthorId = messageResult.rows[0].user_id;
       const memberResult = await db.query("SELECT role FROM group_members WHERE group_id = $1 AND user_id = $2", [groupId, userId]);
-      if (memberResult.rows.length === 0) return; // User is not in the group
-
+      if (memberResult.rows.length === 0) return;
       const userRole = memberResult.rows[0].role;
-
-      // Allow deletion if the user is the author, or if they are an owner/admin
       if (userId == messageAuthorId || ['owner', 'admin'].includes(userRole)) {
         await db.query("DELETE FROM messages WHERE id = $1", [messageId]);
         io.to(room).emit('messageDeleted', messageId);
@@ -322,34 +338,45 @@ io.on('connection', socket => {
     }
   });
 
-  // --- NEW: SERVER-SIDE LOGIC FOR DELETING A FILE ---
   socket.on('deleteFile', async ({ room, fileId, filepath }) => {
     const groupId = room.replace('group-', '');
     try {
-        // Security Check: Verify user has permission
         const fileResult = await db.query("SELECT user_id FROM files WHERE id = $1", [fileId]);
         if (fileResult.rows.length === 0) return;
-
         const fileAuthorId = fileResult.rows[0].user_id;
         const memberResult = await db.query("SELECT role FROM group_members WHERE group_id = $1 AND user_id = $2", [groupId, userId]);
         if (memberResult.rows.length === 0) return;
-
         const userRole = memberResult.rows[0].role;
-
         if (userId == fileAuthorId || ['owner', 'admin'].includes(userRole)) {
-            // 1. Delete from Cloudinary
             const publicId = filepath.split('/').slice(-2).join('/').split('.')[0];
             await cloudinary.uploader.destroy(publicId);
-
-            // 2. Delete from database
             await db.query("DELETE FROM files WHERE id = $1", [fileId]);
-
-            // 3. Notify clients
             io.to(room).emit('fileDeleted', { fileId, filepath });
         }
     } catch (err) {
         console.error("Delete file error:", err);
     }
+  });
+
+  // --- NEW: SOCKET EVENT FOR DELETING A CALENDAR EVENT ---
+  socket.on('deleteEvent', async ({ room, eventId }) => {
+      const groupId = room.replace('group-', '');
+      try {
+          const eventResult = await db.query("SELECT user_id FROM events WHERE id = $1", [eventId]);
+          if (eventResult.rows.length === 0) return;
+
+          const eventAuthorId = eventResult.rows[0].user_id;
+          const memberResult = await db.query("SELECT role FROM group_members WHERE group_id = $1 AND user_id = $2", [groupId, userId]);
+          if (memberResult.rows.length === 0) return;
+          const userRole = memberResult.rows[0].role;
+
+          if (userId == eventAuthorId || ['owner', 'admin'].includes(userRole)) {
+              await db.query("DELETE FROM events WHERE id = $1", [eventId]);
+              io.to(room).emit('eventDeleted', eventId);
+          }
+      } catch (err) {
+          console.error("Delete event error:", err);
+      }
   });
 
   socket.on('disconnect', () => {

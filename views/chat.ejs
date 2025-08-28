@@ -7,45 +7,22 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- NEW: Syntax Highlighting CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
   <style>
     body { font-family: 'Inter', sans-serif; }
     #particles-js { position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: -1; }
-    
-    /* Glassmorphism card effect */
-    .glass-ui {
-      background: rgba(30, 41, 59, 0.2); /* slate-800 with transparency */
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
+    .glass-ui { background: rgba(30, 41, 59, 0.2); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); }
     .message-bubble { animation: slideIn 0.3s ease-out forwards; }
     @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    
-    /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
-
-    /* Responsive Layout CSS */
-    .sidebar {
-      width: 288px; /* w-72 */
-      border-right: 1px solid rgba(255, 255, 255, 0.1);
-      flex-shrink: 0;
-    }
-    .mobile-header, .sidebar-close-btn, .sidebar-backdrop {
-      display: none;
-    }
-
+    .sidebar { width: 288px; border-right: 1px solid rgba(255, 255, 255, 0.1); flex-shrink: 0; }
+    .mobile-header, .sidebar-close-btn, .sidebar-backdrop { display: none; }
     @media (max-width: 767px) {
-      .sidebar {
-        position: fixed;
-        left: 0; top: 0; bottom: 0; z-index: 40;
-        transform: translateX(-100%);
-        transition: transform 0.3s ease-in-out;
-        background: #111827; /* bg-gray-900 */
-        border-right-width: 1px;
-      }
+      .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 40; transform: translateX(-100%); transition: transform 0.3s ease-in-out; background: #111827; border-right-width: 1px; }
       .sidebar.is-open { transform: translateX(0); }
       .sidebar-backdrop { position: fixed; inset: 0; background-color: rgba(0,0,0,0.5); z-index: 30; }
       .sidebar-backdrop.is-open { display: block; }
@@ -54,24 +31,11 @@
       .sidebar-close-btn { display: block; }
       .desktop-header { display: none; }
     }
-    
-    /* Emoji Picker Styles */
-    #emoji-picker {
-        width: 280px;
-        max-height: 200px;
-        overflow-y: auto;
-    }
-    .emoji {
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
-        transition: background-color 0.2s;
-        text-align: center;
-        font-size: 1.25rem;
-    }
-    .emoji:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-    }
+    #emoji-picker { width: 280px; max-height: 200px; overflow-y: auto; }
+    .emoji { cursor: pointer; padding: 4px; border-radius: 4px; transition: background-color 0.2s; text-align: center; font-size: 1.25rem; }
+    .emoji:hover { background-color: rgba(255, 255, 255, 0.1); }
+    /* NEW: Styles for Code Snippets */
+    .code-snippet { font-size: 0.875rem; border-radius: 0.5rem; }
   </style>
 </head>
 
@@ -87,24 +51,20 @@
             <div class="flex justify-between items-center mb-4">
                 <h1 class="text-2xl font-bold desktop-header"><%= group.name %></h1>
                 <div class="sidebar-close-btn">
-                    <button id="close-sidebar-btn" class="text-gray-400 hover:text-white">
-                        <i class="fas fa-times text-2xl"></i>
-                    </button>
+                    <button id="close-sidebar-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times text-2xl"></i></button>
                 </div>
             </div>
             <p class="text-sm text-gray-400 mb-6 desktop-header">Logged in as: <%= user.username %></p>
         </div>
-
         <div class="px-4 mb-6">
           <h2 class="font-bold text-gray-300 mb-3 text-sm tracking-wider uppercase">Online Users</h2>
           <ul id="user-list" class="space-y-2 text-sm text-gray-300"></ul>
         </div>
-        
-        <div class="flex-grow p-4">
-            <h2 class="font-bold text-gray-300 mb-3 text-sm tracking-wider uppercase">Group Files</h2>
+        <div class="flex-grow p-4 space-y-2">
+            <h2 class="font-bold text-gray-300 mb-2 text-sm tracking-wider uppercase">Group Tools</h2>
             <button id="view-files-btn" class="w-full text-sm bg-gray-700 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"><i class="fas fa-folder-open mr-2"></i>View All Files</button>
+            <button id="view-calendar-btn" class="w-full text-sm bg-gray-700 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"><i class="fas fa-calendar-alt mr-2"></i>Group Calendar</button>
         </div>
-        
         <div class="p-4 border-t border-white/10 space-y-2">
             <form action="/chat/<%= group.id %>/upload" method="POST" enctype="multipart/form-data">
               <input type="file" name="file" class="w-full text-xs text-gray-400 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-800 file:text-blue-200 hover:file:bg-blue-700 cursor-pointer" required>
@@ -125,12 +85,9 @@
       <!-- Main Chat Area -->
       <main class="main-chat flex flex-col flex-grow">
         <header class="mobile-header p-4 border-b border-white/10 items-center flex-shrink-0">
-          <button id="sidebar-toggle-btn" class="text-gray-300 mr-4">
-            <i class="fas fa-bars text-xl"></i>
-          </button>
+          <button id="sidebar-toggle-btn" class="text-gray-300 mr-4"><i class="fas fa-bars text-xl"></i></button>
           <h1 class="text-xl font-bold"><%= group.name %></h1>
         </header>
-
         <div id="message-container" class="flex-grow overflow-y-auto p-4 sm:p-6 space-y-6">
           <% messages.forEach(msg => { %>
             <div class="message-bubble w-full flex <%= msg.user_id == user.id ? 'justify-end' : 'justify-start' %>" data-message-id="<%= msg.id %>">
@@ -142,7 +99,11 @@
                       <strong><%= msg.parent_username %></strong>: <%= msg.message.substring(0, 50) %>...
                     </div>
                   <% } %>
-                  <p class="text-base break-words mt-1"><%= msg.message %></p>
+                  <% if (msg.is_code_snippet) { %>
+                    <pre><code class="language-<%= msg.language %> code-snippet"><%- msg.message %></code></pre>
+                  <% } else { %>
+                    <p class="text-base break-words mt-1"><%= msg.message %></p>
+                  <% } %>
                   <div class="reactions-container flex gap-1 mt-2">
                     <% reactions.filter(r => r.message_id === msg.id).forEach(reaction => { %>
                       <span class="bg-gray-800 bg-opacity-50 text-xs px-2 py-1 rounded-full cursor-pointer"><%= reaction.emoji %></span>
@@ -161,7 +122,6 @@
             </div>
           <% }) %>
         </div>
-        
         <div class="p-4 sm:p-6 border-t border-white/10 flex-shrink-0">
           <div id="typing-indicator" class="h-5 text-sm text-gray-400 italic"></div>
           <div id="reply-info" class="hidden bg-black bg-opacity-20 p-2 rounded-t-lg text-sm mb-2">
@@ -170,14 +130,11 @@
           </div>
           <form id="message-form" class="relative flex items-center gap-2 sm:gap-4">
             <div id="emoji-picker" class="hidden absolute bottom-full mb-2 bg-gray-800/80 backdrop-blur-md border border-white/10 rounded-lg p-2 shadow-lg">
-                <div class="grid grid-cols-8 gap-1">
-                    <!-- Emojis will be dynamically inserted here -->
-                </div>
+                <div class="grid grid-cols-8 gap-1"></div>
             </div>
-            <button type="button" id="emoji-btn" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 text-lg">
-                <i class="far fa-smile"></i>
-            </button>
-            <input id="message-input" class="flex-grow p-3 pl-10 bg-gray-800 bg-opacity-50 border border-transparent rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 transition" placeholder="Type a message..." autocomplete="off">
+            <button type="button" id="code-snippet-btn" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 text-lg"><i class="fas fa-code"></i></button>
+            <button type="button" id="emoji-btn" class="absolute left-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 text-lg"><i class="far fa-smile"></i></button>
+            <input id="message-input" class="flex-grow p-3 pl-20 bg-gray-800 bg-opacity-50 border border-transparent rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 transition" placeholder="Type a message..." autocomplete="off">
             <button type="submit" class="bg-gradient-to-r from-sky-500 to-indigo-500 text-white px-5 py-3 rounded-lg hover:from-sky-600 hover:to-indigo-600 transition-all shadow-md"><i class="fas fa-paper-plane"></i></button>
           </form>
         </div>
@@ -198,9 +155,7 @@
                 <% if (file.mimetype && file.mimetype.startsWith('image/')) { %>
                   <img src="<%= file.filepath %>" alt="<%= file.filename %>" class="w-full h-32 object-cover rounded-md mb-2">
                 <% } else { %>
-                  <div class="w-full h-32 rounded-md mb-2 bg-gray-700 flex items-center justify-center">
-                    <i class="fas fa-file-alt text-4xl text-gray-500"></i>
-                  </div>
+                  <div class="w-full h-32 rounded-md mb-2 bg-gray-700 flex items-center justify-center"><i class="fas fa-file-alt text-4xl text-gray-500"></i></div>
                 <% } %>
                 <a href="<%= file.filepath %>" target="_blank" class="text-blue-400 hover:underline text-sm break-all font-medium"><%= file.filename %></a>
                 <div class="flex justify-between items-center mt-2">
@@ -215,10 +170,76 @@
     </div>
   </div>
 
+  <!-- NEW: Calendar Modal -->
+  <div id="calendar-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
+      <div class="glass-ui rounded-2xl shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col m-4">
+          <header class="p-4 border-b border-white/10 flex justify-between items-center">
+              <h2 class="text-xl font-bold">Group Calendar</h2>
+              <button id="close-calendar-modal-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times text-2xl"></i></button>
+          </header>
+          <div class="flex-grow p-6 overflow-y-auto">
+              <div id="calendar-events-list" class="space-y-4"></div>
+          </div>
+          <div class="p-4 border-t border-white/10">
+              <form id="add-event-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                  <input type="text" id="event-title" placeholder="Event Title" class="p-2 bg-gray-800/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500" required>
+                  <input type="date" id="event-date" class="p-2 bg-gray-800/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500" required>
+                  <button type="submit" class="bg-violet-600 text-white py-2 rounded-lg hover:bg-violet-700">Add Event</button>
+              </form>
+          </div>
+      </div>
+  </div>
+
+  <!-- NEW: Code Snippet Modal -->
+  <div id="code-snippet-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
+      <div class="glass-ui rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col m-4">
+          <header class="p-4 border-b border-white/10 flex justify-between items-center">
+              <h2 class="text-xl font-bold">Share Code Snippet</h2>
+              <button id="close-code-modal-btn" class="text-gray-400 hover:text-white"><i class="fas fa-times text-2xl"></i></button>
+          </header>
+          <div class="p-6">
+              <form id="code-snippet-form">
+                  <div class="mb-4">
+                      <label for="language-select" class="block text-sm font-medium text-gray-300 mb-1">Language</label>
+                      <select id="language-select" class="w-full p-2 bg-gray-800/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500">
+                          <option value="javascript">JavaScript</option>
+                          <option value="python">Python</option>
+                          <option value="html">HTML</option>
+                          <option value="css">CSS</option>
+                          <option value="sql">SQL</option>
+                          <option value="plaintext">Plain Text</option>
+                      </select>
+                  </div>
+                  <div class="mb-4">
+                      <label for="code-input" class="block text-sm font-medium text-gray-300 mb-1">Code</label>
+                      <textarea id="code-input" rows="10" class="w-full p-2 bg-gray-800/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono text-sm" placeholder="Paste your code here..."></textarea>
+                  </div>
+                  <button type="submit" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Share Snippet</button>
+              </form>
+          </div>
+      </div>
+  </div>
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tsparticles@1.37.5/dist/tsparticles.min.js"></script>
+  <!-- NEW: Syntax Highlighting JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      hljs.highlightAll();
+      const socket = io({ query: { userId: '<%= user.id %>', username: '<%= user.username %>' } });
+      const room = 'group-<%= group.id %>';
+      const groupId = '<%= group.id %>';
+      const currentUserId = '<%= user.id %>';
+      const currentUsername = '<%= user.username %>';
+      const currentUserRole = '<%= userRole %>';
+      
+      const messageContainer = document.getElementById('message-container');
+      const messageForm = document.getElementById('message-form');
+      const messageInput = document.getElementById('message-input');
+      const typingIndicator = document.getElementById('typing-indicator');
+      const userList = document.getElementById('user-list');
+
       // --- Particle Background ---
       const particleConfig = { particles: { number: { value: 50, density: { enable: true, value_area: 800 } }, color: { value: "#ffffff" }, shape: { type: "circle" }, opacity: { value: 0.3, random: true }, size: { value: 2, random: true }, line_linked: { enable: false }, move: { enable: true, speed: 1.5, direction: "none", random: true, straight: false, out_mode: "out" } }, interactivity: { detect_on: "canvas", events: { onhover: { enable: true, mode: "bubble" }, onclick: { enable: false } }, modes: { bubble: { distance: 200, size: 4, duration: 2, opacity: 0.8 } } }, retina_detect: true };
       if (window.particlesJS) { particlesJS('particles-js', particleConfig); }
@@ -235,7 +256,6 @@
       // --- Emoji Picker Logic ---
       const emojiBtn = document.getElementById('emoji-btn');
       const emojiPicker = document.getElementById('emoji-picker');
-      const messageInput = document.getElementById('message-input');
       const emojis = ['😀', '😂', '😍', '🤔', '👍', '❤️', '🔥', '🎉', '👋', '😢', '🙏', '🚀', '💻', '💡', '💯', '🤯', '😊', '🥳', '😎', '🙌', '👀', '✅', '✨', '👏'];
       const emojiGrid = emojiPicker.querySelector('.grid');
       emojis.forEach(emoji => {
@@ -248,37 +268,104 @@
       emojiBtn.addEventListener('click', (e) => { e.stopPropagation(); emojiPicker.classList.toggle('hidden'); });
       document.addEventListener('click', (e) => { if (!emojiPicker.contains(e.target) && !emojiBtn.contains(e.target)) { emojiPicker.classList.add('hidden'); } });
 
-      // --- All Files Modal Logic ---
+      // --- Modals Logic (Files, Calendar, Code) ---
       const filesModal = document.getElementById('files-modal');
       const openFilesModalBtn = document.getElementById('view-files-btn');
       const closeFilesModalBtn = document.getElementById('close-files-modal-btn');
-      const modalFileList = document.getElementById('modal-file-list');
       openFilesModalBtn.addEventListener('click', () => filesModal.classList.remove('hidden'));
       closeFilesModalBtn.addEventListener('click', () => filesModal.classList.add('hidden'));
       filesModal.addEventListener('click', (e) => { if (e.target === filesModal) { filesModal.classList.add('hidden'); } });
 
-      // --- ALL EXISTING CHAT LOGIC (WITH MODIFICATIONS FOR FILES & DELETE) ---
-      const socket = io({ query: { userId: '<%= user.id %>', username: '<%= user.username %>' } });
-      const room = 'group-<%= group.id %>';
-      const currentUserId = '<%= user.id %>';
-      const currentUsername = '<%= user.username %>';
-      const currentUserRole = '<%= userRole %>';
-      const messageContainer = document.getElementById('message-container');
-      const messageForm = document.getElementById('message-form');
-      const typingIndicator = document.getElementById('typing-indicator');
-      const userList = document.getElementById('user-list');
+      const calendarModal = document.getElementById('calendar-modal');
+      const openCalendarBtn = document.getElementById('view-calendar-btn');
+      const closeCalendarBtn = document.getElementById('close-calendar-modal-btn');
+      openCalendarBtn.addEventListener('click', () => { fetchAndRenderEvents(); calendarModal.classList.remove('hidden'); });
+      closeCalendarBtn.addEventListener('click', () => calendarModal.classList.add('hidden'));
+
+      const codeModal = document.getElementById('code-snippet-modal');
+      const openCodeBtn = document.getElementById('code-snippet-btn');
+      const closeCodeBtn = document.getElementById('close-code-modal-btn');
+      openCodeBtn.addEventListener('click', () => codeModal.classList.remove('hidden'));
+      closeCodeBtn.addEventListener('click', () => codeModal.classList.add('hidden'));
+
+      // --- Calendar Logic ---
+      const eventsList = document.getElementById('calendar-events-list');
+      const addEventForm = document.getElementById('add-event-form');
       
+      async function fetchAndRenderEvents() {
+          const response = await fetch(`/chat/${groupId}/events`);
+          const events = await response.json();
+          renderEvents(events);
+      }
+
+      function renderEvents(events) {
+          eventsList.innerHTML = '';
+          if (events.length === 0) {
+              eventsList.innerHTML = '<p class="text-gray-400">No events scheduled yet.</p>';
+              return;
+          }
+          events.forEach(event => {
+              const eventEl = document.createElement('div');
+              eventEl.className = 'p-3 rounded-lg bg-black/20';
+              eventEl.dataset.eventId = event.id;
+              let deleteBtnHtml = '';
+              if (event.user_id == currentUserId || ['owner', 'admin'].includes(currentUserRole)) {
+                  deleteBtnHtml = `<button data-event-id="${event.id}" class="delete-event-btn text-red-500 hover:text-red-400 text-xs"><i class="fas fa-trash"></i></button>`;
+              }
+              eventEl.innerHTML = `
+                  <div class="flex justify-between items-start">
+                      <div>
+                          <p class="font-bold">${event.title}</p>
+                          <p class="text-sm text-gray-400">${new Date(event.event_date).toLocaleDateString()}</p>
+                          <p class="text-xs text-gray-500 mt-1">Added by ${event.username}</p>
+                      </div>
+                      ${deleteBtnHtml}
+                  </div>
+              `;
+              eventsList.appendChild(eventEl);
+          });
+      }
+
+      addEventForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const title = document.getElementById('event-title').value;
+          const event_date = document.getElementById('event-date').value;
+          await fetch(`/chat/${groupId}/events/create`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ title, description: '', event_date })
+          });
+          addEventForm.reset();
+      });
+
+      eventsList.addEventListener('click', (e) => {
+          const deleteBtn = e.target.closest('.delete-event-btn');
+          if (deleteBtn) {
+              const eventId = deleteBtn.dataset.eventId;
+              if (confirm('Delete this event?')) {
+                  socket.emit('deleteEvent', { room, eventId });
+              }
+          }
+      });
+
+      // --- Code Snippet Logic ---
+      const codeSnippetForm = document.getElementById('code-snippet-form');
+      codeSnippetForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const language = document.getElementById('language-select').value;
+          const code = document.getElementById('code-input').value;
+          if (code) {
+              socket.emit('chatMessage', { room, userId: currentUserId, username: currentUsername, message: code, parentId: null, isCodeSnippet: true, language });
+              codeSnippetForm.reset();
+              codeModal.classList.add('hidden');
+          }
+      });
+
+      // --- Socket Listeners ---
       socket.emit('joinRoom', room);
       socket.on('updateUserList', (users) => { userList.innerHTML = users.map(user => `<li><i class="fas fa-circle text-green-500 text-xs mr-2"></i>${user}</li>`).join(''); });
       socket.on('chatMessage', (msg) => { appendMessage(msg); });
-      
-      socket.on('newFile', (file) => {
-          // Add file to the modal list
-          addFileToModal(file);
-          // Add file as a message in the chat
-          appendFileMessage(file);
-      });
-
+      socket.on('newFile', (file) => { addFileToModal(file); appendFileMessage(file); });
       socket.on('reactionAdded', ({ messageId, emoji }) => {
           const messageBubble = document.querySelector(`.message-bubble[data-message-id='${messageId}']`);
           if (messageBubble) {
@@ -289,8 +376,6 @@
             reactionsContainer.appendChild(reactionEl);
           }
       });
-      
-      // --- NEW: LISTENERS FOR DELETION ---
       socket.on('messageDeleted', (messageId) => {
           const messageEl = document.querySelector(`.message-bubble[data-message-id='${messageId}']`);
           if (messageEl) messageEl.remove();
@@ -301,6 +386,11 @@
           const fileInChat = document.querySelector(`.message-bubble[data-filepath='${filepath}']`);
           if (fileInChat) fileInChat.remove();
       });
+      socket.on('newEvent', (event) => { fetchAndRenderEvents(); });
+      socket.on('eventDeleted', (eventId) => {
+          const eventEl = document.querySelector(`.p-3[data-event-id='${eventId}']`);
+          if (eventEl) eventEl.remove();
+      });
 
       messageContainer.scrollTop = messageContainer.scrollHeight;
       let currentParentId = null;
@@ -308,7 +398,7 @@
           e.preventDefault();
           const message = messageInput.value.trim();
           if (message) {
-            socket.emit('chatMessage', { room, userId: currentUserId, username: currentUsername, message, parentId: currentParentId });
+            socket.emit('chatMessage', { room, userId: currentUserId, username: currentUsername, message, parentId: currentParentId, isCodeSnippet: false, language: null });
             messageInput.value = '';
             cancelReply();
           }
@@ -343,7 +433,6 @@
               socket.emit('addReaction', { messageId, userId: currentUserId, emoji });
             }
           }
-          // --- NEW: DELETE MESSAGE LOGIC ---
           const deleteBtn = e.target.closest('.delete-btn');
           if (deleteBtn) {
               const messageId = deleteBtn.dataset.messageId;
@@ -352,7 +441,7 @@
               }
           }
       });
-      // --- NEW: DELETE FILE LOGIC ---
+      const modalFileList = document.getElementById('modal-file-list');
       modalFileList.addEventListener('click', (e) => {
           const deleteBtn = e.target.closest('.delete-file-btn');
           if (deleteBtn) {
@@ -383,12 +472,20 @@
           if (msg.user_id == currentUserId || ['owner', 'admin'].includes(currentUserRole)) {
               deleteBtnHtml = `<button class="delete-btn hover:text-red-400" data-message-id="${msg.id}"><i class="fas fa-trash"></i></button>`;
           }
+          let messageContent = '';
+          if (msg.is_code_snippet) {
+              // Use <%- %> to output raw HTML, and escape the content for security
+              const escapedCode = msg.message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+              messageContent = `<pre><code class="language-${msg.language} code-snippet">${escapedCode}</code></pre>`;
+          } else {
+              messageContent = `<p class="text-base break-words mt-1">${msg.message}</p>`;
+          }
           div.innerHTML = `
               <div class="max-w-md md:max-w-lg">
                 <div class="rounded-xl px-4 py-2 ${msg.user_id == currentUserId ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white' : 'bg-gray-700 bg-opacity-50 text-gray-200'}">
                   <div class="font-bold text-sm">${msg.username}</div>
                   ${replyHtml}
-                  <p class="text-base break-words mt-1">${msg.message}</p>
+                  ${messageContent}
                   <div class="reactions-container flex gap-1 mt-2"></div>
                 </div>
                 <div class="flex items-center gap-2 mt-1 px-2 text-xs text-gray-500 ${msg.user_id == currentUserId ? 'justify-end' : ''}">
@@ -399,6 +496,12 @@
                 </div>
               </div>`;
           messageContainer.appendChild(div);
+          // Re-run highlighter on the new element
+          if (msg.is_code_snippet) {
+              div.querySelectorAll('pre code').forEach((block) => {
+                  hljs.highlightElement(block);
+              });
+          }
           messageContainer.scrollTop = messageContainer.scrollHeight;
       }
       function addFileToModal(file) {
@@ -426,7 +529,7 @@
       function appendFileMessage(file) {
           const div = document.createElement('div');
           div.className = 'message-bubble w-full flex justify-center'; 
-          div.dataset.filepath = file.filepath; // Important for finding and deleting later
+          div.dataset.filepath = file.filepath;
           let filePreview = '';
           if (file.mimetype && file.mimetype.startsWith('image/')) {
             filePreview = `<img src="${file.filepath}" alt="${file.filename}" class="w-full h-auto rounded-lg mt-2 max-w-xs">`;
