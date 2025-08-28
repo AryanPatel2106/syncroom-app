@@ -55,9 +55,9 @@
 
     <!-- Header Section -->
     <header class="flex justify-between items-center mb-8 fade-in">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Welcome, User!</h1>
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Welcome, <%= user.username %>!</h1>
       <div class="flex items-center gap-4">
-        <a href="#" class="text-sm text-gray-600 dark:text-gray-400 hover:underline">Logout</a>
+        <a href="/logout" class="text-sm text-gray-600 dark:text-gray-400 hover:underline">Logout</a>
         <button id="theme-toggle" class="px-3 py-2 text-lg rounded-full bg-white/50 dark:bg-gray-800/50 hover:bg-white dark:hover:bg-gray-700 transition">
           <i id="theme-toggle-dark-icon" class="fas fa-moon"></i>
           <i id="theme-toggle-light-icon" class="fas fa-sun" style="display: none;"></i>
@@ -77,39 +77,25 @@
 
     <!-- Groups Grid -->
     <div id="groupsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 fade-in" style="animation-delay: 0.2s;">
-        <!-- Example Group Card 1 -->
-        <div class="group-card glass-card rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 p-6 flex flex-col justify-between">
+      <% if (groups.length === 0) { %>
+        <div class="col-span-full text-center py-16">
+          <p class="text-gray-500 dark:text-gray-400">You haven't joined or created any groups yet.</p>
+          <p class="text-gray-400 dark:text-gray-500 mt-2">Click the '+' button to get started!</p>
+        </div>
+      <% } else { %>
+        <% groups.forEach((group, index) => { %>
+          <div class="group-card glass-card rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 p-6 flex flex-col justify-between">
             <div>
               <div class="flex justify-between items-start">
-                  <h3 class="font-bold group-name text-xl mb-2 text-gray-900 dark:text-white">Project Phoenix</h3>
-                  <span class="text-xs capitalize bg-gray-500/20 text-gray-800 dark:text-gray-300 px-2 py-1 rounded-full font-medium">Admin</span>
+                  <h3 class="font-bold group-name text-xl mb-2 text-gray-900 dark:text-white"><%= group.name %></h3>
+                  <span class="text-xs capitalize bg-gray-500/20 text-gray-800 dark:text-gray-300 px-2 py-1 rounded-full font-medium"><%= group.role %></span>
               </div>
-              <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">You are an admin of this group.</p>
+              <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">You are a <%= group.role %> of this group.</p>
             </div>
-            <a href="#" class="text-center w-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-semibold py-2 px-4 rounded-lg hover:from-violet-600 hover:to-fuchsia-600 transition-all duration-300 shadow-md">Enter Chat</a>
-        </div>
-        <!-- Example Group Card 2 -->
-        <div class="group-card glass-card rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 p-6 flex flex-col justify-between">
-            <div>
-              <div class="flex justify-between items-start">
-                  <h3 class="font-bold group-name text-xl mb-2 text-gray-900 dark:text-white">Marketing Team</h3>
-                  <span class="text-xs capitalize bg-gray-500/20 text-gray-800 dark:text-gray-300 px-2 py-1 rounded-full font-medium">Member</span>
-              </div>
-              <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">You are a member of this group.</p>
-            </div>
-            <a href="#" class="text-center w-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-semibold py-2 px-4 rounded-lg hover:from-violet-600 hover:to-fuchsia-600 transition-all duration-300 shadow-md">Enter Chat</a>
-        </div>
-        <!-- Example Group Card 3 -->
-        <div class="group-card glass-card rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 p-6 flex flex-col justify-between">
-            <div>
-              <div class="flex justify-between items-start">
-                  <h3 class="font-bold group-name text-xl mb-2 text-gray-900 dark:text-white">Q3 Brainstorm</h3>
-                  <span class="text-xs capitalize bg-gray-500/20 text-gray-800 dark:text-gray-300 px-2 py-1 rounded-full font-medium">Member</span>
-              </div>
-              <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">You are a member of this group.</p>
-            </div>
-            <a href="#" class="text-center w-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-semibold py-2 px-4 rounded-lg hover:from-violet-600 hover:to-fuchsia-600 transition-all duration-300 shadow-md">Enter Chat</a>
-        </div>
+            <a href="/chat/<%= group.id %>" class="text-center w-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-semibold py-2 px-4 rounded-lg hover:from-violet-600 hover:to-fuchsia-600 transition-all duration-300 shadow-md">Enter Chat</a>
+          </div>
+        <% }) %>
+      <% } %>
     </div>
   </div>
 
@@ -137,7 +123,7 @@
       <!-- Create Group Form -->
       <div id="create-form">
         <h2 class="text-2xl font-semibold mb-4">Create a New Group</h2>
-        <form action="#" method="POST" class="space-y-4">
+        <form action="/groups/create" method="POST" class="space-y-4">
           <input type="text" name="name" placeholder="Group Name" class="w-full p-3 border-2 border-transparent rounded-lg dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-violet-500" required>
           <input type="password" name="key" placeholder="Group Key (Password)" class="w-full p-3 border-2 border-transparent rounded-lg dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-violet-500" required>
           <button type="submit" class="w-full bg-violet-500 text-white py-3 rounded-lg font-semibold hover:bg-violet-600 transition-colors">Create Group</button>
@@ -147,7 +133,7 @@
       <!-- Join Group Form -->
       <div id="join-form" class="hidden">
         <h2 class="text-2xl font-semibold mb-4">Join an Existing Group</h2>
-        <form action="#" method="POST" class="space-y-4">
+        <form action="/groups/join" method="POST" class="space-y-4">
           <input type="text" name="name" placeholder="Group Name" class="w-full p-3 border-2 border-transparent rounded-lg dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500" required>
           <input type="password" name="key" placeholder="Group Key (Password)" class="w-full p-3 border-2 border-transparent rounded-lg dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500" required>
           <button type="submit" class="w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition-colors">Join Group</button>
