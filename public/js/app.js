@@ -176,6 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const path = window.location.pathname;
         const chatMatch = path.match(/^\/chat\/(\d+)$/);
+        const manageMatch = path.match(/^\/manage\/(\d+)$/);
 
         try {
             const session = await api.get('/api/session');
@@ -188,6 +189,8 @@ document.addEventListener('DOMContentLoaded', () => {
             renderHome();
         } else if (chatMatch && currentUser) {
             renderChat(chatMatch[1]);
+        } else if (manageMatch && currentUser) {
+            renderManageGroup(manageMatch[1]);
         } else if (path === '/groups' && currentUser) {
             renderGroups();
         } else if (path === '/register' && !currentUser) {
@@ -232,6 +235,50 @@ document.addEventListener('DOMContentLoaded', () => {
              navigateTo('/groups');
         }
     };
+    
+    // --- NEW: RENDER MANAGE GROUP PAGE ---
+    const renderManageGroup = async (groupId) => {
+        try {
+            const data = await api.get(`/api/manage/${groupId}`);
+            // We need a new template for the manage page, for now, we'll build it here
+            const manageHtml = `
+                <div class="relative min-h-screen container mx-auto p-4 md:p-8 text-white">
+                     <div class="max-w-4xl mx-auto bg-gray-800 p-6 rounded-lg shadow-lg">
+                        <h1 class="text-2xl font-bold mb-4">Manage Group: ${data.group.name}</h1>
+                        <a href="/chat/${data.groupId}" class="text-blue-400 hover:underline mb-6 block">&larr; Back to Chat</a>
+                        <h2 class="text-xl font-semibold mb-2">Members</h2>
+                        <div id="members-list" class="space-y-4">
+                            ${data.members.map(member => `
+                                <div class="flex justify-between items-center p-3 bg-gray-700 rounded-md">
+                                    <div>
+                                        <p class="font-bold">${member.username}</p>
+                                        <p class="text-sm text-gray-400 capitalize">${member.role}</p>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        ${data.user.role === 'owner' && member.role === 'member' ? `
+                                            <form class="promote-form" data-user-id="${member.id}" data-group-id="${data.groupId}">
+                                                <button type="submit" class="bg-green-500 text-white px-3 py-1 rounded-md text-sm hover:bg-green-600">Promote</button>
+                                            </form>
+                                        ` : ''}
+                                        ${(data.user.role === 'owner' || data.user.role === 'admin') && member.role !== 'owner' && member.id !== data.user.id ? `
+                                            <form class="kick-form" data-user-id="${member.id}" data-group-id="${data.groupId}">
+                                                <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600">Kick</button>
+                                            </form>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            render(manageHtml);
+            attachManageListeners();
+        } catch(err) {
+            navigateTo('/groups');
+        }
+    };
+
 
     const attachAuthListeners = () => {
         const loginForm = document.getElementById('login-form');
@@ -321,6 +368,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     
+    // --- NEW: MANAGE LISTENERS ---
+    const attachManageListeners = () => {
+        document.querySelectorAll('.kick-form').forEach(form => {
+            form.addEventListener('submit', async e => {
+                e.preventDefault();
+                const { userId, groupId } = e.target.dataset;
+                await api.post(`/api/manage/${groupId}/kick`, { userIdToKick: userId });
+                router(); // Re-render the page
+            });
+        });
+        document.querySelectorAll('.promote-form').forEach(form => {
+            form.addEventListener('submit', async e => {
+                e.preventDefault();
+                const { userId, groupId } = e.target.dataset;
+                await api.post(`/api/manage/${groupId}/promote`, { userIdToPromote: userId });
+                router(); // Re-render the page
+            });
+        });
+    };
+
     // --- CHAT UI BUILDER AND LOGIC ---
     const buildChatUI = (data) => {
         const sidebar = document.getElementById('chat-sidebar');
@@ -556,4 +623,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- INITIALIZATION ---
     router();
 });
+
+" and the current time is Friday, August 29, 2025 at 12:53 PM. I want to add some functionality to the website.
 
