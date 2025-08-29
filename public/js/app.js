@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
         `,
-        chat: (data) => `
+        chat: () => `
             <div id="particles-js" class="fixed top-0 left-0 w-full h-full z-0"></div>
             <div class="relative z-10 h-full p-2 sm:p-4">
                 <div class="glass-ui rounded-2xl shadow-2xl h-full flex overflow-hidden">
@@ -138,11 +138,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     </main>
                 </div>
             </div>
-            <!-- Modals are generated dynamically -->
+            <!-- Modals are generated dynamically below -->
         `
     };
 
-    // --- API & RENDER HELPERS ---
     const api = {
         get: (url) => fetch(url).then(res => res.ok ? res.json() : Promise.reject(res)),
         post: (url, data) => fetch(url, {
@@ -154,6 +153,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const render = (html) => {
         appRoot.innerHTML = html;
+        const oldModals = document.getElementById('modals-container');
+        if(oldModals) oldModals.remove();
+
         if (window.vantaEffect) {
             window.vantaEffect.destroy();
             window.vantaEffect = null;
@@ -165,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    // --- ROUTER & PAGE RENDERERS ---
+    // --- CORRECTED ROUTER ---
     const router = async () => {
         if (currentSocket) {
             currentSocket.disconnect();
@@ -182,7 +184,9 @@ document.addEventListener('DOMContentLoaded', () => {
             currentUser = null;
         }
 
-        if (chatMatch && currentUser) {
+        if (path === '/') {
+            renderHome();
+        } else if (chatMatch && currentUser) {
             renderChat(chatMatch[1]);
         } else if (path === '/groups' && currentUser) {
             renderGroups();
@@ -193,9 +197,18 @@ document.addEventListener('DOMContentLoaded', () => {
             render(templates.login());
             attachAuthListeners();
         } else if (currentUser) {
-             navigateTo('/groups');
+            navigateTo('/groups'); // User is logged in but tried an invalid URL
         } else {
-             render(templates.home({user: null}));
+            navigateTo('/login'); // User is logged out and tried to access a protected page
+        }
+    };
+
+    const renderHome = async () => {
+        try {
+            const session = await api.get('/api/session');
+            render(templates.home(session));
+        } catch (e) {
+            render(templates.home({ user: null }));
         }
     };
 
@@ -212,20 +225,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderChat = async (groupId) => {
         try {
             const data = await api.get(`/api/chat/${groupId}`);
-            render(templates.chat(data)); // Render the main shell
-            
-            // Now, dynamically build and inject the rest of the chat UI
+            render(templates.chat()); 
             buildChatUI(data);
-            
-            // And finally, initialize all the interactive logic
             initializeChatLogic(data);
-
         } catch (err) {
              navigateTo('/groups');
         }
     };
 
-    // --- EVENT LISTENERS & UI BUILDERS ---
     const attachAuthListeners = () => {
         const loginForm = document.getElementById('login-form');
         if (loginForm) {
@@ -269,7 +276,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('open-modal-btn').addEventListener('click', () => modal.classList.remove('hidden'));
         document.getElementById('close-modal-btn').addEventListener('click', () => modal.classList.add('hidden'));
 
-        // Tab switching for create/join
         const createTab = document.getElementById('create-tab-btn');
         const joinTab = document.getElementById('join-tab-btn');
         const createForm = document.getElementById('create-group-form-container');
@@ -278,17 +284,16 @@ document.addEventListener('DOMContentLoaded', () => {
         createTab.addEventListener('click', () => {
             createForm.classList.remove('hidden');
             joinForm.classList.add('hidden');
-            createTab.classList.add('active-tab', 'text-violet-400', 'border-violet-500');
-            joinTab.classList.remove('active-tab', 'text-violet-400', 'border-violet-500');
+            createTab.classList.add('text-violet-400', 'border-violet-500');
+            joinTab.classList.remove('text-violet-400', 'border-violet-500');
         });
 
         joinTab.addEventListener('click', () => {
             joinForm.classList.remove('hidden');
             createForm.classList.add('hidden');
-            joinTab.classList.add('active-tab', 'text-violet-400', 'border-violet-500');
-            createTab.classList.remove('active-tab', 'text-violet-400', 'border-violet-500');
+            joinTab.classList.add('text-violet-400', 'border-violet-500');
+            createTab.classList.remove('text-violet-400', 'border-violet-500');
         });
-
 
         document.getElementById('create-group-form').addEventListener('submit', async e => {
             e.preventDefault();
@@ -321,7 +326,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const sidebar = document.getElementById('chat-sidebar');
         const mainChat = document.querySelector('.main-chat');
 
-        // Build Sidebar
         sidebar.innerHTML = `
             <div class="p-4">
                 <div class="flex justify-between items-center mb-4">
@@ -352,7 +356,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
-        // Build Main Chat Area
         const messagesHtml = data.messages.map(msg => buildMessageHtml(msg, data)).join('');
         mainChat.innerHTML = `
             <header class="mobile-header p-4 border-b border-white/10 items-center flex-shrink-0">
@@ -376,8 +379,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
         
-        // Build Modals and append them to the body
         const modalsContainer = document.createElement('div');
+        modalsContainer.id = 'modals-container';
         modalsContainer.innerHTML = buildModalsHtml(data);
         document.body.appendChild(modalsContainer);
     };
@@ -390,9 +393,10 @@ document.addEventListener('DOMContentLoaded', () => {
             deleteBtnHtml = `<button class="delete-btn hover:text-red-400" data-message-id="${msg.id}"><i class="fas fa-trash"></i></button>`;
         }
         
-        let messageContentHtml = '';
+        let messageContentHtml;
         if (msg.is_code_snippet) {
-            messageContentHtml = `<pre><code class="language-${msg.language || 'plaintext'} hljs">${msg.message}</code></pre>`;
+             const escapedCode = msg.message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+             messageContentHtml = `<pre><code class="language-${msg.language || 'plaintext'} hljs">${escapedCode}</code></pre>`;
         } else {
             messageContentHtml = `<p class="text-base break-words mt-1">${msg.message}</p>`;
         }
@@ -467,13 +471,19 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const initializeChatLogic = (data) => {
-      // Re-initialize all scripts and listeners from the original chat.ejs
-      currentSocket = io({ query: { userId: data.user.id, username: data.user.username } });
       const room = `group-${data.group.id}`;
+      currentSocket = io({ query: { userId: data.user.id, username: data.user.username } });
       
       const messageContainer = document.getElementById('message-container');
       const userList = document.getElementById('user-list');
-      const modalFileList = document.getElementById('modal-file-list');
+      const messageForm = document.getElementById('message-form');
+      const messageInput = document.getElementById('message-input');
+      const typingIndicator = document.getElementById('typing-indicator');
+      let currentParentId = null;
+
+      // Initial setup
+      messageContainer.scrollTop = messageContainer.scrollHeight;
+      if (document.querySelector('code')) hljs.highlightAll();
       
       // Sidebar toggle
       document.getElementById('sidebar-toggle-btn').addEventListener('click', () => {
@@ -489,13 +499,30 @@ document.addEventListener('DOMContentLoaded', () => {
           document.getElementById('sidebar-backdrop').classList.remove('is-open');
       });
 
-      // Socket listeners
+      // Socket Emitters
       currentSocket.emit('joinRoom', room);
+      messageForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const message = messageInput.value.trim();
+          if (message) {
+              currentSocket.emit('chatMessage', { room, userId: currentUser.id, username: currentUser.username, message, parentId: currentParentId });
+              messageInput.value = '';
+              cancelReply();
+          }
+      });
+
+      let typingTimeout;
+      messageInput.addEventListener('input', () => {
+        currentSocket.emit('typing', { room, username: currentUser.username });
+        clearTimeout(typingTimeout);
+      });
+
+      // Socket Listeners
       currentSocket.on('updateUserList', (users) => { userList.innerHTML = users.map(user => `<li><i class="fas fa-circle text-green-500 text-xs mr-2"></i>${user}</li>`).join(''); });
-      currentSocket.on('chatMessage', (msg) => { 
-          const newMsgEl = document.createElement('div');
-          newMsgEl.innerHTML = buildMessageHtml(msg, data);
-          messageContainer.appendChild(newMsgEl.firstElementChild);
+      currentSocket.on('chatMessage', (msg) => {
+          const div = document.createElement('div');
+          div.innerHTML = buildMessageHtml(msg, data);
+          messageContainer.appendChild(div.firstElementChild);
           messageContainer.scrollTop = messageContainer.scrollHeight;
           if (msg.is_code_snippet) hljs.highlightAll();
       });
@@ -503,26 +530,14 @@ document.addEventListener('DOMContentLoaded', () => {
           const msgEl = document.querySelector(`.message-bubble[data-message-id='${messageId}']`);
           if (msgEl) msgEl.remove();
       });
-
-      // All other listeners from chat.ejs go here...
-      // This includes form submissions, button clicks for modals, etc.
-      // This is a simplified example to show the structure.
-      const messageForm = document.getElementById('message-form');
-      const messageInput = document.getElementById('message-input');
-      messageForm.addEventListener('submit', (e) => {
-          e.preventDefault();
-          const message = messageInput.value.trim();
-          if (message) {
-              currentSocket.emit('chatMessage', { room, userId: currentUser.id, username: currentUser.username, message });
-              messageInput.value = '';
-          }
+      currentSocket.on('typing', ({ username }) => {
+        typingIndicator.textContent = `${username} is typing...`;
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => typingIndicator.textContent = '', 3000);
       });
       
-      if (document.querySelector('code')) {
-          hljs.highlightAll();
-      }
+      // ... Add all other chat logic (modals, clicks, etc.) here
     };
-
 
     // --- NAVIGATION ---
     const navigateTo = (path) => {
