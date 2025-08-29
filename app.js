@@ -61,7 +61,12 @@ app.use(session({
   cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }
 }));
 
-// This middleware is now used for API routes
+// --- CORRECTED: RESTORED THE ORIGINAL isAuthenticated for form-based submissions ---
+const isAuthenticated = (req, res, next) => {
+  if (req.session.user) next();
+  else res.redirect('/login');
+};
+
 const isAuthenticatedAPI = (req, res, next) => {
   if (req.session.user) next();
   else res.status(401).json({ error: 'Not authenticated' });
@@ -86,7 +91,6 @@ const checkGroupRoleAPI = (roles) => async (req, res, next) => {
 
 // --- API ROUTES ---
 
-// Check session status
 app.get('/api/session', (req, res) => {
     if (req.session.user) {
         res.json({ user: req.session.user });
@@ -207,7 +211,7 @@ app.get('/api/chat/:groupId', isAuthenticatedAPI, checkGroupRoleAPI(['owner', 'a
   }
 });
 
-// File upload remains largely the same, but redirects to the SPA route
+// --- CORRECTED: Use the original isAuthenticated for the upload route ---
 app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async (req, res) => {
   const { groupId } = req.params;
   const filepath = req.file.path;
@@ -218,14 +222,13 @@ app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async 
     const result = await db.query( "INSERT INTO files (group_id, user_id, filename, filepath, mimetype) VALUES ($1, $2, $3, $4, $5) RETURNING *", [groupId, req.session.user.id, filename, filepath, mimetype] );
     const newFile = { ...result.rows[0], username: req.session.user.username };
     io.to(`group-${groupId}`).emit('newFile', newFile);
-    res.redirect('/chat/' + groupId); // The client-side router will handle this
+    res.redirect('/chat/' + groupId); 
   } catch (err) {
     console.error("File upload error:", err);
     res.status(500).send("Server error");
   }
 });
 
-// Calendar routes remain the same as they were already API-like
 app.get('/chat/:groupId/events', isAuthenticatedAPI, checkGroupRoleAPI(['owner', 'admin', 'member']), async (req, res) => {
     const { groupId } = req.params;
     try {
@@ -254,7 +257,6 @@ app.post('/chat/:groupId/events/create', isAuthenticatedAPI, checkGroupRoleAPI([
         res.status(500).json({ error: "Server error" });
     }
 });
-
 
 // SOCKET.IO (remains the same)
 const activeUsers = {};
@@ -366,13 +368,10 @@ io.on('connection', socket => {
   });
 });
 
-
 // --- NEW: CATCH-ALL ROUTE FOR SPA ---
-// This should be the last route. It serves the main app shell.
 app.get('*', (req, res) => {
-    res.render('index'); // We will create this new file
+    res.render('index'); 
 });
-
 
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
