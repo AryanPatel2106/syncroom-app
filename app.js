@@ -61,18 +61,12 @@ app.use(session({
   cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }
 }));
 
-// --- CORRECTED: RESTORED THE ORIGINAL isAuthenticated for form-based submissions ---
 const isAuthenticated = (req, res, next) => {
   if (req.session.user) next();
   else res.redirect('/login');
 };
 
-const isAuthenticatedAPI = (req, res, next) => {
-  if (req.session.user) next();
-  else res.status(401).json({ error: 'Not authenticated' });
-};
-
-const checkGroupRoleAPI = (roles) => async (req, res, next) => {
+const checkGroupRole = (roles) => async (req, res, next) => {
     const { groupId } = req.params;
     const userId = req.session.user.id;
     try {
@@ -81,38 +75,32 @@ const checkGroupRoleAPI = (roles) => async (req, res, next) => {
             req.userRole = result.rows[0].role;
             next();
         } else {
-            res.status(403).json({ error: 'Permission denied' });
+            res.status(403).send("You do not have permission for this group.");
         }
     } catch (err) {
         console.error("Role check error:", err);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).send("Server error");
     }
 };
 
-// --- API ROUTES ---
+app.get('/', (req, res) => res.render('home', { user: req.session.user }));
+app.get('/login', (req, res) => res.render('login', { user: req.session.user }));
+app.get('/register', (req, res) => res.render('register', { user: req.session.user }));
 
-app.get('/api/session', (req, res) => {
-    if (req.session.user) {
-        res.json({ user: req.session.user });
-    } else {
-        res.status(401).json({ user: null });
-    }
-});
-
-app.post('/api/register', async (req, res) => {
+app.post('/register', async (req, res) => {
   const { username, email, password } = req.body;
   try {
     const hash = await bcrypt.hash(password, saltRounds);
     const result = await db.query( "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id, username", [username, email, hash] );
     req.session.user = result.rows[0];
-    res.status(201).json({ user: req.session.user });
+    res.redirect('/groups');
   } catch (err) {
     console.error("Registration error:", err);
-    res.status(500).json({ error: 'Registration failed' });
+    res.redirect('/register');
   }
 });
 
-app.post('/api/login', async (req, res) => {
+app.post('/login', async (req, res) => {
   const { username, password } = req.body;
   try {
     const result = await db.query("SELECT * FROM users WHERE username = $1", [username]);
@@ -120,30 +108,26 @@ app.post('/api/login', async (req, res) => {
       const user = result.rows[0];
       if (await bcrypt.compare(password, user.password)) {
         req.session.user = { id: user.id, username: user.username };
-        res.json({ user: req.session.user });
-      } else { res.status(401).json({ error: "Incorrect password" }); }
-    } else { res.status(404).json({ error: "User not found" }); }
+        res.redirect('/groups');
+      } else { res.send("Incorrect password"); }
+    } else { res.send("User not found"); }
   } catch (err) {
     console.error("Login error:", err);
-    res.status(500).json({ error: 'Login failed' });
+    res.redirect('/login');
   }
 });
 
-app.post('/api/logout', (req, res) => {
-  req.session.destroy(() => res.status(200).json({ message: 'Logged out' }));
-});
-
-app.get('/api/groups', isAuthenticatedAPI, async (req, res) => {
+app.get('/groups', isAuthenticated, async (req, res) => {
   try {
     const result = await db.query( "SELECT g.id, g.name, gm.role FROM groups g JOIN group_members gm ON g.id = gm.group_id WHERE gm.user_id = $1", [req.session.user.id] );
-    res.json({ user: req.session.user, groups: result.rows });
+    res.render('groups', { user: req.session.user, groups: result.rows });
   } catch (err) {
     console.error("Groups fetch error:", err);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).send("Server error");
   }
 });
 
-app.post('/api/groups/create', isAuthenticatedAPI, async (req, res) => {
+app.post('/groups/create', isAuthenticated, async (req, res) => {
     const { name, key } = req.body;
     const userId = req.session.user.id;
     try {
@@ -151,14 +135,14 @@ app.post('/api/groups/create', isAuthenticatedAPI, async (req, res) => {
         const groupResult = await db.query( "INSERT INTO groups (name, key) VALUES ($1, $2) RETURNING id", [name, hash] );
         const groupId = groupResult.rows[0].id;
         await db.query( "INSERT INTO group_members (group_id, user_id, role) VALUES ($1, $2, 'owner')", [groupId, userId] );
-        res.status(201).json({ message: 'Group created' });
+        res.redirect('/groups');
     } catch (err) {
         console.error("Group creation error:", err);
-        res.status(500).json({ error: "Server error" });
+        res.status(500).send("Server error");
     }
 });
 
-app.post('/api/groups/join', isAuthenticatedAPI, async (req, res) => {
+app.post('/groups/join', isAuthenticated, async (req, res) => {
   const { name, key } = req.body;
   try {
     const result = await db.query("SELECT * FROM groups WHERE name = $1", [name]);
@@ -166,38 +150,38 @@ app.post('/api/groups/join', isAuthenticatedAPI, async (req, res) => {
       const group = result.rows[0];
       if (await bcrypt.compare(key, group.key)) {
         await db.query("INSERT INTO group_members (group_id, user_id, role) VALUES ($1, $2, 'member') ON CONFLICT (group_id, user_id) DO NOTHING", [group.id, req.session.user.id]);
-        res.json({ message: 'Group joined' });
-      } else { res.status(401).json({ error: "Incorrect key" }); }
-    } else { res.status(404).json({ error: "Group not found" }); }
+        res.redirect('/groups');
+      } else { res.send("Incorrect key"); }
+    } else { res.send("Group not found"); }
   } catch (err) {
     console.error("Group join error:", err);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).send("Server error");
   }
 });
 
-app.post('/api/groups/leave/:groupId', isAuthenticatedAPI, async (req, res) => {
+app.post('/groups/leave/:groupId', isAuthenticated, async (req, res) => {
     const { groupId } = req.params;
     const userId = req.session.user.id;
     try {
         await db.query("DELETE FROM group_members WHERE group_id = $1 AND user_id = $2", [groupId, userId]);
-        res.json({ message: 'Left group' });
+        res.redirect('/groups');
     } catch (err) {
         console.error("Leave group error:", err);
-        res.status(500).json({ error: "Server error" });
+        res.status(500).send("Server error");
     }
 });
 
-app.get('/api/chat/:groupId', isAuthenticatedAPI, checkGroupRoleAPI(['owner', 'admin', 'member']), async (req, res) => {
+app.get('/chat/:groupId', isAuthenticated, checkGroupRole(['owner', 'admin', 'member']), async (req, res) => {
   const { groupId } = req.params;
   try {
     const groupResult = await db.query("SELECT * FROM groups WHERE id = $1", [groupId]);
-    if (groupResult.rows.length === 0) { return res.status(404).json({ error: "Group not found" }); }
+    if (groupResult.rows.length === 0) { return res.status(404).send("Group not found"); }
     
     const messages = await db.query( `SELECT m.*, u.username, p.message as parent_message, p_u.username as parent_username FROM messages m JOIN users u ON m.user_id = u.id LEFT JOIN messages p ON m.parent_message_id = p.id LEFT JOIN users p_u ON p.user_id = p_u.id WHERE m.group_id = $1 ORDER BY m.created_at ASC`, [groupId] );
     const reactions = await db.query( `SELECT r.* FROM reactions r JOIN messages m ON r.message_id = m.id WHERE m.group_id = $1`, [groupId] );
     const files = await db.query("SELECT * FROM files WHERE group_id = $1 ORDER BY created_at DESC", [groupId]);
     
-    res.json({
+    res.render('chat', {
       user: req.session.user,
       group: groupResult.rows[0],
       messages: messages.rows,
@@ -207,11 +191,10 @@ app.get('/api/chat/:groupId', isAuthenticatedAPI, checkGroupRoleAPI(['owner', 'a
     });
   } catch (err) {
     console.error("Chat fetch error:", err);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).send("Server error");
   }
 });
 
-// --- CORRECTED: Use the original isAuthenticated for the upload route ---
 app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async (req, res) => {
   const { groupId } = req.params;
   const filepath = req.file.path;
@@ -222,14 +205,45 @@ app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async 
     const result = await db.query( "INSERT INTO files (group_id, user_id, filename, filepath, mimetype) VALUES ($1, $2, $3, $4, $5) RETURNING *", [groupId, req.session.user.id, filename, filepath, mimetype] );
     const newFile = { ...result.rows[0], username: req.session.user.username };
     io.to(`group-${groupId}`).emit('newFile', newFile);
-    res.redirect('/chat/' + groupId); 
+    res.redirect('/chat/' + groupId);
   } catch (err) {
     console.error("File upload error:", err);
     res.status(500).send("Server error");
   }
 });
 
-app.get('/chat/:groupId/events', isAuthenticatedAPI, checkGroupRoleAPI(['owner', 'admin', 'member']), async (req, res) => {
+app.get('/chat/:groupId/manage', isAuthenticated, checkGroupRole(['owner', 'admin']), async (req, res) => {
+    const { groupId } = req.params;
+    try {
+        const membersResult = await db.query( "SELECT u.id, u.username, gm.role FROM users u JOIN group_members gm ON u.id = gm.user_id WHERE gm.group_id = $1 ORDER BY u.username", [groupId] );
+        const groupResult = await db.query("SELECT name FROM groups WHERE id = $1", [groupId]);
+        res.render('manage_group', { user: { ...req.session.user, role: req.userRole }, members: membersResult.rows, group: groupResult.rows[0], groupId: groupId });
+    } catch (err) {
+        console.error("Manage group error:", err);
+        res.status(500).send("Server error");
+    }
+});
+
+app.post('/chat/:groupId/manage/kick', isAuthenticated, checkGroupRole(['owner', 'admin']), async (req, res) => {
+    const { groupId } = req.params;
+    const { userIdToKick } = req.body;
+    try {
+        await db.query("DELETE FROM group_members WHERE group_id = $1 AND user_id = $2 AND role <> 'owner'", [groupId, userIdToKick]);
+        res.redirect(`/chat/${groupId}/manage`);
+    } catch (err) { console.error("Kick user error:", err); res.status(500).send("Server error"); }
+});
+
+app.post('/chat/:groupId/manage/promote', isAuthenticated, checkGroupRole(['owner']), async (req, res) => {
+    const { groupId } = req.params;
+    const { userIdToPromote } = req.body;
+    try {
+        await db.query( "UPDATE group_members SET role = 'admin' WHERE group_id = $1 AND user_id = $2 AND role = 'member'", [groupId, userIdToPromote] );
+        res.redirect(`/chat/${groupId}/manage`);
+    } catch (err) { console.error("Promote user error:", err); res.status(500).send("Server error"); }
+});
+
+// --- NEW: CALENDAR EVENT ROUTES ---
+app.get('/chat/:groupId/events', isAuthenticated, checkGroupRole(['owner', 'admin', 'member']), async (req, res) => {
     const { groupId } = req.params;
     try {
         const events = await db.query("SELECT e.*, u.username FROM events e JOIN users u ON e.user_id = u.id WHERE e.group_id = $1 ORDER BY e.event_date ASC", [groupId]);
@@ -240,7 +254,7 @@ app.get('/chat/:groupId/events', isAuthenticatedAPI, checkGroupRoleAPI(['owner',
     }
 });
 
-app.post('/chat/:groupId/events/create', isAuthenticatedAPI, checkGroupRoleAPI(['owner', 'admin', 'member']), async (req, res) => {
+app.post('/chat/:groupId/events/create', isAuthenticated, checkGroupRole(['owner', 'admin', 'member']), async (req, res) => {
     const { groupId } = req.params;
     const { title, description, event_date } = req.body;
     const userId = req.session.user.id;
@@ -258,7 +272,11 @@ app.post('/chat/:groupId/events/create', isAuthenticatedAPI, checkGroupRoleAPI([
     }
 });
 
-// SOCKET.IO (remains the same)
+app.get('/logout', (req, res) => {
+  req.session.destroy(() => res.redirect('/'));
+});
+
+// SOCKET.IO
 const activeUsers = {};
 io.on('connection', socket => {
   const userId = socket.handshake.query.userId;
@@ -340,15 +358,18 @@ io.on('connection', socket => {
     }
   });
 
+  // --- NEW: SOCKET EVENT FOR DELETING A CALENDAR EVENT ---
   socket.on('deleteEvent', async ({ room, eventId }) => {
       const groupId = room.replace('group-', '');
       try {
           const eventResult = await db.query("SELECT user_id FROM events WHERE id = $1", [eventId]);
           if (eventResult.rows.length === 0) return;
+
           const eventAuthorId = eventResult.rows[0].user_id;
           const memberResult = await db.query("SELECT role FROM group_members WHERE group_id = $1 AND user_id = $2", [groupId, userId]);
           if (memberResult.rows.length === 0) return;
           const userRole = memberResult.rows[0].role;
+
           if (userId == eventAuthorId || ['owner', 'admin'].includes(userRole)) {
               await db.query("DELETE FROM events WHERE id = $1", [eventId]);
               io.to(room).emit('eventDeleted', eventId);
@@ -368,10 +389,4 @@ io.on('connection', socket => {
   });
 });
 
-// --- NEW: CATCH-ALL ROUTE FOR SPA ---
-app.get('*', (req, res) => {
-    res.render('index'); 
-});
-
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
