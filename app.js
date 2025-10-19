@@ -7,8 +7,16 @@ const http = require('http');
 const socketIO = require('socket.io');
 const multer = require('multer');
 const bcrypt = require('bcrypt');
-const { Pool } = require('pg');
-const connectPgSimple = require('connect-pg-simple');
+const mongoose = require('mongoose');
+const MongoStore = require('connect-mongo');
+
+const User = require('./models/user');
+const Group = require('./models/group');
+const GroupMember = require('./models/groupMember');
+const Message = require('./models/message');
+const File = require('./models/file');
+const Reaction = require('./models/reaction');
+const Event = require('./models/event');
 
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
@@ -19,13 +27,7 @@ const io = socketIO(server);
 const PORT = process.env.PORT || 5000;
 const saltRounds = 10;
 
-const dbConfig = {
-  connectionString: process.env.DATABASE_URL,
-};
-if (process.env.NODE_ENV === 'production') {
-  dbConfig.ssl = { rejectUnauthorized: false };
-}
-const db = new Pool(dbConfig);
+
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -49,9 +51,9 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 
-const sessionStore = new (connectPgSimple(session))({
-    pool: db,
-    createTableIfMissing: true,
+const sessionStore = MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI,
+    collectionName: 'sessions',
 });
 app.use(session({
   store: sessionStore,
@@ -70,9 +72,9 @@ const checkGroupRole = (roles) => async (req, res, next) => {
     const { groupId } = req.params;
     const userId = req.session.user.id;
     try {
-        const result = await db.query( "SELECT role FROM group_members WHERE group_id = $1 AND user_id = $2", [groupId, userId] );
-        if (result.rows.length > 0 && roles.includes(result.rows[0].role)) {
-            req.userRole = result.rows[0].role;
+        const member = await GroupMember.findOne({ groupId, userId });
+        if (member && roles.includes(member.role)) {
+            req.userRole = member.role;
             next();
         } else {
             res.status(403).send("You do not have permission for this group.");
@@ -91,8 +93,8 @@ app.post('/register', async (req, res) => {
   const { username, email, password } = req.body;
   try {
     const hash = await bcrypt.hash(password, saltRounds);
-    const result = await db.query( "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id, username", [username, email, hash] );
-    req.session.user = result.rows[0];
+    const user = await User.create({ username, email, password: hash });
+    req.session.user = { id: user._id, username: user.username };
     res.redirect('/groups');
   } catch (err) {
     console.error("Registration error:", err);
@@ -103,11 +105,10 @@ app.post('/register', async (req, res) => {
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
   try {
-    const result = await db.query("SELECT * FROM users WHERE username = $1", [username]);
-    if (result.rows.length > 0) {
-      const user = result.rows[0];
+    const user = await User.findOne({ username });
+    if (user) {
       if (await bcrypt.compare(password, user.password)) {
-        req.session.user = { id: user.id, username: user.username };
+        req.session.user = { id: user._id, username: user.username };
         res.redirect('/groups');
       } else { res.send("Incorrect password"); }
     } else { res.send("User not found"); }
@@ -119,8 +120,9 @@ app.post('/login', async (req, res) => {
 
 app.get('/groups', isAuthenticated, async (req, res) => {
   try {
-    const result = await db.query( "SELECT g.id, g.name, gm.role FROM groups g JOIN group_members gm ON g.id = gm.group_id WHERE gm.user_id = $1", [req.session.user.id] );
-    res.render('groups', { user: req.session.user, groups: result.rows });
+    const groupMemberships = await GroupMember.find({ userId: req.session.user.id }).populate('groupId');
+    const groups = groupMemberships.map(gm => ({...gm.groupId._doc, role: gm.role}));
+    res.render('groups', { user: req.session.user, groups: groups });
   } catch (err) {
     console.error("Groups fetch error:", err);
     res.status(500).send("Server error");
@@ -132,9 +134,8 @@ app.post('/groups/create', isAuthenticated, async (req, res) => {
     const userId = req.session.user.id;
     try {
         const hash = await bcrypt.hash(key, saltRounds);
-        const groupResult = await db.query( "INSERT INTO groups (name, key) VALUES ($1, $2) RETURNING id", [name, hash] );
-        const groupId = groupResult.rows[0].id;
-        await db.query( "INSERT INTO group_members (group_id, user_id, role) VALUES ($1, $2, 'owner')", [groupId, userId] );
+        const group = await Group.create({ name, key: hash });
+        await GroupMember.create({ groupId: group._id, userId, role: 'owner' });
         res.redirect('/groups');
     } catch (err) {
         console.error("Group creation error:", err);
@@ -145,11 +146,14 @@ app.post('/groups/create', isAuthenticated, async (req, res) => {
 app.post('/groups/join', isAuthenticated, async (req, res) => {
   const { name, key } = req.body;
   try {
-    const result = await db.query("SELECT * FROM groups WHERE name = $1", [name]);
-    if (result.rows.length > 0) {
-      const group = result.rows[0];
+    const group = await Group.findOne({ name });
+    if (group) {
       if (await bcrypt.compare(key, group.key)) {
-        await db.query("INSERT INTO group_members (group_id, user_id, role) VALUES ($1, $2, 'member') ON CONFLICT (group_id, user_id) DO NOTHING", [group.id, req.session.user.id]);
+        await GroupMember.findOneAndUpdate(
+            { groupId: group._id, userId: req.session.user.id },
+            { groupId: group._id, userId: req.session.user.id, role: 'member' },
+            { upsert: true }
+        );
         res.redirect('/groups');
       } else { res.send("Incorrect key"); }
     } else { res.send("Group not found"); }
@@ -163,7 +167,7 @@ app.post('/groups/leave/:groupId', isAuthenticated, async (req, res) => {
     const { groupId } = req.params;
     const userId = req.session.user.id;
     try {
-        await db.query("DELETE FROM group_members WHERE group_id = $1 AND user_id = $2", [groupId, userId]);
+        await GroupMember.deleteOne({ groupId, userId });
         res.redirect('/groups');
     } catch (err) {
         console.error("Leave group error:", err);
@@ -174,19 +178,29 @@ app.post('/groups/leave/:groupId', isAuthenticated, async (req, res) => {
 app.get('/chat/:groupId', isAuthenticated, checkGroupRole(['owner', 'admin', 'member']), async (req, res) => {
   const { groupId } = req.params;
   try {
-    const groupResult = await db.query("SELECT * FROM groups WHERE id = $1", [groupId]);
-    if (groupResult.rows.length === 0) { return res.status(404).send("Group not found"); }
+    const group = await Group.findById(groupId);
+    if (!group) { return res.status(404).send("Group not found"); }
     
-    const messages = await db.query( `SELECT m.*, u.username, p.message as parent_message, p_u.username as parent_username FROM messages m JOIN users u ON m.user_id = u.id LEFT JOIN messages p ON m.parent_message_id = p.id LEFT JOIN users p_u ON p.user_id = p_u.id WHERE m.group_id = $1 ORDER BY m.created_at ASC`, [groupId] );
-    const reactions = await db.query( `SELECT r.* FROM reactions r JOIN messages m ON r.message_id = m.id WHERE m.group_id = $1`, [groupId] );
-    const files = await db.query("SELECT * FROM files WHERE group_id = $1 ORDER BY created_at DESC", [groupId]);
+    const messages = await Message.find({ groupId }).populate('userId', 'username').populate('parentId', 'message userId');
+    const reactions = await Reaction.find({ messageId: { $in: messages.map(m => m._id) } });
+    const files = await File.find({ groupId }).populate('userId', 'username').sort({ createdAt: -1 });
     
+    const populatedMessages = messages.map(m => {
+        const parent = m.parentId;
+        return {
+            ...m._doc,
+            username: m.userId.username,
+            parent_message: parent ? parent.message : null,
+            parent_username: parent ? parent.userId.username : null,
+        }
+    })
+
     res.render('chat', {
       user: req.session.user,
-      group: groupResult.rows[0],
-      messages: messages.rows,
-      files: files.rows,
-      reactions: reactions.rows,
+      group: group,
+      messages: populatedMessages,
+      files: files,
+      reactions: reactions,
       userRole: req.userRole
     });
   } catch (err) {
@@ -202,8 +216,8 @@ app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async 
   const mimetype = req.file.mimetype;
   
   try {
-    const result = await db.query( "INSERT INTO files (group_id, user_id, filename, filepath, mimetype) VALUES ($1, $2, $3, $4, $5) RETURNING *", [groupId, req.session.user.id, filename, filepath, mimetype] );
-    const newFile = { ...result.rows[0], username: req.session.user.username };
+    const file = await File.create({ groupId, userId: req.session.user.id, filename, filepath, mimetype });
+    const newFile = { ...file._doc, username: req.session.user.username };
     io.to(`group-${groupId}`).emit('newFile', newFile);
     res.redirect('/chat/' + groupId);
   } catch (err) {
@@ -215,9 +229,10 @@ app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async 
 app.get('/chat/:groupId/manage', isAuthenticated, checkGroupRole(['owner', 'admin']), async (req, res) => {
     const { groupId } = req.params;
     try {
-        const membersResult = await db.query( "SELECT u.id, u.username, gm.role FROM users u JOIN group_members gm ON u.id = gm.user_id WHERE gm.group_id = $1 ORDER BY u.username", [groupId] );
-        const groupResult = await db.query("SELECT name FROM groups WHERE id = $1", [groupId]);
-        res.render('manage_group', { user: { ...req.session.user, role: req.userRole }, members: membersResult.rows, group: groupResult.rows[0], groupId: groupId });
+        const members = await GroupMember.find({ groupId }).populate('userId', 'username');
+        const group = await Group.findById(groupId);
+        const transformedMembers = members.map(m => ({ id: m.userId._id, username: m.userId.username, role: m.role }));
+        res.render('manage_group', { user: { ...req.session.user, role: req.userRole }, members: transformedMembers, group: group, groupId: groupId });
     } catch (err) {
         console.error("Manage group error:", err);
         res.status(500).send("Server error");
@@ -228,7 +243,7 @@ app.post('/chat/:groupId/manage/kick', isAuthenticated, checkGroupRole(['owner',
     const { groupId } = req.params;
     const { userIdToKick } = req.body;
     try {
-        await db.query("DELETE FROM group_members WHERE group_id = $1 AND user_id = $2 AND role <> 'owner'", [groupId, userIdToKick]);
+        await GroupMember.deleteOne({ groupId, userId: userIdToKick, role: { $ne: 'owner' } });
         res.redirect(`/chat/${groupId}/manage`);
     } catch (err) { console.error("Kick user error:", err); res.status(500).send("Server error"); }
 });
@@ -237,7 +252,7 @@ app.post('/chat/:groupId/manage/promote', isAuthenticated, checkGroupRole(['owne
     const { groupId } = req.params;
     const { userIdToPromote } = req.body;
     try {
-        await db.query( "UPDATE group_members SET role = 'admin' WHERE group_id = $1 AND user_id = $2 AND role = 'member'", [groupId, userIdToPromote] );
+        await GroupMember.updateOne({ groupId, userId: userIdToPromote, role: 'member' }, { role: 'admin' });
         res.redirect(`/chat/${groupId}/manage`);
     } catch (err) { console.error("Promote user error:", err); res.status(500).send("Server error"); }
 });
@@ -246,8 +261,8 @@ app.post('/chat/:groupId/manage/promote', isAuthenticated, checkGroupRole(['owne
 app.get('/chat/:groupId/events', isAuthenticated, checkGroupRole(['owner', 'admin', 'member']), async (req, res) => {
     const { groupId } = req.params;
     try {
-        const events = await db.query("SELECT e.*, u.username FROM events e JOIN users u ON e.user_id = u.id WHERE e.group_id = $1 ORDER BY e.event_date ASC", [groupId]);
-        res.json(events.rows);
+        const events = await Event.find({ groupId }).populate('userId', 'username').sort({ event_date: 'asc' });
+        res.json(events);
     } catch (err) {
         console.error("Fetch events error:", err);
         res.status(500).json({ error: "Server error" });
@@ -259,11 +274,8 @@ app.post('/chat/:groupId/events/create', isAuthenticated, checkGroupRole(['owner
     const { title, description, event_date } = req.body;
     const userId = req.session.user.id;
     try {
-        const result = await db.query(
-            "INSERT INTO events (group_id, user_id, title, description, event_date) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-            [groupId, userId, title, description, event_date]
-        );
-        const newEvent = { ...result.rows[0], username: req.session.user.username };
+        const event = await Event.create({ groupId, userId, title, description, event_date });
+        const newEvent = { ...event._doc, username: req.session.user.username };
         io.to(`group-${groupId}`).emit('newEvent', newEvent);
         res.status(201).json(newEvent);
     } catch (err) {
@@ -291,16 +303,18 @@ io.on('connection', socket => {
 
   socket.on('chatMessage', async ({ room, userId, username, message, parentId, isCodeSnippet, language }) => {
     try {
-      const result = await db.query( "INSERT INTO messages (group_id, user_id, message, parent_message_id, is_code_snippet, language) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, created_at", [room.replace('group-', ''), userId, message, parentId, isCodeSnippet, language] );
+      const groupId = room.replace('group-', '');
+      const msg = await Message.create({ groupId, userId, message, parentId, isCodeSnippet, language });
+      
       let parentData = { parent_message: null, parent_username: null };
       if (parentId) {
-          const parentResult = await db.query(`SELECT m.message, u.username FROM messages m JOIN users u ON m.user_id = u.id WHERE m.id = $1`, [parentId]);
-          if(parentResult.rows.length > 0) {
-              parentData.parent_message = parentResult.rows[0].message;
-              parentData.parent_username = parentResult.rows[0].username;
+          const parentResult = await Message.findById(parentId).populate('userId', 'username');
+          if(parentResult) {
+              parentData.parent_message = parentResult.message;
+              parentData.parent_username = parentResult.userId.username;
           }
       }
-      const newMsg = { id: result.rows[0].id, message: message, user_id: userId, username, created_at: result.rows[0].created_at, parent_message_id: parentId, is_code_snippet: isCodeSnippet, language, ...parentData };
+      const newMsg = { id: msg._id, message: msg.message, user_id: userId, username, created_at: msg.createdAt, parent_message_id: parentId, is_code_snippet: isCodeSnippet, language, ...parentData };
       io.to(room).emit('chatMessage', newMsg);
     } catch (err) { console.error("Socket chat message error:", err); }
   });
@@ -311,10 +325,14 @@ io.on('connection', socket => {
 
   socket.on('addReaction', async ({ messageId, userId, emoji }) => {
     try {
-        await db.query( "INSERT INTO reactions (message_id, user_id, emoji) VALUES ($1, $2, $3) ON CONFLICT (message_id, user_id, emoji) DO NOTHING", [messageId, userId, emoji] );
-        const groupResult = await db.query("SELECT group_id FROM messages WHERE id = $1", [messageId]);
-        if (groupResult.rows.length > 0) {
-            const room = `group-${groupResult.rows[0].group_id}`;
+        await Reaction.findOneAndUpdate(
+            { messageId, userId, emoji },
+            { messageId, userId, emoji },
+            { upsert: true }
+        );
+        const message = await Message.findById(messageId);
+        if (message) {
+            const room = `group-${message.groupId}`;
             io.to(room).emit('reactionAdded', { messageId, userId, emoji });
         }
     } catch (err) { console.error("Add reaction error:", err); }
@@ -323,14 +341,14 @@ io.on('connection', socket => {
   socket.on('deleteMessage', async ({ room, messageId }) => {
     const groupId = room.replace('group-', '');
     try {
-      const messageResult = await db.query("SELECT user_id FROM messages WHERE id = $1", [messageId]);
-      if (messageResult.rows.length === 0) return;
-      const messageAuthorId = messageResult.rows[0].user_id;
-      const memberResult = await db.query("SELECT role FROM group_members WHERE group_id = $1 AND user_id = $2", [groupId, userId]);
-      if (memberResult.rows.length === 0) return;
-      const userRole = memberResult.rows[0].role;
+      const message = await Message.findById(messageId);
+      if (!message) return;
+      const messageAuthorId = message.userId;
+      const member = await GroupMember.findOne({ groupId, userId });
+      if (!member) return;
+      const userRole = member.role;
       if (userId == messageAuthorId || ['owner', 'admin'].includes(userRole)) {
-        await db.query("DELETE FROM messages WHERE id = $1", [messageId]);
+        await Message.deleteOne({ _id: messageId });
         io.to(room).emit('messageDeleted', messageId);
       }
     } catch (err) {
@@ -341,16 +359,16 @@ io.on('connection', socket => {
   socket.on('deleteFile', async ({ room, fileId, filepath }) => {
     const groupId = room.replace('group-', '');
     try {
-        const fileResult = await db.query("SELECT user_id FROM files WHERE id = $1", [fileId]);
-        if (fileResult.rows.length === 0) return;
-        const fileAuthorId = fileResult.rows[0].user_id;
-        const memberResult = await db.query("SELECT role FROM group_members WHERE group_id = $1 AND user_id = $2", [groupId, userId]);
-        if (memberResult.rows.length === 0) return;
-        const userRole = memberResult.rows[0].role;
+        const file = await File.findById(fileId);
+        if (!file) return;
+        const fileAuthorId = file.userId;
+        const member = await GroupMember.findOne({ groupId, userId });
+        if (!member) return;
+        const userRole = member.role;
         if (userId == fileAuthorId || ['owner', 'admin'].includes(userRole)) {
             const publicId = filepath.split('/').slice(-2).join('/').split('.')[0];
             await cloudinary.uploader.destroy(publicId);
-            await db.query("DELETE FROM files WHERE id = $1", [fileId]);
+            await File.deleteOne({ _id: fileId });
             io.to(room).emit('fileDeleted', { fileId, filepath });
         }
     } catch (err) {
@@ -362,16 +380,16 @@ io.on('connection', socket => {
   socket.on('deleteEvent', async ({ room, eventId }) => {
       const groupId = room.replace('group-', '');
       try {
-          const eventResult = await db.query("SELECT user_id FROM events WHERE id = $1", [eventId]);
-          if (eventResult.rows.length === 0) return;
+          const event = await Event.findById(eventId);
+          if (!event) return;
 
-          const eventAuthorId = eventResult.rows[0].user_id;
-          const memberResult = await db.query("SELECT role FROM group_members WHERE group_id = $1 AND user_id = $2", [groupId, userId]);
-          if (memberResult.rows.length === 0) return;
-          const userRole = memberResult.rows[0].role;
+          const eventAuthorId = event.userId;
+          const member = await GroupMember.findOne({ groupId, userId });
+          if (!member) return;
+          const userRole = member.role;
 
           if (userId == eventAuthorId || ['owner', 'admin'].includes(userRole)) {
-              await db.query("DELETE FROM events WHERE id = $1", [eventId]);
+              await Event.deleteOne({ _id: eventId });
               io.to(room).emit('eventDeleted', eventId);
           }
       } catch (err) {
