@@ -15,7 +15,7 @@
 
     const doc = new Y.Doc();
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsProvider = new WebsocketProvider(`${wsProtocol}//${window.location.host}`, '<%= doc.docId %>', doc);
+    const wsProvider = new WebsocketProvider(wsUrl, '<%= doc.docId %>', doc);
 
     wsProvider.on('status', event => {
         console.log(event.status); // logs "connected" or "disconnected"

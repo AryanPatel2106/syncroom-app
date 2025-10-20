@@ -9,8 +9,6 @@ const multer = require('multer');
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const MongoStore = require('connect-mongo');
-const { Server } = require('ws');
-const { setupWSConnection } = require('y-websocket/dist/src/utils.js');
 
 const User = require('./models/user');
 const Group = require('./models/group');
@@ -29,20 +27,6 @@ const server = http.createServer(app);
 const io = socketIO(server);
 const PORT = process.env.PORT || 5000;
 const saltRounds = 10;
-
-// --- Yjs WebSocket Server Setup ---
-const wss = new Server({ noServer: true });
-wss.on('connection', setupWSConnection);
-
-server.on('upgrade', (request, socket, head) => {
-    const { pathname } = new URL(request.url, `http://${request.headers.host}`);
-    if (pathname === '/yjs') {
-        wss.handleUpgrade(request, socket, head, ws => {
-            wss.emit('connection', ws, request);
-        });
-    }
-});
-// --- End Yjs Setup ---
 
 console.log('Attempting to connect to MongoDB. URI:', process.env.MONGODB_URI); // Debugging line
 
@@ -251,7 +235,11 @@ app.get('/collab/:docId', isAuthenticated, async (req, res) => {
         if (!member) {
             return res.status(403).send('You do not have access to this document.');
         }
-        res.render('collab', { user: req.session.user, doc });
+        res.render('collab', { 
+            user: req.session.user, 
+            doc,
+            wsUrl: process.env.YJS_WEBSOCKET_URL || 'ws://localhost:1234' 
+        });
     } catch (err) {
         console.error("Collab doc fetch error:", err);
         res.status(500).send("Server error");
