@@ -350,7 +350,7 @@ app.get('/collab/:docId', isAuthenticated, async (req, res) => {
         }
         res.render('collab', { 
             user: req.session.user, 
-            doc
+            doc: { ...doc.toObject(), docId: doc.docId || doc._id.toString() }
         });
     } catch (err) {
         console.error("Collab doc fetch error:", err);
