@@ -17,116 +17,15 @@ const Message = require('./models/message');
 const File = require('./models/file');
 const Reaction = require('./models/reaction');
 const Event = require('./models/event');
-const CollabDoc = require('./models/collabDoc');
 
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-const { WebSocketServer } = require('ws');
-const Y = require('yjs');
-const { MongodbPersistence } = require('y-mongodb-provider');
-const T = require('lib0/testing');
-const mammoth = require('mammoth');
-
 const app = express();
 const server = http.createServer(app);
-const io = socketIO(server, {
-  // Allow socket.io to handle its own upgrade mechanism
-  // This prevents it from conflicting with the Yjs WebSocket server
-});
+const io = socketIO(server);
 
 // Yjs WebSocket server setup
-const wss = new WebSocketServer({ noServer: true });
-const mdb = new MongodbPersistence(process.env.MONGODB_URI, {
-  collectionName: 'yjs_transactions',
-  flushSize: 100,
-  multipleCollections: true,
-});
-
-const setupWSConnection = (conn, req) => {
-  conn.binaryType = 'arraybuffer';
-  const docName = req.url.slice(1).split('?')[0];
-  const doc = new Y.Doc();
-
-  // get stored document
-  mdb.bindState(docName, doc);
-
-  const awareness = new Y.Awareness();
-  // setup awareness
-  // ...
-
-  conn.on('message', message => {
-    try {
-      const encoder = new Y.encoding.Encoder();
-      const decoder = new Y.decoding.Decoder(new Uint8Array(message));
-      const messageType = Y.decoding.readVarUint(decoder);
-      switch (messageType) {
-        case 0: // sync
-          Y.protocol.readSyncMessage(decoder, encoder, doc, conn);
-          if (Y.encoding.length(encoder) > 1) {
-            conn.send(Y.encoding.toUint8Array(encoder));
-          }
-          break;
-        case 1: // awareness
-          Y.awarenessProtocol.applyAwarenessUpdate(awareness, Y.decoding.readVarUint8Array(decoder), conn);
-          break;
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  });
-
-  // Check if connection is still alive
-  let pongReceived = true;
-  const pingInterval = setInterval(() => {
-    if (!pongReceived) {
-      doc.destroy();
-      conn.close();
-      clearInterval(pingInterval);
-    } else {
-      pongReceived = false;
-      try {
-        conn.ping();
-      } catch (e) {
-        doc.destroy();
-        conn.close();
-        clearInterval(pingInterval);
-      }
-    }
-  }, 30000);
-
-  conn.on('pong', () => {
-    pongReceived = true;
-  });
-
-  conn.on('close', () => {
-    doc.destroy();
-    clearInterval(pingInterval);
-  });
-
-  // send sync step 1
-  const encoder = new Y.encoding.Encoder();
-  Y.encoding.writeVarUint(encoder, 0);
-  Y.protocol.writeSyncStep1(encoder, doc);
-  conn.send(Y.encoding.toUint8Array(encoder));
-  // broadcast awareness state
-  const awarenessEncoder = new Y.encoding.Encoder();
-  Y.encoding.writeVarUint(awarenessEncoder, 1);
-  Y.encoding.writeVarUint8Array(awarenessEncoder, Y.awarenessProtocol.encodeAwarenessUpdate(awareness, [doc.clientID]));
-  conn.send(Y.encoding.toUint8Array(awarenessEncoder));
-};
-
-server.on('upgrade', (request, socket, head) => {
-  const { pathname } = new URL(request.url, `http://${request.headers.host}`);
-
-  if (pathname.startsWith('/socket.io/')) {
-    // Let socket.io handle its own upgrade requests
-  } else {
-    wss.handleUpgrade(request, socket, head, ws => {
-      setupWSConnection(ws, request);
-    });
-  }
-});
 
 const PORT = process.env.PORT || 5000;
 const saltRounds = 10;
@@ -277,102 +176,6 @@ app.post('/groups/leave/:groupId', isAuthenticated, async (req, res) => {
         res.redirect('/groups');
     } catch (err) {
         console.error("Leave group error:", err);
-        res.status(500).send("Server error");
-    }
-});
-
-app.post('/collab/:groupId/create', isAuthenticated, checkGroupRole(['owner', 'admin', 'member']), upload.single('docFile'), async (req, res) => {
-    const { groupId } = req.params;
-    
-    if (!req.file) {
-        return res.status(400).send("No file uploaded.");
-    }
-
-    const docName = req.file.originalname;
-    let content = '';
-
-    try {
-        if (req.file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-            // It's a .docx file, use mammoth
-            const result = await mammoth.extractRawText({ buffer: req.file.buffer });
-            content = result.value;
-        } else if (req.file.mimetype === 'text/plain') {
-            // It's a plain text file
-            content = req.file.buffer.toString('utf-8');
-        } else {
-            return res.status(400).send("Unsupported file type. Please upload a .docx or .txt file.");
-        }
-
-        const docId = new mongoose.Types.ObjectId().toString(); // Generate a unique ID
-        const newDoc = await CollabDoc.create({
-            name: docName,
-            groupId,
-            content,
-            docId: docId // Save the unique ID
-        });
-
-        // Post a message to the chat about the new session
-        const message = `Started a new collaborative document: <a href="/collab/${newDoc._id}" class="text-blue-400 hover:underline">${newDoc.name}</a>`;
-        const msg = await Message.create({
-            groupId,
-            userId: req.session.user.id,
-            message,
-            isCodeSnippet: false
-        });
-        
-        const newMsg = { 
-            id: msg._id, 
-            message: msg.message, 
-            user_id: req.session.user.id, 
-            username: req.session.user.username, 
-            created_at: msg.createdAt,
-            is_code_snippet: false
-        };
-        io.to(`group-${groupId}`).emit('chatMessage', newMsg);
-
-        res.redirect(`/chat/${groupId}`);
-    } catch (err) {
-        console.error("Collab doc creation error:", err);
-        res.status(500).send("Server error");
-    }
-});
-
-app.get('/collab/:docId', isAuthenticated, async (req, res) => {
-    try {
-        const doc = await CollabDoc.findById(req.params.docId);
-        if (!doc) {
-            return res.status(404).send('Document not found');
-        }
-        // Check if user is a member of the group associated with the doc
-        const member = await GroupMember.findOne({ groupId: doc.groupId, userId: req.session.user.id });
-        if (!member) {
-            return res.status(403).send('You do not have access to this document.');
-        }
-        res.render('collab', { 
-            user: req.session.user, 
-            doc: { ...doc.toObject(), docId: doc.docId || doc._id.toString() }
-        });
-    } catch (err) {
-        console.error("Collab doc fetch error:", err);
-        res.status(500).send("Server error");
-    }
-});
-
-app.get('/collab/list/:groupId', isAuthenticated, checkGroupRole(['owner', 'admin', 'member']), async (req, res) => {
-    const { groupId } = req.params;
-    try {
-        const group = await Group.findById(groupId);
-        if (!group) {
-            return res.status(404).send("Group not found");
-        }
-        const docs = await CollabDoc.find({ groupId }).sort({ createdAt: -1 });
-        res.render('collab_list', {
-            user: req.session.user,
-            group: group,
-            docs: docs
-        });
-    } catch (err) {
-        console.error("Collab list fetch error:", err);
         res.status(500).send("Server error");
     }
 });

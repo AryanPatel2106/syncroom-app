@@ -91,7 +91,6 @@
         <div class="flex justify-between items-center p-4 border-b border-gray-700 desktop-header">
             <div class="flex items-center space-x-4">
                 <h1 class="text-2xl font-bold"><%= group.name %></h1>
-                <a href="/collab/list/<%= group._id %>" class="text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors">View Collaborative Docs</a>
             </div>
             <div class="flex items-center space-x-4">
                 <span class="text-sm text-gray-400">Active Users:</span>
@@ -136,27 +135,6 @@
           <% }) %>
         </div>
 
-        <!-- Collab Doc Creation Form -->
-        <div class="p-4 bg-gray-800 border-t border-gray-700">
-            <form action="/collab/<%= group.id %>/create" method="POST" enctype="multipart/form-data" class="flex items-center bg-gray-700 rounded-lg">
-                <label for="collab-file-upload" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-4 rounded-l-lg cursor-pointer transition-colors duration-300">
-                    <i class="fas fa-file-code"></i>
-                </label>
-                <input id="collab-file-upload" type="file" name="docFile" class="hidden" required>
-                <span id="collab-file-name" class="text-gray-400 px-4 truncate flex-grow">Choose a text file...</span>
-                <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-r-lg transition-colors duration-300">
-                    Collaborate
-                </button>
-            </form>
-        </div>
-
-        <script>
-            document.getElementById('collab-file-upload').addEventListener('change', function() {
-                const fileName = this.files[0] ? this.files[0].name : 'Choose a text file...';
-                document.getElementById('collab-file-name').textContent = fileName;
-            });
-        </script>
-        
         <!-- Typing indicator -->
         <div id="typing-indicator" class="h-6 px-4 text-gray-400 italic"></div>
         <div id="reply-info" class="hidden bg-black bg-opacity-20 p-2 rounded-t-lg text-sm mb-2">
