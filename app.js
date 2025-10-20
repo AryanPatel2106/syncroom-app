@@ -26,6 +26,7 @@ const { WebSocketServer } = require('ws');
 const Y = require('yjs');
 const { MongodbPersistence } = require('y-mongodb-provider');
 const T = require('lib0/testing');
+const mammoth = require('mammoth');
 
 const app = express();
 const server = http.createServer(app);
@@ -288,9 +289,20 @@ app.post('/collab/:groupId/create', isAuthenticated, checkGroupRole(['owner', 'a
     }
 
     const docName = req.file.originalname;
-    const content = req.file.buffer.toString('utf-8');
+    let content = '';
 
     try {
+        if (req.file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            // It's a .docx file, use mammoth
+            const result = await mammoth.extractRawText({ buffer: req.file.buffer });
+            content = result.value;
+        } else if (req.file.mimetype === 'text/plain') {
+            // It's a plain text file
+            content = req.file.buffer.toString('utf-8');
+        } else {
+            return res.status(400).send("Unsupported file type. Please upload a .docx or .txt file.");
+        }
+
         const docId = new mongoose.Types.ObjectId().toString(); // Generate a unique ID
         const newDoc = await CollabDoc.create({
             name: docName,
