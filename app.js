@@ -27,7 +27,11 @@ const io = socketIO(server);
 const PORT = process.env.PORT || 5000;
 const saltRounds = 10;
 
+console.log('Attempting to connect to MongoDB. URI:', process.env.MONGODB_URI); // Debugging line
 
+mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('MongoDB connected'))
+    .catch(err => console.error('MongoDB connection error:', err));
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
