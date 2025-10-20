@@ -150,15 +150,8 @@
     const themeToggleBtn = document.getElementById('theme-toggle');
     const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
     const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-
-    /*
-    // --- THIS IS YOUR OLD Particle.js Configuration ---
-    // Kept here, commented out, to show that only the background logic was swapped.
-    const particleConfig = (isDark) => { ... };
-    const loadParticles = (isDark) => { ... };
-    */
     
-    // --- Theme Management (Your Original Code) ---
+    // --- Theme Management ---
     const setTheme = (isDark) => {
       if (isDark) {
         document.documentElement.classList.add('dark');
@@ -171,7 +164,6 @@
         themeToggleLightIcon.style.display = 'none';
         themeToggleDarkIcon.style.display = 'block';
       }
-      // This now calls the function to load the NEW, professional background
       loadVantaBackground(isDark);
     };
     
@@ -179,7 +171,7 @@
     const savedTheme = localStorage.getItem('theme');
     const isInitiallyDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
     
-    // --- UPGRADED: Function to load the "Network" background ---
+    // --- UPGRADED: Vanta.js Background Logic ---
     let vantaEffect = null; 
     const loadVantaBackground = (isDark) => {
         if (vantaEffect) {
@@ -194,9 +186,8 @@
             minWidth: 200.00,
             scale: 1.00,
             scaleMobile: 1.00,
-            // Colors now change with the theme
-            color: isDark ? 0x3b82f6 : 0x1e40af, // Blue shades
-            backgroundColor: isDark ? 0x111827 : 0xf3f4f6, // Dark and Light background
+            color: isDark ? 0x3b82f6 : 0x1e40af, // Blue shades for dark/light
+            backgroundColor: isDark ? 0x111827 : 0xf3f4f6, // bg-gray-900 / bg-gray-100
             points: 12.00,
             maxDistance: 25.00,
             spacing: 18.00
@@ -206,7 +197,7 @@
     // Load initial theme and background
     setTheme(isInitiallyDark);
 
-    // Event listener for the button (Your Original Code)
+    // Event listener for the theme toggle button
     themeToggleBtn.addEventListener('click', () => {
       const isCurrentlyDark = document.documentElement.classList.contains('dark');
       setTheme(!isCurrentlyDark);

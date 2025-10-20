@@ -15,6 +15,28 @@
     .glass-ui { background: rgba(30, 41, 59, 0.2); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); }
     .message-bubble { animation: slideIn 0.3s ease-out forwards; }
     @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    /* New styles for message actions on hover */
+    .message-actions {
+      display: none;
+      position: absolute;
+      top: -1rem;
+      background-color: #1f2937; /* bg-gray-800 */
+      border-radius: 9999px;
+      padding: 0.25rem 0.5rem;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .message-content:hover .message-actions {
+      display: flex;
+    }
+    .message-actions.self {
+      right: 0.5rem;
+    }
+    .message-actions.other {
+      left: 0.5rem;
+    }
+
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 3px; }
@@ -102,12 +124,12 @@
           <% messages.forEach(function(message) { %>
             <div class="message-container mb-4" id="message-<%= message.id %>">
               <div class="message-bubble w-full flex <%= message.user_id == user.id ? 'justify-end' : 'justify-start' %>" data-message-id="<%= message.id %>">
-                <div class="max-w-md md:max-w-lg">
+                <div class="relative max-w-md md:max-w-lg message-content">
                   <div class="rounded-xl px-4 py-2 <%= message.user_id == user.id ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white' : 'bg-gray-700 bg-opacity-50 text-gray-200' %>">
                     <div class="font-bold text-sm"><%= message.username %></div>
                     <% if (message.parent_message_id) { %>
                       <div class="border-l-2 border-blue-300 pl-2 text-xs opacity-80 mb-1 mt-1">
-                        <strong><%= message.parent_username %></strong>: <%= message.message.substring(0, 50) %>...
+                        <strong>Replying to <%= message.parent_username %></strong>
                       </div>
                     <% } %>
                     <% if (message.is_code_snippet) { %>
@@ -115,19 +137,22 @@
                     <% } else { %>
                       <p class="text-base break-words mt-1"><%= message.message %></p>
                     <% } %>
-                    <div class="reactions-container flex gap-1 mt-2">
-                      <% reactions.filter(r => r.message_id === message.id).forEach(reaction => { %>
-                        <span class="bg-gray-800 bg-opacity-50 text-xs px-2 py-1 rounded-full cursor-pointer"><%= reaction.emoji %></span>
-                      <% }) %>
-                    </div>
+                  </div>
+                  <!-- Actions on Hover -->
+                  <div class="message-actions gap-2 text-xs text-gray-400 <%= message.user_id == user.id ? 'self' : 'other' %>">
+                    <button class="reply-btn hover:text-blue-400" data-parent-id="<%= message.id %>" data-parent-username="<%= message.username %>" data-parent-message="<%= message.message %>" title="Reply"><i class="fas fa-reply"></i></button>
+                    <button class="react-btn hover:text-yellow-400" title="React"><i class="fas fa-smile"></i></button>
+                    <% if (message.user_id == user.id || ['owner', 'admin'].includes(userRole)) { %>
+                      <button class="delete-btn hover:text-red-400" data-message-id="<%= message.id %>" title="Delete"><i class="fas fa-trash"></i></button>
+                    <% } %>
                   </div>
                   <div class="flex items-center gap-2 mt-1 px-2 text-xs text-gray-500 <%= message.user_id == user.id ? 'justify-end' : '' %>">
                     <span><%= new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></span>
-                    <button class="reply-btn hover:text-blue-400" data-parent-id="<%= message.id %>" data-parent-username="<%= message.username %>" data-parent-message="<%= message.message %>"><i class="fas fa-reply"></i></button>
-                    <button class="react-btn hover:text-yellow-400"><i class="fas fa-smile"></i></button>
-                    <% if (message.user_id == user.id || ['owner', 'admin'].includes(userRole)) { %>
-                      <button class="delete-btn hover:text-red-400" data-message-id="<%= message.id %>"><i class="fas fa-trash"></i></button>
-                    <% } %>
+                    <div class="reactions-container flex gap-1">
+                      <% reactions.filter(r => r.message_id === message.id).forEach(reaction => { %>
+                        <span class="bg-gray-800 bg-opacity-50 text-xs px-1.5 py-0.5 rounded-full cursor-pointer"><%= reaction.emoji %></span>
+                      <% }) %>
+                    </div>
                   </div>
                 </div>
               </div>
