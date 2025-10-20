@@ -1,56 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Your Groups</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-    }
-  </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* Particle background container */
-    #particles-js {
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      z-index: -1;
+    body { 
+      font-family: 'Inter', sans-serif; 
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
-    /* Simple fade-in animation for page load */
     .fade-in {
-      animation: fadeInAnimation 0.8s ease-out forwards;
+      animation: fadeInAnimation 0.5s ease-out forwards;
     }
     @keyframes fadeInAnimation {
-      from { opacity: 0; transform: translateY(15px); }
+      from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    /* Glassmorphism card effect */
-    .glass-card {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px); /* For Safari */
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      transition: all 0.3s ease; /* Added for smooth transitions */
-    }
-    .dark .glass-card {
-      background: rgba(30, 41, 59, 0.2); /* slate-800 with transparency */
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    /* Custom scrollbar for a sleeker look */
-    body::-webkit-scrollbar { width: 8px; }
-    body::-webkit-scrollbar-track { background: transparent; }
-    body::-webkit-scrollbar-thumb { background-color: rgba(128, 128, 128, 0.5); border-radius: 10px; }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
+    ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+    .dark ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
 
-    /* New styles for group card avatars */
     .group-avatar {
       width: 48px;
       height: 48px;
-      border-radius: 50%;
+      border-radius: 12px; /* Squircle shape */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -58,11 +39,18 @@
       font-weight: bold;
       color: white;
     }
+    .tab-btn.active-tab {
+        border-bottom-width: 2px;
+        color: #4f46e5; /* indigo-600 */
+        border-color: #4f46e5;
+    }
+    .dark .tab-btn.active-tab {
+        color: #818cf8; /* indigo-400 */
+        border-color: #818cf8;
+    }
   </style>
 </head>
-<body class="bg-gray-200 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
-
-  <div id="particles-js"></div>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
 
   <!-- Main Content Container -->
   <div class="relative min-h-screen container mx-auto p-4 md:p-8">
@@ -72,9 +60,9 @@
       <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Welcome, <%= user.username %>!</h1>
       <div class="flex items-center gap-4">
         <a href="/logout" class="text-sm text-gray-600 dark:text-gray-400 hover:underline">Logout</a>
-        <button id="theme-toggle" class="px-3 py-2 text-lg rounded-full bg-white/50 dark:bg-gray-800/50 hover:bg-white dark:hover:bg-gray-700 transition">
-          <i id="theme-toggle-dark-icon" class="fas fa-moon"></i>
-          <i id="theme-toggle-light-icon" class="fas fa-sun" style="display: none;"></i>
+        <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
+            <i id="theme-toggle-dark-icon" class="fas fa-moon w-5 h-5"></i>
+            <i id="theme-toggle-light-icon" class="fas fa-sun w-5 h-5 hidden"></i>
         </button>
       </div>
     </header>
@@ -85,35 +73,39 @@
         <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-500">
           <i class="fas fa-search"></i>
         </span>
-        <input type="text" id="searchInput" placeholder="Search your groups..." class="w-full pl-12 pr-4 py-3 rounded-full text-gray-800 bg-white/80 dark:bg-gray-800/80 border-transparent focus:border-violet-500 focus:ring-2 focus:ring-violet-500 transition-all duration-300">
+        <input type="text" id="searchInput" placeholder="Search your groups..." class="w-full pl-12 pr-4 py-3 rounded-full text-gray-900 dark:text-white bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-all duration-300">
       </div>
     </div>
 
     <!-- Groups Grid -->
     <div id="groupsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 fade-in" style="animation-delay: 0.2s;">
       <% if (groups.length === 0) { %>
-        <div class="col-span-full text-center py-16 glass-card rounded-2xl">
+        <div class="col-span-full text-center py-16 bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700">
           <i class="fas fa-users text-5xl text-gray-400 dark:text-gray-500 mb-4"></i>
           <h2 class="text-2xl font-bold text-gray-700 dark:text-gray-300">No Groups Yet</h2>
           <p class="text-gray-500 dark:text-gray-400 mt-2">Create or join a group to start chatting.</p>
-          <p class="text-gray-400 dark:text-gray-500 mt-1">Click the <span class="inline-block bg-sky-500 text-white rounded-full w-6 h-6 mx-1"><i class="fas fa-plus text-sm"></i></span> button to get started!</p>
+          <p class="text-gray-400 dark:text-gray-500 mt-1">Click the <span class="inline-block bg-indigo-500 text-white rounded-full w-6 h-6 mx-1"><i class="fas fa-plus text-sm"></i></span> button to get started!</p>
         </div>
       <% } else { %>
-        <% groups.forEach((group, index) => { %>
-          <div class="group-card glass-card rounded-2xl shadow-lg hover:shadow-violet-500/30 hover:-translate-y-2 p-6 flex flex-col">
+        <% 
+          const colors = ['bg-red-500', 'bg-green-500', 'bg-blue-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'];
+          groups.forEach((group, index) => { 
+            const colorClass = colors[Math.abs(group.name.charCodeAt(0)) % colors.length];
+        %>
+          <div class="group-card bg-white dark:bg-gray-800/50 rounded-2xl shadow-sm hover:shadow-lg border border-gray-200 dark:border-gray-700 hover:border-indigo-500/50 p-6 flex flex-col transition-all duration-300 hover:-translate-y-1">
             <div class="flex-grow">
               <div class="flex items-center space-x-4 mb-4">
-                <div class="group-avatar" style="background-color: hsl(<%= (group.name.charCodeAt(0) * 137.5) % 360 %>, 50%, 50%)">
+                <div class="group-avatar <%= colorClass %>">
                   <%= group.name.charAt(0).toUpperCase() %>
                 </div>
                 <div>
                   <h3 class="font-bold group-name text-xl text-gray-900 dark:text-white"><%= group.name %></h3>
-                  <span class="text-xs capitalize bg-gray-500/20 text-gray-800 dark:text-gray-300 px-2 py-1 rounded-full font-medium"><%= group.role %></span>
+                  <span class="text-xs capitalize bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full font-medium"><%= group.role %></span>
                 </div>
               </div>
               <p class="text-gray-600 dark:text-gray-400 text-sm mb-6">A space for your team to collaborate.</p>
             </div>
-            <a href="/chat/<%= group.id %>" class="text-center w-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-semibold py-3 px-4 rounded-lg hover:from-violet-600 hover:to-fuchsia-600 transition-all duration-300 shadow-lg hover:shadow-xl">
+            <a href="/chat/<%= group.id %>" class="text-center w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-indigo-700 transition-all duration-300 shadow-sm hover:shadow-md">
               Enter Chat <i class="fas fa-arrow-right ml-2"></i>
             </a>
           </div>
@@ -123,22 +115,22 @@
   </div>
 
   <!-- Floating Action Button to Open Modal -->
-  <button id="open-modal-btn" class="fixed bottom-8 right-8 bg-gradient-to-r from-sky-500 to-indigo-500 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center text-3xl hover:from-sky-600 hover:to-indigo-600 transition-transform hover:scale-110">
+  <button id="open-modal-btn" class="fixed bottom-8 right-8 bg-indigo-600 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center text-3xl hover:bg-indigo-700 transition-transform hover:scale-110">
     <i class="fas fa-plus"></i>
   </button>
 
   <!-- Modal for Create/Join Group -->
-  <div id="group-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm hidden">
-    <div class="bg-gray-200 dark:bg-slate-800 w-full max-w-md m-4 p-6 rounded-2xl shadow-2xl relative text-gray-800 dark:text-gray-200 transform transition-transform duration-300 scale-95">
+  <div id="group-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white dark:bg-gray-800 w-full max-w-md m-4 p-6 rounded-2xl shadow-2xl relative text-gray-800 dark:text-gray-200 transform transition-transform duration-300 scale-95 border border-gray-200 dark:border-gray-700">
       <!-- Close Button -->
       <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition">
         <i class="fas fa-times fa-lg"></i>
       </button>
 
       <!-- Tabs -->
-      <div class="mb-6 border-b border-gray-300 dark:border-gray-600">
+      <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
         <nav class="flex space-x-4" aria-label="Tabs">
-          <button id="create-tab" class="tab-btn active-tab font-medium px-1 py-2 text-violet-600 dark:text-violet-400 border-b-2 border-violet-500">Create Group</button>
+          <button id="create-tab" class="tab-btn active-tab font-medium px-1 py-2">Create Group</button>
           <button id="join-tab" class="tab-btn font-medium px-1 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">Join Group</button>
         </nav>
       </div>
@@ -147,9 +139,9 @@
       <div id="create-form">
         <h2 class="text-2xl font-semibold mb-4">Create a New Group</h2>
         <form action="/groups/create" method="POST" class="space-y-4">
-          <input type="text" name="name" placeholder="Group Name" class="w-full p-3 border-2 border-transparent rounded-lg dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-violet-500" required>
-          <input type="password" name="key" placeholder="Group Key (Password)" class="w-full p-3 border-2 border-transparent rounded-lg dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-violet-500" required>
-          <button type="submit" class="w-full bg-violet-500 text-white py-3 rounded-lg font-semibold hover:bg-violet-600 transition-colors">Create Group</button>
+          <input type="text" name="name" placeholder="Group Name" class="w-full p-3 border-transparent rounded-lg bg-gray-100 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+          <input type="password" name="key" placeholder="Group Key (Password)" class="w-full p-3 border-transparent rounded-lg bg-gray-100 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+          <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">Create Group</button>
         </form>
       </div>
       
@@ -157,135 +149,96 @@
       <div id="join-form" class="hidden">
         <h2 class="text-2xl font-semibold mb-4">Join an Existing Group</h2>
         <form action="/groups/join" method="POST" class="space-y-4">
-          <input type="text" name="name" placeholder="Group Name" class="w-full p-3 border-2 border-transparent rounded-lg dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500" required>
-          <input type="password" name="key" placeholder="Group Key (Password)" class="w-full p-3 border-2 border-transparent rounded-lg dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500" required>
+          <input type="text" name="name" placeholder="Group Name" class="w-full p-3 border-transparent rounded-lg bg-gray-100 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500" required>
+          <input type="password" name="key" placeholder="Group Key (Password)" class="w-full p-3 border-transparent rounded-lg bg-gray-100 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500" required>
           <button type="submit" class="w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition-colors">Join Group</button>
         </form>
       </div>
     </div>
   </div>
 
-
-  <script src="https://cdn.jsdelivr.net/npm/tsparticles@1.37.5/dist/tsparticles.min.js"></script>
   <script>
-    // This script is self-contained and handles all interactivity for the page.
-    // It manages theme switching, particle effects, search filtering, and the modal window for creating/joining groups.
-
-    // --- Theme & Particle Logic ---
-    const themeToggleBtn = document.getElementById('theme-toggle');
-    const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-    const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-
-    // Configuration for the particle background animation.
-    const particleConfig = (isDark) => {
-      const color = isDark ? "#ffffff" : "#334155"; // White for dark, slate-700 for light
-      return { particles: { number: { value: 50, density: { enable: true, value_area: 800 } }, color: { value: color }, shape: { type: "circle" }, opacity: { value: 0.3, random: true }, size: { value: 2, random: true }, line_linked: { enable: false }, move: { enable: true, speed: 1.5, direction: "none", random: true, straight: false, out_mode: "out" } }, interactivity: { detect_on: "canvas", events: { onhover: { enable: true, mode: "bubble" }, onclick: { enable: false } }, modes: { bubble: { distance: 200, size: 4, duration: 2, opacity: 0.8 } } }, retina_detect: true };
-    };
-
-    // Initializes or re-initializes the particles with the correct color.
-    const loadParticles = (isDark) => {
-      if (window.particlesJS) {
-          particlesJS('particles-js', particleConfig(isDark));
-      }
-    };
-
-    // Sets the theme (dark/light) on the page and in localStorage.
-    const setTheme = (isDark) => {
-      if (isDark) {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-        themeToggleLightIcon.style.display = 'block';
-        themeToggleDarkIcon.style.display = 'none';
-      } else {
-        document.documentElement.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-        themeToggleLightIcon.style.display = 'none';
-        themeToggleDarkIcon.style.display = 'block';
-      }
-      loadParticles(isDark);
-    };
-
-    // Set initial theme on page load based on user preference or system settings.
     document.addEventListener('DOMContentLoaded', () => {
+        // --- Theme Management ---
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+        const setTheme = (isDark) => {
+            document.documentElement.classList.toggle('dark', isDark);
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            themeToggleLightIcon.classList.toggle('hidden', !isDark);
+            themeToggleDarkIcon.classList.toggle('hidden', isDark);
+        };
+
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         const savedTheme = localStorage.getItem('theme');
-        setTheme(savedTheme === 'dark' || (!savedTheme && prefersDark));
+        const isInitiallyDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+        setTheme(isInitiallyDark);
 
         themeToggleBtn.addEventListener('click', () => {
             const isCurrentlyDark = document.documentElement.classList.contains('dark');
             setTheme(!isCurrentlyDark);
         });
-    });
 
-    // --- Search Functionality ---
-    const searchInput = document.getElementById('searchInput');
-    const groupsGrid = document.getElementById('groupsGrid');
-    // Filters the group cards in real-time as the user types.
-    searchInput.addEventListener('keyup', () => {
-      const filter = searchInput.value.toLowerCase();
-      const items = groupsGrid.querySelectorAll('.group-card');
-      items.forEach(item => {
-        const groupName = item.querySelector('.group-name').textContent.toLowerCase();
-        // Uses 'flex' to match the display property of the grid items.
-        item.style.display = groupName.includes(filter) ? 'flex' : 'none';
-      });
-    });
+        // --- Search Functionality ---
+        const searchInput = document.getElementById('searchInput');
+        const groupsGrid = document.getElementById('groupsGrid');
+        searchInput.addEventListener('keyup', () => {
+            const filter = searchInput.value.toLowerCase();
+            const items = groupsGrid.querySelectorAll('.group-card');
+            items.forEach(item => {
+                const groupName = item.querySelector('.group-name').textContent.toLowerCase();
+                item.style.display = groupName.includes(filter) ? 'flex' : 'none';
+            });
+        });
 
-    // --- Modal & Tab Logic ---
-    const modal = document.getElementById('group-modal');
-    const modalContent = modal.querySelector('div');
-    const openBtn = document.getElementById('open-modal-btn');
-    const closeBtn = document.getElementById('close-modal-btn');
-    
-    const createTab = document.getElementById('create-tab');
-    const joinTab = document.getElementById('join-tab');
-    const createForm = document.getElementById('create-form');
-    const joinForm = document.getElementById('join-form');
-
-    // Opens the modal with a subtle scale-up animation.
-    const openModal = () => {
-      modal.classList.remove('hidden');
-      // Timeout ensures the animation plays after the display property is set.
-      setTimeout(() => modalContent.classList.remove('scale-95'), 10);
-    };
-
-    // Closes the modal with a scale-down animation.
-    const closeModal = () => {
-      modalContent.classList.add('scale-95');
-      // Waits for the animation to finish before hiding the modal.
-      setTimeout(() => modal.classList.add('hidden'), 200);
-    };
-
-    openBtn.addEventListener('click', openModal);
-    closeBtn.addEventListener('click', closeModal);
-    // Allows closing the modal by clicking on the dark overlay.
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeModal();
-    });
-    
-    // Handles the logic for switching between the "Create" and "Join" tabs.
-    const switchTabs = (activeTab) => {
-        const isActiveCreate = activeTab === 'create';
-        createForm.classList.toggle('hidden', !isActiveCreate);
-        joinForm.classList.toggle('hidden', isActiveCreate);
+        // --- Modal & Tab Logic ---
+        const modal = document.getElementById('group-modal');
+        const modalContent = modal.querySelector('div');
+        const openBtn = document.getElementById('open-modal-btn');
+        const closeBtn = document.getElementById('close-modal-btn');
         
-        // Toggles classes to update the visual style of the active tab.
-        createTab.classList.toggle('active-tab', isActiveCreate);
-        createTab.classList.toggle('text-violet-600', isActiveCreate);
-        createTab.classList.toggle('dark:text-violet-400', isActiveCreate);
-        createTab.classList.toggle('border-violet-500', isActiveCreate);
-        createTab.classList.toggle('text-gray-500', !isActiveCreate);
+        const createTab = document.getElementById('create-tab');
+        const joinTab = document.getElementById('join-tab');
+        const createForm = document.getElementById('create-form');
+        const joinForm = document.getElementById('join-form');
+
+        const openModal = () => {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => modalContent.classList.remove('scale-95'), 10);
+        };
+
+        const closeModal = () => {
+            modalContent.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 200);
+        };
+
+        openBtn.addEventListener('click', openModal);
+        closeBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
         
-        joinTab.classList.toggle('active-tab', !isActiveCreate);
-        joinTab.classList.toggle('text-violet-600', !isActiveCreate);
-        joinTab.classList.toggle('dark:text-violet-400', !isActiveCreate);
-        joinTab.classList.toggle('border-violet-500', !isActiveCreate);
-        joinTab.classList.toggle('text-gray-500', isActiveCreate);
-    };
+        const switchTabs = (activeTab) => {
+            const isCreateActive = activeTab === 'create';
+            createForm.classList.toggle('hidden', !isCreateActive);
+            joinForm.classList.toggle('hidden', isCreateActive);
+            
+            createTab.classList.toggle('active-tab', isCreateActive);
+            createTab.classList.toggle('text-gray-500', !isCreateActive);
+            
+            joinTab.classList.toggle('active-tab', !isCreateActive);
+            joinTab.classList.toggle('text-gray-500', isCreateActive);
+        };
 
-    createTab.addEventListener('click', () => switchTabs('create'));
-    joinTab.addEventListener('click', () => switchTabs('join'));
-
+        createTab.addEventListener('click', () => switchTabs('create'));
+        joinTab.addEventListener('click', () => switchTabs('join'));
+    });
   </script>
 </body>
 </html>
