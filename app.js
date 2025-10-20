@@ -10,7 +10,7 @@ const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const MongoStore = require('connect-mongo');
 const { Server } = require('ws');
-const { setupWSConnection } = require('y-websocket/bin/utils');
+const { setupWSConnection } = require('y-websocket/dist/src/utils.js');
 
 const User = require('./models/user');
 const Group = require('./models/group');
