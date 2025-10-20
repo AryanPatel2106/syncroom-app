@@ -30,7 +30,7 @@ const io = socketIO(server);
 
 // --- Redis Adapter Setup for Scaling ---
 const pubClient = createClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' });
-const subClient = pubClient.clone();
+const subClient = pubClient.duplicate();
 
 Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
     io.adapter(createAdapter(pubClient, subClient));
