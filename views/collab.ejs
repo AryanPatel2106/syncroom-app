@@ -1,8 +1,13 @@
 <%- include('partials/header') %>
 
-<div class="container mx-auto mt-10">
-    <h1 class="text-4xl font-bold mb-4"><%= doc.name %></h1>
-    <div id="editor" class="border rounded-lg"></div>
+<div class="container mx-auto mt-10 p-4">
+    <div class="flex justify-between items-center mb-4">
+        <h1 class="text-4xl font-bold"><%= doc.name %></h1>
+        <div id="connection-status" class="text-sm font-semibold px-3 py-1 rounded-full">
+            Connecting...
+        </div>
+    </div>
+    <div id="editor" class="border rounded-lg shadow-lg"></div>
 </div>
 
 <script type="module">
@@ -13,15 +18,28 @@
     import { EditorState } from '@codemirror/state';
     import { javascript } from '@codemirror/lang-javascript';
 
+    const statusIndicator = document.getElementById('connection-status');
     const doc = new Y.Doc();
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsProvider = new WebsocketProvider(wsUrl, '<%= doc.docId %>', doc);
+    
+    // Use the URL provided by the server
+    const wsProvider = new WebsocketProvider('<%= wsUrl %>', '<%= doc.docId %>', doc);
 
     wsProvider.on('status', event => {
         console.log(event.status); // logs "connected" or "disconnected"
+        if (event.status === 'connected') {
+            statusIndicator.textContent = 'Connected';
+            statusIndicator.className = 'text-sm font-semibold px-3 py-1 rounded-full bg-green-500 text-white';
+        } else {
+            statusIndicator.textContent = 'Disconnected';
+            statusIndicator.className = 'text-sm font-semibold px-3 py-1 rounded-full bg-red-500 text-white';
+        }
     });
 
     const ytext = doc.getText('codemirror');
+    
+    // Pre-fill the document with content from the database
+    ytext.insert(0, `<%- doc.content.replace(/`/g, '\\`') %>`);
+
     const editorContainer = document.getElementById('editor');
 
     const state = EditorState.create({
@@ -34,7 +52,20 @@
         parent: editorContainer
     });
 
-    const binding = new CodemirrorBinding(ytext, view);
+    const binding = new CodemirrorBinding(ytext, view, wsProvider.awareness);
+
+    // Save changes back to the database periodically
+    let saveTimeout;
+    ytext.observe(event => {
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            fetch(`/collab/<%= doc._id %>/save`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: ytext.toString() })
+            });
+        }, 2000); // Save 2 seconds after the last change
+    });
 </script>
 
 <%- include('partials/footer') %>

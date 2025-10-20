@@ -10,6 +10,10 @@ const collabDocSchema = new mongoose.Schema({
     ref: 'Group',
     required: true,
   },
+  content: {
+    type: String,
+    default: '',
+  },
   // The document's unique identifier for Yjs
   docId: {
     type: String,

@@ -187,15 +187,16 @@ app.post('/groups/leave/:groupId', isAuthenticated, async (req, res) => {
     }
 });
 
-app.post('/collab/:groupId/create', isAuthenticated, checkGroupRole(['owner', 'admin', 'member']), async (req, res) => {
+app.post('/collab/:groupId/create', isAuthenticated, checkGroupRole(['owner', 'admin', 'member']), upload.single('docFile'), async (req, res) => {
     const { groupId } = req.params;
-    const { docName } = req.body;
+    const docName = req.file.originalname;
+    const content = req.file.buffer.toString('utf-8');
+
     try {
-        const docId = new mongoose.Types.ObjectId().toString();
         const newDoc = await CollabDoc.create({
             name: docName,
             groupId,
-            docId: docId
+            content
         });
 
         // Post a message to the chat about the new session
