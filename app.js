@@ -418,38 +418,41 @@ io.on('connection', (socket) => {
     }
   });
 
-  // --- WebRTC Signaling Events for P2P ---
-  socket.on('webrtc-signal', (data) => {
-    // Forward the signal to the specific user in the group
-    io.to(data.to).emit('webrtc-signal', {
-      from: socket.id,
-      signal: data.signal
-    });
+  // --- Call Initiation ---
+  socket.on('start-call', (data) => {
+    socket.to(data.room).emit('call-started', { from: socket.id, username: currentUsername });
   });
 
-  socket.on('webrtc-join-room', (room) => {
-    const clientsInRoom = io.sockets.adapter.rooms.get(room) || new Set();
-    const numClients = clientsInRoom.size;
-
-    if (numClients === 0) {
-      socket.join(room);
-      socket.emit('webrtc-created', room, socket.id);
-    } else if (numClients === 1) {
-      // Second user joins
-      socket.join(room);
-      // Let the new user know they joined and who else is there
-      const otherUser = Array.from(clientsInRoom)[0];
-      socket.emit('webrtc-joined', room, socket.id, otherUser);
-      // Let the original user know a peer is ready
-      socket.to(otherUser).emit('webrtc-ready', room, socket.id);
-    } else { // Already 2 people
-      socket.emit('webrtc-room-full', room);
+  // --- WebRTC Group Call Signaling ---
+  socket.on('join-call', (data) => {
+    const clientsInRoom = io.sockets.adapter.rooms.get(data.room);
+    const otherUsers = [];
+    if (clientsInRoom) {
+      clientsInRoom.forEach(id => {
+        if (id !== socket.id) {
+          otherUsers.push(id);
+        }
+      });
     }
+    socket.join(data.room);
+    socket.emit('existing-peers', otherUsers);
   });
 
-  socket.on('webrtc-leave-room', (room) => {
+  socket.on('webrtc-offer', (data) => {
+    socket.to(data.to).emit('webrtc-offer', { sdp: data.sdp, from: socket.id });
+  });
+
+  socket.on('webrtc-answer', (data) => {
+    socket.to(data.to).emit('webrtc-answer', { sdp: data.sdp, from: socket.id });
+  });
+
+  socket.on('webrtc-ice-candidate', (data) => {
+    socket.to(data.to).emit('webrtc-ice-candidate', { candidate: data.candidate, from: socket.id });
+  });
+
+  socket.on('leave-call', (room) => {
     socket.leave(room);
-    socket.to(room).emit('webrtc-user-left', socket.id);
+    socket.to(room).emit('peer-disconnected', socket.id);
   });
   // -----------------------------------------
 

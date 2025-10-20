@@ -116,10 +116,13 @@
 
       <!-- Video Call Container -->
       <div id="video-call-container" class="hidden absolute inset-0 bg-gray-900/80 z-50 flex-col items-center justify-center p-4">
-        <h2 class="text-2xl font-bold text-white mb-4">Video Call</h2>
-        <div id="video-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-6xl">
-            <video id="local-video" autoplay muted class="w-full rounded-lg bg-black"></video>
-            <video id="remote-video" autoplay class="w-full rounded-lg bg-black"></video>
+        <h2 class="text-2xl font-bold text-white mb-4">Group Video Call</h2>
+        <div id="video-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl flex-grow">
+            <div class="relative">
+                <video id="local-video" autoplay muted class="w-full h-full object-cover rounded-lg bg-black"></video>
+                <div class="absolute bottom-2 left-2 bg-black/50 text-white text-sm px-2 py-1 rounded">You</div>
+            </div>
+            <!-- Remote videos will be added here -->
         </div>
         <button id="end-video-call-btn" class="mt-6 bg-red-600 text-white font-bold py-2 px-6 rounded-full hover:bg-red-700 transition-colors">End Call</button>
       </div>
@@ -284,6 +287,20 @@
       </div>
   </div>
 
+  <!-- Incoming Call Modal -->
+  <div id="incoming-call-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-11/12 max-w-sm m-4 p-6 text-center">
+        <h2 class="text-2xl font-bold mb-2">Incoming Call</h2>
+        <p id="incoming-call-text" class="text-gray-600 dark:text-gray-400 mb-6">You have an incoming video call.</p>
+        <div class="flex justify-center gap-4">
+            <button id="accept-call-btn" class="bg-green-500 text-white font-bold py-3 px-8 rounded-full hover:bg-green-600 transition-colors">Accept</button>
+            <button id="decline-call-btn" class="bg-red-600 text-white font-bold py-3 px-8 rounded-full hover:bg-red-700 transition-colors">Decline</button>
+        </div>
+    </div>
+  </div>
+
+  <audio id="ringtone" src="https://cdn.pixabay.com/audio/2022/02/22/audio_e5e6d7c53d.mp3" loop preload="auto"></audio>
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://unpkg.com/webrtc-adapter/out/adapter.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -295,31 +312,40 @@
       const userUsername = "<%= user.username %>";
       const userRole = "<%= userRole %>";
 
-      // --- WebRTC Implementation ---
+      // --- WebRTC Group Call Implementation ---
       const videoCallContainer = document.getElementById('video-call-container');
       const startVideoCallBtn = document.getElementById('start-video-call-btn');
       const endVideoCallBtn = document.getElementById('end-video-call-btn');
       const localVideo = document.getElementById('local-video');
-      const remoteVideo = document.getElementById('remote-video');
+      const videoGrid = document.getElementById('video-grid');
+      const ringtone = document.getElementById('ringtone');
+      const incomingCallModal = document.getElementById('incoming-call-modal');
+      const incomingCallText = document.getElementById('incoming-call-text');
+      const acceptCallBtn = document.getElementById('accept-call-btn');
+      const declineCallBtn = document.getElementById('decline-call-btn');
+      
       let localStream;
-      let peerConnection;
-      const webrtcRoom = `webrtc-${groupId}`;
-      let otherPeerId = null; 
+      let peerConnections = {}; // Store multiple peer connections { socketId: RTCPeerConnection }
+      const webrtcRoom = `webrtc-group-${groupId}`;
+      let isCalling = false;
 
       const configuration = {
-          iceServers: [
-              { urls: 'stun:stun.l.google.com:19302' } // Public STUN server
-          ]
+          iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
       };
 
-      async function startCall() {
+      async function joinCall() {
+          if (isCalling) return;
+          isCalling = true;
+          
+          incomingCallModal.classList.add('hidden');
+          ringtone.pause();
           videoCallContainer.classList.remove('hidden');
           videoCallContainer.classList.add('flex');
 
           try {
               localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
               localVideo.srcObject = localStream;
-              socket.emit('webrtc-join-room', webrtcRoom);
+              socket.emit('join-call', { room: webrtcRoom });
           } catch (e) {
               console.error('Error accessing media devices.', e);
               alert('Could not access camera and microphone. Please check permissions.');
@@ -328,112 +354,130 @@
       }
 
       function endCall() {
-          if (peerConnection) {
-              peerConnection.close();
-              peerConnection = null;
+          isCalling = false;
+          for (const peerId in peerConnections) {
+              peerConnections[peerId].close();
           }
+          peerConnections = {};
+
           if (localStream) {
               localStream.getTracks().forEach(track => track.stop());
               localStream = null;
           }
+          
           videoCallContainer.classList.add('hidden');
           videoCallContainer.classList.remove('flex');
-          remoteVideo.srcObject = null; // Clear remote video
-          socket.emit('webrtc-leave-room', webrtcRoom);
+          
+          // Remove all remote video elements
+          const remoteVideos = videoGrid.querySelectorAll('.remote-video-container');
+          remoteVideos.forEach(v => v.remove());
+
+          socket.emit('leave-call', webrtcRoom);
       }
 
-      function createPeerConnection() {
-          peerConnection = new RTCPeerConnection(configuration);
-
-          peerConnection.onicecandidate = event => {
-              if (event.candidate && otherPeerId) {
-                  socket.emit('webrtc-signal', {
-                      to: otherPeerId,
-                      from: socket.id,
-                      signal: { candidate: event.candidate }
-                  });
-              }
-          };
-
-          peerConnection.ontrack = event => {
-              if (remoteVideo.srcObject !== event.streams[0]) {
-                remoteVideo.srcObject = event.streams[0];
-              }
-          };
+      function createPeerConnection(peerId, isInitiator) {
+          const pc = new RTCPeerConnection(configuration);
+          peerConnections[peerId] = pc;
 
           localStream.getTracks().forEach(track => {
-              peerConnection.addTrack(track, localStream);
+              pc.addTrack(track, localStream);
           });
+
+          pc.onicecandidate = event => {
+              if (event.candidate) {
+                  socket.emit('webrtc-ice-candidate', { to: peerId, candidate: event.candidate });
+              }
+          };
+
+          pc.ontrack = event => {
+              addRemoteVideoStream(peerId, event.streams[0]);
+          };
+          
+          if (isInitiator) {
+              pc.createOffer()
+                  .then(offer => pc.setLocalDescription(offer))
+                  .then(() => {
+                      socket.emit('webrtc-offer', { to: peerId, sdp: pc.localDescription });
+                  });
+          }
+          return pc;
       }
 
-      socket.on('webrtc-created', (room, id) => {
-          console.log('You created the call. Waiting for a peer.');
-      });
-
-      socket.on('webrtc-joined', (room, id) => {
-          console.log('A peer joined the call:', id);
-          otherPeerId = id;
-          // The initiator creates the offer
-          if(!peerConnection) {
-            createPeerConnection();
+      function addRemoteVideoStream(peerId, stream) {
+          let container = document.getElementById(`video-container-${peerId}`);
+          if (!container) {
+              container = document.createElement('div');
+              container.id = `video-container-${peerId}`;
+              container.className = 'remote-video-container relative w-full h-full bg-black rounded-lg overflow-hidden';
+              
+              const video = document.createElement('video');
+              video.autoplay = true;
+              video.playsInline = true;
+              video.className = 'w-full h-full object-cover';
+              
+              container.appendChild(video);
+              videoGrid.appendChild(container);
+              video.srcObject = stream;
           }
-          peerConnection.createOffer()
-              .then(offer => peerConnection.setLocalDescription(offer))
-              .then(() => {
-                  socket.emit('webrtc-signal', {
-                      to: otherPeerId,
-                      from: socket.id,
-                      signal: { sdp: peerConnection.localDescription }
-                  });
-              });
-      });
-      
-      socket.on('webrtc-ready', (room, id) => {
-        if (id !== socket.id) {
-            otherPeerId = id;
-            console.log('Peer is ready:', id);
-            if(!peerConnection) {
-                createPeerConnection();
-            }
-        }
+      }
+
+      // --- Group Call Socket Events ---
+      startVideoCallBtn.addEventListener('click', () => {
+        socket.emit('start-call', { room: webrtcRoom, username: '<%= user.username %>' });
+        joinCall();
       });
 
-      socket.on('webrtc-signal', async (data) => {
-          if (!peerConnection) {
-            createPeerConnection();
-          }
-          
-          otherPeerId = data.from;
-
-          if (data.signal.sdp) {
-              await peerConnection.setRemoteDescription(new RTCSessionDescription(data.signal.sdp));
-              if (data.signal.sdp.type === 'offer') {
-                  peerConnection.createAnswer()
-                      .then(answer => peerConnection.setLocalDescription(answer))
-                      .then(() => {
-                          socket.emit('webrtc-signal', {
-                              to: data.from,
-                              from: socket.id,
-                              signal: { sdp: peerConnection.localDescription }
-                          });
-                      });
-              }
-          } else if (data.signal.candidate) {
-              await peerConnection.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
-          }
-      });
-      
-      socket.on('webrtc-user-left', (id) => {
-        if (otherPeerId === id) {
-            endCall();
-            // Restart call process if desired
-            alert('The other user has left the call.');
-        }
-      });
-
-      startVideoCallBtn.addEventListener('click', startCall);
       endVideoCallBtn.addEventListener('click', endCall);
-      // --- End WebRTC ---
+
+      socket.on('call-started', (data) => {
+        if (!isCalling) {
+            incomingCallText.textContent = `${data.username} started a call.`;
+            incomingCallModal.classList.remove('hidden');
+            ringtone.play();
+        }
+      });
+
+      acceptCallBtn.addEventListener('click', joinCall);
+      declineCallBtn.addEventListener('click', () => {
+          incomingCallModal.classList.add('hidden');
+          ringtone.pause();
+      });
+
+      socket.on('existing-peers', (otherUsers) => {
+          otherUsers.forEach(peerId => {
+              createPeerConnection(peerId, true); // true = initiator
+          });
+      });
+
+      socket.on('webrtc-offer', async (data) => {
+          const pc = createPeerConnection(data.from, false); // false = not initiator
+          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          socket.emit('webrtc-answer', { to: data.from, sdp: answer });
+      });
+
+      socket.on('webrtc-answer', (data) => {
+          peerConnections[data.from].setRemoteDescription(new RTCSessionDescription(data.sdp));
+      });
+
+      socket.on('webrtc-ice-candidate', (data) => {
+          if (peerConnections[data.from]) {
+            peerConnections[data.from].addIceCandidate(new RTCIceCandidate(data.candidate));
+          }
+      });
+
+      socket.on('peer-disconnected', (peerId) => {
+          if (peerConnections[peerId]) {
+              peerConnections[peerId].close();
+              delete peerConnections[peerId];
+          }
+          const videoContainer = document.getElementById(`video-container-${peerId}`);
+          if (videoContainer) {
+              videoContainer.remove();
+          }
+      });
+      // --- End Group Call ---
 
       // --- Theme Management ---
       const themeToggleBtn = document.getElementById('theme-toggle');
