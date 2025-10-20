@@ -280,6 +280,32 @@ app.post('/chat/:groupId/manage/promote', isAuthenticated, checkGroupRole(['owne
     } catch (err) { console.error("Promote user error:", err); res.status(500).send("Server error"); }
 });
 
+app.post('/chat/:groupId/manage/demote', isAuthenticated, checkGroupRole(['owner']), async (req, res) => {
+    const { groupId } = req.params;
+    const { userIdToDemote } = req.body;
+    try {
+        await GroupMember.updateOne({ groupId, userId: userIdToDemote, role: 'admin' }, { role: 'member' });
+        res.redirect(`/chat/${groupId}/manage`);
+    } catch (err) { console.error("Demote user error:", err); res.status(500).send("Server error"); }
+});
+
+app.post('/chat/:groupId/delete', isAuthenticated, checkGroupRole(['owner']), async (req, res) => {
+    const { groupId } = req.params;
+    try {
+        // This is a simplified deletion. In a real app, you'd want to handle this more carefully,
+        // maybe archiving instead of deleting, and cleaning up all associated data.
+        await Message.deleteMany({ groupId });
+        await File.deleteMany({ groupId }); // You'd also delete from Cloudinary here
+        await Event.deleteMany({ groupId });
+        await GroupMember.deleteMany({ groupId });
+        await Group.deleteOne({ _id: groupId });
+        res.redirect('/groups');
+    } catch (err) {
+        console.error("Delete group error:", err);
+        res.status(500).send("Server error");
+    }
+});
+
 // --- NEW: CALENDAR EVENT ROUTES ---
 app.get('/chat/:groupId/events', isAuthenticated, checkGroupRole(['owner', 'admin', 'member']), async (req, res) => {
     const { groupId } = req.params;
