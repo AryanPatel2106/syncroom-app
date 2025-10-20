@@ -43,7 +43,7 @@
     .dark ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
 
     .sidebar { 
-      width: 320px; 
+      width: 280px; /* Slightly reduce sidebar width */
       border-right: 1px solid #e5e7eb;
       flex-shrink: 0;
       transition: transform 0.3s ease-in-out;
@@ -51,7 +51,7 @@
     .dark .sidebar { border-right-color: #374151; }
     .mobile-header, .sidebar-close-btn, .sidebar-backdrop { display: none; }
     @media (max-width: 1023px) {
-      .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 40; transform: translateX(-100%); background: #fff; }
+      .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 40; transform: translateX(-100%); background: #fff; width: 85%; max-width: 320px; }
       .dark .sidebar { background: #111827; }
       .sidebar.is-open { transform: translateX(0); }
       .sidebar-backdrop { position: fixed; inset: 0; background-color: rgba(0,0,0,0.5); z-index: 30; }
@@ -61,7 +61,7 @@
       .sidebar-close-btn { display: block; }
       .desktop-header { display: none; }
     }
-    #emoji-picker { width: 320px; max-height: 250px; overflow-y: auto; }
+    #emoji-picker { width: 320px; max-width: 90vw; max-height: 250px; overflow-y: auto; }
     .emoji { cursor: pointer; padding: 4px; border-radius: 4px; transition: background-color 0.2s; text-align: center; font-size: 1.5rem; }
     .emoji:hover { background-color: #f3f4f6; }
     .dark .emoji:hover { background-color: #374151; }
@@ -115,25 +115,25 @@
 
       <!-- Main Chat Area -->
       <main class="main-chat flex flex-col flex-grow bg-gray-100 dark:bg-gray-900">
-        <header class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
+        <header class="flex justify-between items-center p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
           <div class="flex items-center">
-            <button id="sidebar-toggle-btn" class="text-gray-500 dark:text-gray-300 mr-4 lg:hidden"><i class="fas fa-bars text-xl"></i></button>
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white desktop-header"><%= group.name %></h1>
+            <button id="sidebar-toggle-btn" class="text-gray-500 dark:text-gray-300 mr-2 sm:mr-4 lg:hidden"><i class="fas fa-bars text-xl"></i></button>
+            <h1 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white desktop-header truncate"><%= group.name %></h1>
           </div>
-          <div class="flex items-center space-x-4">
+          <div class="flex items-center space-x-2 sm:space-x-4">
               <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none rounded-lg text-sm p-2.5">
                   <i id="theme-toggle-dark-icon" class="fas fa-moon w-5 h-5"></i>
                   <i id="theme-toggle-light-icon" class="fas fa-sun w-5 h-5 hidden"></i>
               </button>
           </div>
         </header>
-        <div id="message-container" class="flex-grow overflow-y-auto p-6 space-y-6">
+        <div id="message-container" class="flex-grow overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
           <!-- Messages will be dynamically inserted here -->
           <% messages.forEach(function(message) { %>
             <div class="message-container" id="message-<%= message.id %>">
               <div class="message-bubble w-full flex <%= message.user_id == user.id ? 'justify-end' : 'justify-start' %>" data-message-id="<%= message.id %>">
-                <div class="relative max-w-xl message-content">
-                  <div class="rounded-2xl px-4 py-3 <%= message.user_id == user.id ? 'bg-indigo-600 text-white rounded-br-lg' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-lg shadow-sm' %>">
+                <div class="relative max-w-xs sm:max-w-md md:max-w-lg message-content">
+                  <div class="rounded-2xl px-3 py-2 sm:px-4 sm:py-3 <%= message.user_id == user.id ? 'bg-indigo-600 text-white rounded-br-lg' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-lg shadow-sm' %>">
                     <div class="font-bold text-sm mb-1"><%= message.username %></div>
                     <% if (message.parent_message_id) { %>
                       <div class="border-l-2 border-indigo-300 dark:border-indigo-500 pl-2 text-xs opacity-80 mb-2">
@@ -143,7 +143,7 @@
                     <% if (message.is_code_snippet) { %>
                       <pre><code class="language-<%= message.language %> code-snippet"><%- message.message %></code></pre>
                     <% } else { %>
-                      <p class="text-base break-words"><%= message.message %></p>
+                      <p class="text-sm sm:text-base break-words"><%= message.message %></p>
                     <% } %>
                   </div>
                   <!-- Actions on Hover -->
@@ -169,20 +169,20 @@
         </div>
 
         <!-- Typing indicator -->
-        <div id="typing-indicator" class="h-6 px-6 text-gray-500 dark:text-gray-400 italic text-sm"></div>
-        <div id="reply-info" class="hidden bg-gray-200 dark:bg-gray-700/50 p-3 mx-6 rounded-t-lg text-sm border-b border-gray-300 dark:border-gray-600">
+        <div id="typing-indicator" class="h-6 px-3 sm:px-6 text-gray-500 dark:text-gray-400 italic text-sm"></div>
+        <div id="reply-info" class="hidden bg-gray-200 dark:bg-gray-700/50 p-3 mx-3 sm:mx-6 rounded-t-lg text-sm border-b border-gray-300 dark:border-gray-600">
           Replying to <strong id="reply-username"></strong>: "<span id="reply-message" class="line-clamp-1"></span>"
           <button id="cancel-reply" class="float-right font-bold text-gray-500 hover:text-red-500 transition-colors">×</button>
         </div>
-        <div class="p-4 sm:p-6 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+        <div class="p-2 sm:p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
             <form id="message-form" class="relative flex items-center gap-2 sm:gap-4">
               <div id="emoji-picker" class="hidden absolute bottom-full mb-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-2 shadow-lg">
                   <div class="grid grid-cols-8 gap-1"></div>
               </div>
-              <button type="button" id="code-snippet-btn" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 text-lg transition-colors"><i class="fas fa-code"></i></button>
-              <button type="button" id="emoji-btn" class="absolute left-12 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 text-lg transition-colors"><i class="far fa-smile"></i></button>
-              <input id="message-input" class="flex-grow p-4 pl-24 pr-16 bg-gray-100 dark:bg-gray-900 border-2 border-transparent rounded-full text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Type a message..." autocomplete="off">
-              <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 bg-indigo-600 text-white w-12 h-12 rounded-full hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105 flex-shrink-0 flex items-center justify-center"><i class="fas fa-paper-plane text-xl"></i></button>
+              <button type="button" id="code-snippet-btn" class="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 text-lg transition-colors"><i class="fas fa-code"></i></button>
+              <button type="button" id="emoji-btn" class="absolute left-10 sm:left-12 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 text-lg transition-colors"><i class="far fa-smile"></i></button>
+              <input id="message-input" class="flex-grow p-3 sm:p-4 pl-16 sm:pl-24 pr-12 sm:pr-16 bg-gray-100 dark:bg-gray-900 border-2 border-transparent rounded-full text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Type a message..." autocomplete="off">
+              <button type="submit" class="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 bg-indigo-600 text-white w-10 h-10 sm:w-12 sm:h-12 rounded-full hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105 flex-shrink-0 flex items-center justify-center"><i class="fas fa-paper-plane text-lg sm:text-xl"></i></button>
             </form>
         </div>
       </main>
@@ -190,24 +190,24 @@
 
   <!-- All Files Modal -->
   <div id="files-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/60 backdrop-blur-sm">
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col m-4 border border-gray-200 dark:border-gray-700">
-        <header class="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center flex-shrink-0">
-            <h2 class="text-xl font-bold">All Shared Files</h2>
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-11/12 max-w-4xl max-h-[80vh] flex flex-col m-4 border border-gray-200 dark:border-gray-700">
+        <header class="p-4 sm:p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center flex-shrink-0">
+            <h2 class="text-lg sm:text-xl font-bold">All Shared Files</h2>
             <button id="close-files-modal-btn" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"><i class="fas fa-times text-2xl"></i></button>
         </header>
-        <div id="modal-file-list" class="p-6 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div id="modal-file-list" class="p-3 sm:p-6 overflow-y-auto grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             <% files.forEach(file => { %>
               <div class="file-item p-3 rounded-lg bg-gray-100 dark:bg-gray-900/50 hover:bg-gray-200 dark:hover:bg-gray-700/50 transition border border-gray-200 dark:border-gray-700" data-file-id="<%= file.id %>">
                 <% if (file.mimetype && file.mimetype.startsWith('image/')) { %>
-                  <img src="<%= file.filepath %>" alt="<%= file.filename %>" class="w-full h-32 object-cover rounded-md mb-2">
+                  <img src="<%= file.filepath %>" alt="<%= file.filename %>" class="w-full h-24 sm:h-32 object-cover rounded-md mb-2">
                 <% } else { %>
-                  <div class="w-full h-32 rounded-md mb-2 bg-gray-200 dark:bg-gray-700 flex items-center justify-center"><i class="fas fa-file-alt text-4xl text-gray-400 dark:text-gray-500"></i></div>
+                  <div class="w-full h-24 sm:h-32 rounded-md mb-2 bg-gray-200 dark:bg-gray-700 flex items-center justify-center"><i class="fas fa-file-alt text-3xl sm:text-4xl text-gray-400 dark:text-gray-500"></i></div>
                 <% } %>
-                <a href="<%= file.filepath %>" target="_blank" class="text-indigo-500 hover:underline text-sm break-all font-medium"><%= file.filename %></a>
-                <div class="flex justify-between items-center mt-2">
-                    <a href="<%= file.filepath.replace('/upload/', '/upload/fl_attachment/') %>" class="text-green-500 hover:text-green-600 text-xs"><i class="fas fa-download mr-1"></i> Download</a>
+                <a href="<%= file.filepath %>" target="_blank" class="text-indigo-500 hover:underline text-xs sm:text-sm break-all font-medium"><%= file.filename %></a>
+                <div class="flex justify-between items-center mt-2 text-xs">
+                    <a href="<%= file.filepath.replace('/upload/', '/upload/fl_attachment/') %>" class="text-green-500 hover:text-green-600"><i class="fas fa-download mr-1"></i> Download</a>
                     <% if (file.user_id == user.id || ['owner', 'admin'].includes(userRole)) { %>
-                        <button data-file-id="<%= file.id %>" data-filepath="<%= file.filepath %>" class="delete-file-btn text-red-500 hover:text-red-600 text-xs"><i class="fas fa-trash mr-1"></i> Delete</button>
+                        <button data-file-id="<%= file.id %>" data-filepath="<%= file.filepath %>" class="delete-file-btn text-red-500 hover:text-red-600"><i class="fas fa-trash mr-1"></i> Delete</button>
                     <% } %>
                 </div>
               </div>
@@ -218,16 +218,16 @@
 
   <!-- Calendar Modal -->
   <div id="calendar-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col m-4 border border-gray-200 dark:border-gray-700">
-          <header class="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-              <h2 class="text-xl font-bold">Group Calendar</h2>
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-11/12 max-w-2xl max-h-[80vh] flex flex-col m-4 border border-gray-200 dark:border-gray-700">
+          <header class="p-4 sm:p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+              <h2 class="text-lg sm:text-xl font-bold">Group Calendar</h2>
               <button id="close-calendar-modal-btn" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"><i class="fas fa-times text-2xl"></i></button>
           </header>
-          <div class="flex-grow p-6 overflow-y-auto">
+          <div class="flex-grow p-3 sm:p-6 overflow-y-auto">
               <div id="calendar-events-list" class="space-y-4"></div>
           </div>
-          <div class="p-4 border-t border-gray-200 dark:border-gray-700">
-              <form id="add-event-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div class="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700">
+              <form id="add-event-form" class="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4 items-end">
                   <input type="text" id="event-title" placeholder="Event Title" class="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 border-transparent" required>
                   <input type="date" id="event-date" class="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 border-transparent" required>
                   <button type="submit" class="bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 font-semibold">Add Event</button>
@@ -238,12 +238,12 @@
 
   <!-- Code Snippet Modal -->
   <div id="code-snippet-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col m-4 border border-gray-200 dark:border-gray-700">
-          <header class="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-              <h2 class="text-xl font-bold">Share Code Snippet</h2>
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-11/12 max-w-3xl flex flex-col m-4 border border-gray-200 dark:border-gray-700">
+          <header class="p-4 sm:p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+              <h2 class="text-lg sm:text-xl font-bold">Share Code Snippet</h2>
               <button id="close-code-modal-btn" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"><i class="fas fa-times text-2xl"></i></button>
           </header>
-          <div class="p-6">
+          <div class="p-3 sm:p-6">
               <form id="code-snippet-form">
                   <div class="mb-4">
                       <label for="language-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Language</label>
