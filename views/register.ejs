@@ -6,7 +6,7 @@
   <title>Register - SyncRoom</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     body { 
       font-family: 'Inter', sans-serif; 
@@ -14,11 +14,12 @@
       -moz-osx-font-smoothing: grayscale;
     }
     .form-container {
-        animation: fadeInUp 0.5s ease-out forwards;
+        animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        opacity: 0;
     }
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+    @keyframes popIn {
+        from { opacity: 0; transform: scale(0.9); }
+        to { opacity: 1; transform: scale(1); }
     }
     .criteria-item.valid { color: #10B981; } /* green-500 */
     .criteria-item.valid .fa-circle { display: none; }
@@ -30,39 +31,53 @@
 <body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
 
   <div class="absolute top-4 right-4 z-10">
-      <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
+      <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none rounded-lg text-sm p-2.5">
           <i id="theme-toggle-dark-icon" class="fas fa-moon w-5 h-5"></i>
           <i id="theme-toggle-light-icon" class="fas fa-sun w-5 h-5 hidden"></i>
       </button>
   </div>
 
-  <div class="min-h-screen flex flex-col items-center justify-center p-4">
-    <div class="form-container w-full max-w-sm">
+  <div class="min-h-screen flex items-center justify-center p-4 bg-dots-pattern">
+    <div class="w-full max-w-md">
         <div class="text-center mb-8">
-            <a href="/" class="text-3xl font-bold text-gray-800 dark:text-gray-200">SyncRoom</a>
+            <a href="/" class="text-4xl font-bold text-indigo-600 dark:text-indigo-400">SyncRoom</a>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">Join the conversation. Create your free account.</p>
         </div>
-        <form id="register-form" action="/register" method="POST" class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-6">
-          <h2 class="text-2xl font-bold mb-1 text-center text-gray-800 dark:text-gray-200">Create Account</h2>
-          <div class="space-y-4">
-            <input name="username" placeholder="Username" class="bg-gray-100 dark:bg-gray-700 border-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" required />
-            
-            <input type="email" name="email" placeholder="Email" class="bg-gray-100 dark:bg-gray-700 border-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" required />
-            
-            <input type="password" id="password" name="password" placeholder="Password" class="bg-gray-100 dark:bg-gray-700 border-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" required />
-            <input type="password" id="confirm-password" name="confirmPassword" placeholder="Confirm Password" class="bg-gray-100 dark:bg-gray-700 border-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" required />
+        <form id="register-form" action="/register" method="POST" class="form-container bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 space-y-6">
+          <h2 class="text-2xl font-bold text-center text-gray-800 dark:text-gray-200">Create Your Account</h2>
+          
+          <div class="relative">
+            <label for="username" class="absolute -top-2 left-2 inline-block bg-white dark:bg-gray-800 px-1 text-xs font-medium text-gray-600 dark:text-gray-400">Username</label>
+            <input id="username" name="username" placeholder="your_username" class="bg-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg border-2 border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" required />
           </div>
 
-          <div id="password-criteria" class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-              <p class="criteria-item" id="criteria-length"><i class="far fa-circle text-xs mr-2"></i><i class="fas fa-check-circle text-xs mr-2"></i>At least 8 characters</p>
-              <p class="criteria-item" id="criteria-uppercase"><i class="far fa-circle text-xs mr-2"></i><i class="fas fa-check-circle text-xs mr-2"></i>An uppercase letter</p>
-              <p class="criteria-item" id="criteria-lowercase"><i class="far fa-circle text-xs mr-2"></i><i class="fas fa-check-circle text-xs mr-2"></i>A lowercase letter</p>
-              <p class="criteria-item" id="criteria-number"><i class="far fa-circle text-xs mr-2"></i><i class="fas fa-check-circle text-xs mr-2"></i>A number</p>
-              <p class="criteria-item" id="criteria-special"><i class="far fa-circle text-xs mr-2"></i><i class="fas fa-check-circle text-xs mr-2"></i>A special character (!@#$...)</p>
+          <div class="relative">
+            <label for="email" class="absolute -top-2 left-2 inline-block bg-white dark:bg-gray-800 px-1 text-xs font-medium text-gray-600 dark:text-gray-400">Email</label>
+            <input id="email" type="email" name="email" placeholder="you@example.com" class="bg-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg border-2 border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" required />
+          </div>
+
+          <div class="relative">
+            <label for="password" class="absolute -top-2 left-2 inline-block bg-white dark:bg-gray-800 px-1 text-xs font-medium text-gray-600 dark:text-gray-400">Password</label>
+            <input id="password" type="password" name="password" placeholder="••••••••" class="bg-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg border-2 border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" required />
+          </div>
+
+          <div class="relative">
+            <label for="confirm-password" class="absolute -top-2 left-2 inline-block bg-white dark:bg-gray-800 px-1 text-xs font-medium text-gray-600 dark:text-gray-400">Confirm Password</label>
+            <input id="confirm-password" type="password" name="confirmPassword" placeholder="••••••••" class="bg-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg border-2 border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" required />
+          </div>
+
+          <div id="password-criteria" class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-gray-600 dark:text-gray-400">
+              <p class="criteria-item" id="criteria-length"><i class="far fa-circle text-xs mr-2"></i><i class="fas fa-check-circle text-xs mr-2"></i>8+ characters</p>
+              <p class="criteria-item" id="criteria-uppercase"><i class="far fa-circle text-xs mr-2"></i><i class="fas fa-check-circle text-xs mr-2"></i>Uppercase</p>
+              <p class="criteria-item" id="criteria-lowercase"><i class="far fa-circle text-xs mr-2"></i><i class="fas fa-check-circle text-xs mr-2"></i>Lowercase</p>
+              <p class="criteria-item" id="criteria-number"><i class="far fa-circle text-xs mr-2"></i><i class="fas fa-check-circle text-xs mr-2"></i>Number</p>
+              <p class="criteria-item" id="criteria-special"><i class="far fa-circle text-xs mr-2"></i><i class="fas fa-check-circle text-xs mr-2"></i>Special</p>
               <p class="criteria-item" id="criteria-match"><i class="far fa-circle text-xs mr-2"></i><i class="fas fa-check-circle text-xs mr-2"></i>Passwords match</p>
           </div>
 
-          <button id="register-button" type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 font-semibold disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed" disabled>Register</button>
-          <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+          <button id="register-button" type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 font-semibold disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed shadow-md hover:shadow-lg transform hover:-translate-y-0.5" disabled>Create Account</button>
+          
+          <p class="text-center text-sm text-gray-600 dark:text-gray-400 pt-4">
             Already have an account? <a href="/login" class="text-indigo-500 hover:underline font-medium">Sign In</a>
           </p>
         </form>

@@ -338,119 +338,97 @@ app.get('/logout', (req, res) => {
 });
 
 // SOCKET.IO
-const activeUsers = {};
-io.on('connection', socket => {
-  const userId = socket.handshake.query.userId;
-  const username = socket.handshake.query.username;
+const activeUsers = {}; // In-memory store for active users per group
 
-  socket.on('joinRoom', room => {
-    socket.join(room);
-    if (!activeUsers[room]) activeUsers[room] = {};
-    activeUsers[room][userId] = username;
-    io.to(room).emit('updateUserList', Object.values(activeUsers[room]));
+io.on('connection', (socket) => {
+  let currentGroupId = null;
+  let currentUserId = null;
+  let currentUsername = null;
+
+  socket.on('joinGroup', async ({ groupId, userId, username }) => {
+    currentGroupId = groupId;
+    currentUserId = userId;
+    currentUsername = username;
+    
+    socket.join(groupId);
+
+    if (!activeUsers[groupId]) {
+      activeUsers[groupId] = new Map();
+    }
+    activeUsers[groupId].set(userId, username);
+
+    io.to(groupId).emit('userList', Array.from(activeUsers[groupId].values()).map(name => ({ username: name })));
   });
 
-  socket.on('chatMessage', async ({ room, userId, username, message, parentId, isCodeSnippet, language }) => {
+  socket.on('chatMessage', async (data) => {
+    if (!currentGroupId) return;
+
     try {
-      const groupId = room.replace('group-', '');
-      const msg = await Message.create({ groupId, userId, message, parentId, isCodeSnippet, language });
-      
-      let parentData = { parent_message: null, parent_username: null };
-      if (parentId) {
-          const parentResult = await Message.findById(parentId).populate('userId', 'username');
-          if(parentResult) {
-              parentData.parent_message = parentResult.message;
-              parentData.parent_username = parentResult.userId.username;
-          }
-      }
-      const newMsg = { id: msg._id, message: msg.message, user_id: userId, username, created_at: msg.createdAt, parent_message_id: parentId, is_code_snippet: isCodeSnippet, language, ...parentData };
-      io.to(room).emit('chatMessage', newMsg);
-    } catch (err) { console.error("Socket chat message error:", err); }
+      const { message, parentMessageId, isCodeSnippet, language } = data;
+      const msg = await Message.create({ 
+        groupId: currentGroupId, 
+        userId: currentUserId, 
+        message, 
+        parentId: parentMessageId,
+        isCodeSnippet: isCodeSnippet || false,
+        language: language || 'plaintext'
+      });
+
+      const populatedMessage = await Message.findById(msg._id)
+        .populate('userId', 'username')
+        .populate({
+            path: 'parentId',
+            populate: { path: 'userId', select: 'username' }
+        });
+
+      const result = {
+        ...populatedMessage.toObject(),
+        id: populatedMessage._id,
+        username: populatedMessage.userId.username,
+        user_id: populatedMessage.userId._id,
+        parent_message: populatedMessage.parentId ? populatedMessage.parentId.message : null,
+        parent_username: populatedMessage.parentId ? populatedMessage.parentId.userId.username : null,
+      };
+
+      io.to(currentGroupId).emit('chatMessage', { message: result });
+    } catch (err) { 
+      console.error("Socket chat message error:", err); 
+    }
   });
 
-  socket.on('typing', ({ room, username }) => {
-    socket.to(room).emit('typing', { username });
+  socket.on('typing', ({ isTyping }) => {
+    if (currentGroupId) {
+      socket.to(currentGroupId).emit('typing', { 
+        userId: currentUserId, 
+        username: currentUsername, 
+        isTyping 
+      });
+    }
   });
 
-  socket.on('addReaction', async ({ messageId, userId, emoji }) => {
-    try {
-        await Reaction.findOneAndUpdate(
-            { messageId, userId, emoji },
-            { messageId, userId, emoji },
-            { upsert: true }
-        );
-        const message = await Message.findById(messageId);
-        if (message) {
-            const room = `group-${message.groupId}`;
-            io.to(room).emit('reactionAdded', { messageId, userId, emoji });
-        }
-    } catch (err) { console.error("Add reaction error:", err); }
-  });
-
-  socket.on('deleteMessage', async ({ room, messageId }) => {
-    const groupId = room.replace('group-', '');
+  socket.on('deleteMessage', async ({ messageId }) => {
+    if (!currentGroupId) return;
     try {
       const message = await Message.findById(messageId);
       if (!message) return;
-      const messageAuthorId = message.userId;
-      const member = await GroupMember.findOne({ groupId, userId });
+
+      const member = await GroupMember.findOne({ groupId: currentGroupId, userId: currentUserId });
       if (!member) return;
-      const userRole = member.role;
-      if (userId == messageAuthorId || ['owner', 'admin'].includes(userRole)) {
+
+      if (message.userId.toString() === currentUserId || ['owner', 'admin'].includes(member.role)) {
         await Message.deleteOne({ _id: messageId });
-        io.to(room).emit('messageDeleted', messageId);
+        io.to(currentGroupId).emit('messageDeleted', messageId);
       }
     } catch (err) {
       console.error("Delete message error:", err);
     }
   });
 
-  socket.on('deleteFile', async ({ room, fileId, filepath }) => {
-    const groupId = room.replace('group-', '');
-    try {
-        const file = await File.findById(fileId);
-        if (!file) return;
-        const fileAuthorId = file.userId;
-        const member = await GroupMember.findOne({ groupId, userId });
-        if (!member) return;
-        const userRole = member.role;
-        if (userId == fileAuthorId || ['owner', 'admin'].includes(userRole)) {
-            const publicId = filepath.split('/').slice(-2).join('/').split('.')[0];
-            await cloudinary.uploader.destroy(publicId);
-            await File.deleteOne({ _id: fileId });
-            io.to(room).emit('fileDeleted', { fileId, filepath });
-        }
-    } catch (err) {
-        console.error("Delete file error:", err);
-    }
-  });
-
-  // --- NEW: SOCKET EVENT FOR DELETING A CALENDAR EVENT ---
-  socket.on('deleteEvent', async ({ room, eventId }) => {
-      const groupId = room.replace('group-', '');
-      try {
-          const event = await Event.findById(eventId);
-          if (!event) return;
-
-          const eventAuthorId = event.userId;
-          const member = await GroupMember.findOne({ groupId, userId });
-          if (!member) return;
-          const userRole = member.role;
-
-          if (userId == eventAuthorId || ['owner', 'admin'].includes(userRole)) {
-              await Event.deleteOne({ _id: eventId });
-              io.to(room).emit('eventDeleted', eventId);
-          }
-      } catch (err) {
-          console.error("Delete event error:", err);
-      }
-  });
-
   socket.on('disconnect', () => {
-    for (const room in activeUsers) {
-      if (activeUsers[room] && activeUsers[room][userId]) {
-        delete activeUsers[room][userId];
-        io.to(room).emit('updateUserList', Object.values(activeUsers[room]));
+    if (currentGroupId && currentUserId) {
+      if (activeUsers[currentGroupId]) {
+        activeUsers[currentGroupId].delete(currentUserId);
+        io.to(currentGroupId).emit('userList', Array.from(activeUsers[currentGroupId].values()).map(name => ({ username: name })));
       }
     }
   });

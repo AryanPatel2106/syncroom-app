@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" class=""> <!-- Default to light mode -->
+<html lang="en" class="">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat - <%= group.name %></title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" id="highlight-theme">
   <style>
     body { 
@@ -14,30 +14,27 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
-    /* Remove particles.js background */
     .message-bubble { animation: slideIn 0.3s ease-out forwards; }
     @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     
-    /* Simplified message actions on hover */
     .message-actions {
       display: none;
       position: absolute;
       top: -1rem;
-      background-color: #fff; /* White background */
+      background-color: #fff;
       border-radius: 9999px;
       padding: 0.25rem 0.5rem;
       box-shadow: 0 4px 12px -1px rgb(0 0 0 / 0.08);
-      border: 1px solid #e5e7eb; /* light gray border */
+      border: 1px solid #e5e7eb;
     }
     .dark .message-actions {
-      background-color: #1f2937; /* bg-gray-800 */
-      border-color: #374151; /* bg-gray-700 */
+      background-color: #1f2937;
+      border-color: #374151;
     }
     .message-content:hover .message-actions { display: flex; }
     .message-actions.self { right: 0.5rem; }
     .message-actions.other { left: 0.5rem; }
 
-    /* Apple-like scrollbar */
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
@@ -45,16 +42,15 @@
     ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
     .dark ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
 
-    /* Simplified Sidebar */
     .sidebar { 
-      width: 280px; 
-      border-right: 1px solid #e5e7eb; /* light gray border */
+      width: 320px; 
+      border-right: 1px solid #e5e7eb;
       flex-shrink: 0;
       transition: transform 0.3s ease-in-out;
     }
     .dark .sidebar { border-right-color: #374151; }
     .mobile-header, .sidebar-close-btn, .sidebar-backdrop { display: none; }
-    @media (max-width: 767px) {
+    @media (max-width: 1023px) {
       .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 40; transform: translateX(-100%); background: #fff; }
       .dark .sidebar { background: #111827; }
       .sidebar.is-open { transform: translateX(0); }
@@ -65,50 +61,52 @@
       .sidebar-close-btn { display: block; }
       .desktop-header { display: none; }
     }
-    #emoji-picker { width: 280px; max-height: 200px; overflow-y: auto; }
-    .emoji { cursor: pointer; padding: 4px; border-radius: 4px; transition: background-color 0.2s; text-align: center; font-size: 1.25rem; }
+    #emoji-picker { width: 320px; max-height: 250px; overflow-y: auto; }
+    .emoji { cursor: pointer; padding: 4px; border-radius: 4px; transition: background-color 0.2s; text-align: center; font-size: 1.5rem; }
     .emoji:hover { background-color: #f3f4f6; }
     .dark .emoji:hover { background-color: #374151; }
     .code-snippet { font-size: 0.875rem; border-radius: 0.5rem; }
   </style>
 </head>
 
-<body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-white h-screen overflow-hidden">
-  <!-- Removed particles-js div -->
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white h-screen overflow-hidden">
 
-  <div class="relative z-10 h-full flex">
+  <div class="h-full flex">
       
       <!-- Sidebar -->
-      <aside id="chat-sidebar" class="sidebar flex flex-col bg-gray-50 dark:bg-gray-900/50">
-        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-            <div class="flex justify-between items-center mb-4">
-                <h1 class="text-xl font-bold desktop-header text-gray-900 dark:text-white"><%= group.name %></h1>
-                <div class="sidebar-close-btn">
-                    <button id="close-sidebar-btn" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"><i class="fas fa-times text-2xl"></i></button>
-                </div>
+      <aside id="chat-sidebar" class="sidebar flex flex-col bg-white dark:bg-gray-800">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <a href="/groups" class="text-gray-600 dark:text-gray-400 hover:text-indigo-500 transition-colors"><i class="fas fa-chevron-left mr-3"></i>All Groups</a>
+            <div class="sidebar-close-btn">
+                <button id="close-sidebar-btn" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"><i class="fas fa-times text-2xl"></i></button>
             </div>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-2 desktop-header">Logged in as: <%= user.username %></p>
+        </div>
+        <div class="p-6 text-center border-b border-gray-200 dark:border-gray-700">
+            <h1 class="text-2xl font-extrabold text-gray-900 dark:text-white"><%= group.name %></h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Logged in as: <%= user.username %></p>
         </div>
         <div class="px-4 py-4 border-b border-gray-200 dark:border-gray-700">
           <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-3 text-xs tracking-wider uppercase">Online Users</h2>
-          <ul id="user-list" class="space-y-2 text-sm text-gray-600 dark:text-gray-300"></ul>
+          <ul id="user-list" class="space-y-3 text-sm text-gray-700 dark:text-gray-300"></ul>
         </div>
-        <div class="flex-grow p-4 space-y-1">
+        <div class="flex-grow p-4 space-y-2">
             <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-2 text-xs tracking-wider uppercase">Group Tools</h2>
-            <button id="view-files-btn" class="w-full text-sm text-gray-700 dark:text-gray-200 py-2 px-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700/50 transition-colors flex items-center"><i class="fas fa-folder-open w-6 text-center mr-2"></i>View All Files</button>
-            <button id="view-calendar-btn" class="w-full text-sm text-gray-700 dark:text-gray-200 py-2 px-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700/50 transition-colors flex items-center"><i class="fas fa-calendar-alt w-6 text-center mr-2"></i>Group Calendar</button>
+            <button id="view-files-btn" class="w-full text-left text-gray-700 dark:text-gray-200 py-2.5 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors flex items-center font-medium"><i class="fas fa-folder-open w-6 text-center mr-3 text-gray-400"></i>View All Files</button>
+            <button id="view-calendar-btn" class="w-full text-left text-gray-700 dark:text-gray-200 py-2.5 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors flex items-center font-medium"><i class="fas fa-calendar-alt w-6 text-center mr-3 text-gray-400"></i>Group Calendar</button>
         </div>
-        <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+        <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
             <form action="/chat/<%= group.id %>/upload" method="POST" enctype="multipart/form-data">
-              <input type="file" name="file" class="w-full text-xs text-gray-500 dark:text-gray-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 dark:file:bg-blue-900/50 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-blue-900 cursor-pointer" required>
-              <button type="submit" class="w-full mt-2 text-sm bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold">Upload File</button>
+              <label class="w-full text-sm bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300 py-2.5 px-4 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors font-semibold flex items-center justify-center cursor-pointer">
+                <i class="fas fa-paperclip mr-2"></i> Attach File
+                <input type="file" name="file" class="hidden" onchange="this.form.submit()" required>
+              </label>
             </form>
             <% if (userRole === 'owner' || userRole === 'admin') { %>
-              <a href="/chat/<%= group.id %>/manage" class="block text-center text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><i class="fas fa-users-cog mr-2"></i>Manage Group</a>
+              <a href="/chat/<%= group.id %>/manage" class="block text-center text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-2.5 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-semibold"><i class="fas fa-users-cog mr-2"></i>Manage Group</a>
             <% } %>
             <% if (userRole !== 'owner') { %>
               <form action="/groups/leave/<%= group.id %>" method="POST" onsubmit="return confirm('Are you sure you want to leave this group permanently?');">
-                  <button type="submit" class="w-full text-sm bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition-colors"><i class="fas fa-sign-out-alt mr-2"></i>Leave Group</button>
+                  <button type="submit" class="w-full text-sm bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400 py-2.5 rounded-lg hover:bg-red-500/20 dark:hover:bg-red-500/30 transition-colors font-semibold"><i class="fas fa-sign-out-alt mr-2"></i>Leave Group</button>
               </form>
             <% } %>
         </div>
@@ -116,42 +114,41 @@
       <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
 
       <!-- Main Chat Area -->
-      <main class="main-chat flex flex-col flex-grow bg-white dark:bg-gray-800">
-        <header class="mobile-header p-4 border-b border-gray-200 dark:border-gray-700 items-center flex-shrink-0">
-          <button id="sidebar-toggle-btn" class="text-gray-500 dark:text-gray-300 mr-4"><i class="fas fa-bars text-xl"></i></button>
-          <h1 class="text-xl font-bold text-gray-900 dark:text-white"><%= group.name %></h1>
+      <main class="main-chat flex flex-col flex-grow bg-gray-100 dark:bg-gray-900">
+        <header class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
+          <div class="flex items-center">
+            <button id="sidebar-toggle-btn" class="text-gray-500 dark:text-gray-300 mr-4 lg:hidden"><i class="fas fa-bars text-xl"></i></button>
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white desktop-header"><%= group.name %></h1>
+          </div>
+          <div class="flex items-center space-x-4">
+              <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none rounded-lg text-sm p-2.5">
+                  <i id="theme-toggle-dark-icon" class="fas fa-moon w-5 h-5"></i>
+                  <i id="theme-toggle-light-icon" class="fas fa-sun w-5 h-5 hidden"></i>
+              </button>
+          </div>
         </header>
-        <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700 desktop-header">
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white"><%= group.name %></h1>
-            <div class="flex items-center space-x-4">
-                <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
-                    <i id="theme-toggle-dark-icon" class="fas fa-moon w-5 h-5"></i>
-                    <i id="theme-toggle-light-icon" class="fas fa-sun w-5 h-5 hidden"></i>
-                </button>
-            </div>
-        </div>
-        <div id="message-container" class="flex-grow overflow-y-auto p-4 space-y-4">
+        <div id="message-container" class="flex-grow overflow-y-auto p-6 space-y-6">
           <!-- Messages will be dynamically inserted here -->
           <% messages.forEach(function(message) { %>
             <div class="message-container" id="message-<%= message.id %>">
               <div class="message-bubble w-full flex <%= message.user_id == user.id ? 'justify-end' : 'justify-start' %>" data-message-id="<%= message.id %>">
-                <div class="relative max-w-md md:max-w-lg message-content">
-                  <div class="rounded-2xl px-4 py-2.5 <%= message.user_id == user.id ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200' %>">
-                    <div class="font-semibold text-sm"><%= message.username %></div>
+                <div class="relative max-w-xl message-content">
+                  <div class="rounded-2xl px-4 py-3 <%= message.user_id == user.id ? 'bg-indigo-600 text-white rounded-br-lg' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-lg shadow-sm' %>">
+                    <div class="font-bold text-sm mb-1"><%= message.username %></div>
                     <% if (message.parent_message_id) { %>
-                      <div class="border-l-2 border-blue-300 dark:border-blue-500 pl-2 text-xs opacity-80 mb-1 mt-1">
+                      <div class="border-l-2 border-indigo-300 dark:border-indigo-500 pl-2 text-xs opacity-80 mb-2">
                         <strong>Replying to <%= message.parent_username %></strong>
                       </div>
                     <% } %>
                     <% if (message.is_code_snippet) { %>
                       <pre><code class="language-<%= message.language %> code-snippet"><%- message.message %></code></pre>
                     <% } else { %>
-                      <p class="text-base break-words mt-1"><%= message.message %></p>
+                      <p class="text-base break-words"><%= message.message %></p>
                     <% } %>
                   </div>
                   <!-- Actions on Hover -->
                   <div class="message-actions gap-2 text-xs text-gray-500 dark:text-gray-400 <%= message.user_id == user.id ? 'self' : 'other' %>">
-                    <button class="reply-btn hover:text-blue-500" data-parent-id="<%= message.id %>" data-parent-username="<%= message.username %>" data-parent-message="<%= message.message %>" title="Reply"><i class="fas fa-reply"></i></button>
+                    <button class="reply-btn hover:text-indigo-500" data-parent-id="<%= message.id %>" data-parent-username="<%= message.username %>" data-parent-message="<%= message.message %>" title="Reply"><i class="fas fa-reply"></i></button>
                     <button class="react-btn hover:text-yellow-500" title="React"><i class="fas fa-smile"></i></button>
                     <% if (message.user_id == user.id || ['owner', 'admin'].includes(userRole)) { %>
                       <button class="delete-btn hover:text-red-500" data-message-id="<%= message.id %>" title="Delete"><i class="fas fa-trash"></i></button>
@@ -161,7 +158,7 @@
                     <span><%= new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></span>
                     <div class="reactions-container flex gap-1">
                       <% reactions.filter(r => r.message_id === message.id).forEach(reaction => { %>
-                        <span class="bg-gray-200 dark:bg-gray-700/80 text-xs px-1.5 py-0.5 rounded-full cursor-pointer"><%= reaction.emoji %></span>
+                        <span class="bg-gray-200 dark:bg-gray-600 text-xs px-1.5 py-0.5 rounded-full cursor-pointer"><%= reaction.emoji %></span>
                       <% }) %>
                     </div>
                   </div>
@@ -172,33 +169,33 @@
         </div>
 
         <!-- Typing indicator -->
-        <div id="typing-indicator" class="h-6 px-4 text-gray-500 dark:text-gray-400 italic text-sm"></div>
-        <div id="reply-info" class="hidden bg-gray-100 dark:bg-gray-700 p-2 mx-4 rounded-t-lg text-sm">
-          Replying to <strong id="reply-username"></strong>: "<span id="reply-message"></span>"
-          <button id="cancel-reply" class="float-right font-bold text-red-500 hover:text-red-400">×</button>
+        <div id="typing-indicator" class="h-6 px-6 text-gray-500 dark:text-gray-400 italic text-sm"></div>
+        <div id="reply-info" class="hidden bg-gray-200 dark:bg-gray-700/50 p-3 mx-6 rounded-t-lg text-sm border-b border-gray-300 dark:border-gray-600">
+          Replying to <strong id="reply-username"></strong>: "<span id="reply-message" class="line-clamp-1"></span>"
+          <button id="cancel-reply" class="float-right font-bold text-gray-500 hover:text-red-500 transition-colors">×</button>
         </div>
-        <div class="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+        <div class="p-4 sm:p-6 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
             <form id="message-form" class="relative flex items-center gap-2 sm:gap-4">
               <div id="emoji-picker" class="hidden absolute bottom-full mb-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-2 shadow-lg">
                   <div class="grid grid-cols-8 gap-1"></div>
               </div>
-              <button type="button" id="code-snippet-btn" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg"><i class="fas fa-code"></i></button>
-              <button type="button" id="emoji-btn" class="absolute left-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg"><i class="far fa-smile"></i></button>
-              <input id="message-input" class="flex-grow p-3 pl-20 bg-gray-100 dark:bg-gray-700 border border-transparent rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition" placeholder="Type a message..." autocomplete="off">
-              <button type="submit" class="bg-blue-500 text-white px-5 py-3 rounded-lg hover:bg-blue-600 transition-all shadow-md flex-shrink-0"><i class="fas fa-paper-plane"></i></button>
+              <button type="button" id="code-snippet-btn" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 text-lg transition-colors"><i class="fas fa-code"></i></button>
+              <button type="button" id="emoji-btn" class="absolute left-12 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 text-lg transition-colors"><i class="far fa-smile"></i></button>
+              <input id="message-input" class="flex-grow p-4 pl-24 pr-16 bg-gray-100 dark:bg-gray-900 border-2 border-transparent rounded-full text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Type a message..." autocomplete="off">
+              <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 bg-indigo-600 text-white w-12 h-12 rounded-full hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105 flex-shrink-0 flex items-center justify-center"><i class="fas fa-paper-plane text-xl"></i></button>
             </form>
         </div>
       </main>
   </div>
 
   <!-- All Files Modal -->
-  <div id="files-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-50">
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] flex flex-col m-4 border border-gray-200 dark:border-gray-700">
-        <header class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center flex-shrink-0">
+  <div id="files-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col m-4 border border-gray-200 dark:border-gray-700">
+        <header class="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center flex-shrink-0">
             <h2 class="text-xl font-bold">All Shared Files</h2>
             <button id="close-files-modal-btn" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"><i class="fas fa-times text-2xl"></i></button>
         </header>
-        <div id="modal-file-list" class="p-6 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div id="modal-file-list" class="p-6 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <% files.forEach(file => { %>
               <div class="file-item p-3 rounded-lg bg-gray-100 dark:bg-gray-900/50 hover:bg-gray-200 dark:hover:bg-gray-700/50 transition border border-gray-200 dark:border-gray-700" data-file-id="<%= file.id %>">
                 <% if (file.mimetype && file.mimetype.startsWith('image/')) { %>
@@ -206,7 +203,7 @@
                 <% } else { %>
                   <div class="w-full h-32 rounded-md mb-2 bg-gray-200 dark:bg-gray-700 flex items-center justify-center"><i class="fas fa-file-alt text-4xl text-gray-400 dark:text-gray-500"></i></div>
                 <% } %>
-                <a href="<%= file.filepath %>" target="_blank" class="text-blue-500 hover:underline text-sm break-all font-medium"><%= file.filename %></a>
+                <a href="<%= file.filepath %>" target="_blank" class="text-indigo-500 hover:underline text-sm break-all font-medium"><%= file.filename %></a>
                 <div class="flex justify-between items-center mt-2">
                     <a href="<%= file.filepath.replace('/upload/', '/upload/fl_attachment/') %>" class="text-green-500 hover:text-green-600 text-xs"><i class="fas fa-download mr-1"></i> Download</a>
                     <% if (file.user_id == user.id || ['owner', 'admin'].includes(userRole)) { %>
@@ -220,9 +217,9 @@
   </div>
 
   <!-- Calendar Modal -->
-  <div id="calendar-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-50">
+  <div id="calendar-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/60 backdrop-blur-sm">
       <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col m-4 border border-gray-200 dark:border-gray-700">
-          <header class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+          <header class="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
               <h2 class="text-xl font-bold">Group Calendar</h2>
               <button id="close-calendar-modal-btn" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"><i class="fas fa-times text-2xl"></i></button>
           </header>
@@ -231,28 +228,33 @@
           </div>
           <div class="p-4 border-t border-gray-200 dark:border-gray-700">
               <form id="add-event-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                  <input type="text" id="event-title" placeholder="Event Title" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                  <input type="date" id="event-date" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                  <button type="submit" class="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Add Event</button>
+                  <input type="text" id="event-title" placeholder="Event Title" class="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 border-transparent" required>
+                  <input type="date" id="event-date" class="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 border-transparent" required>
+                  <button type="submit" class="bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 font-semibold">Add Event</button>
               </form>
           </div>
       </div>
   </div>
 
   <!-- Code Snippet Modal -->
-  <div id="code-snippet-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black bg-opacity-50">
-      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col m-4 border border-gray-200 dark:border-gray-700">
-          <header class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+  <div id="code-snippet-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col m-4 border border-gray-200 dark:border-gray-700">
+          <header class="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
               <h2 class="text-xl font-bold">Share Code Snippet</h2>
               <button id="close-code-modal-btn" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"><i class="fas fa-times text-2xl"></i></button>
           </header>
           <div class="p-6">
               <form id="code-snippet-form">
                   <div class="mb-4">
-                      <label for="language-select" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Language</label>
-                      <select id="language-select" class="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <label for="language-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Language</label>
+                      <select id="language-select" class="w-full p-3 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 border-transparent">
                           <option value="javascript">JavaScript</option>
                           <option value="python">Python</option>
+                          <option value="java">Java</option>
+                          <option value="csharp">C#</option>
+                          <option value="php">PHP</option>
+                          <option value="ruby">Ruby</option>
+                          <option value="go">Go</option>
                           <option value="html">HTML</option>
                           <option value="css">CSS</option>
                           <option value="sql">SQL</option>
@@ -260,10 +262,12 @@
                       </select>
                   </div>
                   <div class="mb-4">
-                      <label for="code-input" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Code</label>
-                      <textarea id="code-input" rows="10" class="w-full p-2 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm" placeholder="Paste your code here..."></textarea>
+                      <label for="code-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Code</label>
+                      <textarea id="code-input" rows="10" class="w-full p-3 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 border-transparent font-mono text-sm" placeholder="Paste your code here..."></textarea>
                   </div>
-                  <button type="submit" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Share Snippet</button>
+                  <div class="flex justify-end">
+                      <button type="submit" class="bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 font-semibold">Send Snippet</button>
+                  </div>
               </form>
           </div>
       </div>
@@ -273,34 +277,25 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      hljs.highlightAll();
-      const socket = io({ query: { userId: '<%= user.id %>', username: '<%= user.username %>' } });
-      const room = 'group-<%= group.id %>';
-      const groupId = '<%= group.id %>';
-      const currentUserId = '<%= user.id %>';
-      const currentUsername = '<%= user.username %>';
-      const currentUserRole = '<%= userRole %>';
-      
-      const messageContainer = document.getElementById('message-container');
-      const messageForm = document.getElementById('message-form');
-      const messageInput = document.getElementById('message-input');
-      const typingIndicator = document.getElementById('typing-indicator');
-      const userList = document.getElementById('user-list');
+      const socket = io();
+      const groupId = "<%= group.id %>";
+      const userId = "<%= user.id %>";
+      const userUsername = "<%= user.username %>";
+      const userRole = "<%= userRole %>";
 
       // --- Theme Management ---
       const themeToggleBtn = document.getElementById('theme-toggle');
       const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
       const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-      const highlightTheme = document.getElementById('highlight-theme');
-      const lightHighlightTheme = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css";
-      const darkHighlightTheme = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css";
 
       const setTheme = (isDark) => {
           document.documentElement.classList.toggle('dark', isDark);
           localStorage.setItem('theme', isDark ? 'dark' : 'light');
-          themeToggleLightIcon.style.display = isDark ? 'block' : 'none';
-          themeToggleDarkIcon.style.display = isDark ? 'none' : 'block';
-          highlightTheme.href = isDark ? darkHighlightTheme : lightHighlightTheme;
+          themeToggleLightIcon.classList.toggle('hidden', !isDark);
+          themeToggleDarkIcon.classList.toggle('hidden', isDark);
+          
+          const newHighlightTheme = isDark ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css' : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css';
+          document.getElementById('highlight-theme').setAttribute('href', newHighlightTheme);
       };
 
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -309,398 +304,310 @@
       setTheme(isInitiallyDark);
 
       themeToggleBtn.addEventListener('click', () => {
-        const isCurrentlyDark = document.documentElement.classList.contains('dark');
-        setTheme(!isCurrentlyDark);
+          const isCurrentlyDark = document.documentElement.classList.contains('dark');
+          setTheme(!isCurrentlyDark);
       });
-      
-      // --- Responsive Sidebar ---
+
+      // --- Socket.IO Listeners ---
+      socket.emit('joinGroup', { groupId, userId, username: userUsername });
+
+      socket.on('userList', (users) => {
+        const userList = document.getElementById('user-list');
+        userList.innerHTML = '';
+        users.forEach(user => {
+          const li = document.createElement('li');
+          li.className = 'flex items-center gap-3';
+          li.innerHTML = `<span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span> ${user.username}`;
+          userList.appendChild(li);
+        });
+      });
+
+      socket.on('chatMessage', (data) => {
+        addMessageToUI(data.message);
+        document.getElementById('typing-indicator').textContent = '';
+      });
+
+      socket.on('typing', (data) => {
+        const typingIndicator = document.getElementById('typing-indicator');
+        if (data.isTyping && data.userId !== userId) {
+          typingIndicator.textContent = `${data.username} is typing...`;
+        } else {
+          typingIndicator.textContent = '';
+        }
+      });
+
+      socket.on('messageDeleted', (messageId) => {
+        const messageElement = document.getElementById(`message-${messageId}`);
+        if (messageElement) {
+          messageElement.remove();
+        }
+      });
+
+      // --- Message & Form Handling ---
+      const messageContainer = document.getElementById('message-container');
+      const messageForm = document.getElementById('message-form');
+      const messageInput = document.getElementById('message-input');
+      let typingTimer;
+
+      messageContainer.scrollTop = messageContainer.scrollHeight;
+
+      messageInput.addEventListener('input', () => {
+        clearTimeout(typingTimer);
+        socket.emit('typing', { groupId, userId, username: userUsername, isTyping: true });
+        typingTimer = setTimeout(() => {
+          socket.emit('typing', { groupId, userId, username: userUsername, isTyping: false });
+        }, 2000);
+      });
+
+      messageForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const message = messageInput.value.trim();
+        if (message) {
+          const parentMessageId = messageInput.dataset.replyToId;
+          socket.emit('chatMessage', { groupId, userId, message, parentMessageId });
+          messageInput.value = '';
+          cancelReply();
+          clearTimeout(typingTimer);
+          socket.emit('typing', { groupId, userId, username: userUsername, isTyping: false });
+        }
+      });
+
+      // --- UI Functions ---
+      function addMessageToUI(message) {
+        const div = document.createElement('div');
+        div.className = 'message-container';
+        div.id = `message-${message.id}`;
+        const isSelf = message.user_id == userId;
+
+        let replyHTML = '';
+        if (message.parent_message_id) {
+          replyHTML = `
+            <div class="border-l-2 ${isSelf ? 'border-indigo-300' : 'border-indigo-500'} pl-2 text-xs opacity-80 mb-2">
+              <strong>Replying to ${message.parent_username}</strong>
+            </div>`;
+        }
+
+        let messageContentHTML = '';
+        if (message.is_code_snippet) {
+            messageContentHTML = `<pre><code class="language-${message.language} code-snippet">${hljs.highlight(message.message, {language: message.language}).value}</code></pre>`;
+        } else {
+            messageContentHTML = `<p class="text-base break-words">${message.message}</p>`;
+        }
+
+        div.innerHTML = `
+          <div class="message-bubble w-full flex ${isSelf ? 'justify-end' : 'justify-start'}" data-message-id="${message.id}">
+            <div class="relative max-w-xl message-content">
+              <div class="rounded-2xl px-4 py-3 ${isSelf ? 'bg-indigo-600 text-white rounded-br-lg' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-lg shadow-sm'}">
+                <div class="font-bold text-sm mb-1">${message.username}</div>
+                ${replyHTML}
+                ${messageContentHTML}
+              </div>
+              <div class="message-actions gap-2 text-xs text-gray-500 dark:text-gray-400 ${isSelf ? 'self' : 'other'}">
+                <button class="reply-btn hover:text-indigo-500" data-parent-id="${message.id}" data-parent-username="${message.username}" data-parent-message="${message.message}" title="Reply"><i class="fas fa-reply"></i></button>
+                <button class="react-btn hover:text-yellow-500" title="React"><i class="fas fa-smile"></i></button>
+                ${(isSelf || ['owner', 'admin'].includes(userRole)) ? `<button class="delete-btn hover:text-red-500" data-message-id="${message.id}" title="Delete"><i class="fas fa-trash"></i></button>` : ''}
+              </div>
+              <div class="flex items-center gap-2 mt-1.5 px-2 text-xs text-gray-400 dark:text-gray-500 ${isSelf ? 'justify-end' : ''}">
+                <span>${new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+              </div>
+            </div>
+          </div>`;
+        
+        messageContainer.appendChild(div);
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+      }
+
+      // --- Event Delegation for dynamic elements ---
+      document.body.addEventListener('click', function(e) {
+        // Delete message
+        if (e.target.closest('.delete-btn')) {
+          const button = e.target.closest('.delete-btn');
+          const messageId = button.dataset.messageId;
+          if (confirm('Are you sure you want to delete this message?')) {
+            socket.emit('deleteMessage', { messageId, groupId });
+          }
+        }
+        // Reply to message
+        if (e.target.closest('.reply-btn')) {
+          const button = e.target.closest('.reply-btn');
+          setupReply(button.dataset.parentId, button.dataset.parentUsername, button.dataset.parentMessage);
+        }
+        // Delete file
+        if (e.target.closest('.delete-file-btn')) {
+            const button = e.target.closest('.delete-file-btn');
+            const fileId = button.dataset.fileId;
+            const filepath = button.dataset.filepath;
+            if (confirm('Are you sure you want to delete this file?')) {
+                fetch(`/chat/${groupId}/files/${fileId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filepath })
+                }).then(res => res.json()).then(data => {
+                    if (data.success) {
+                        button.closest('.file-item').remove();
+                    } else {
+                        alert('Failed to delete file.');
+                    }
+                });
+            }
+        }
+      });
+
+      // --- Reply Functionality ---
+      const replyInfo = document.getElementById('reply-info');
+      const cancelReplyBtn = document.getElementById('cancel-reply');
+
+      function setupReply(id, username, message) {
+        messageInput.dataset.replyToId = id;
+        document.getElementById('reply-username').textContent = username;
+        document.getElementById('reply-message').textContent = message;
+        replyInfo.classList.remove('hidden');
+        messageInput.focus();
+      }
+
+      function cancelReply() {
+        delete messageInput.dataset.replyToId;
+        replyInfo.classList.add('hidden');
+      }
+
+      cancelReplyBtn.addEventListener('click', cancelReply);
+
+      // --- Sidebar Toggle for Mobile ---
       const sidebar = document.getElementById('chat-sidebar');
-      const openBtn = document.getElementById('sidebar-toggle-btn');
-      const closeBtn = document.getElementById('close-sidebar-btn');
-      const backdrop = document.getElementById('sidebar-backdrop');
-      if(openBtn) openBtn.addEventListener('click', () => { sidebar.classList.add('is-open'); backdrop.classList.add('is-open'); });
-      if(closeBtn) closeBtn.addEventListener('click', () => { sidebar.classList.remove('is-open'); backdrop.classList.remove('is-open'); });
-      if(backdrop) backdrop.addEventListener('click', () => { sidebar.classList.remove('is-open'); backdrop.classList.remove('is-open'); });
-      
-      // --- Emoji Picker Logic ---
+      const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+      const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+      const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+
+      const toggleSidebar = () => {
+        sidebar.classList.toggle('is-open');
+        sidebarBackdrop.classList.toggle('is-open');
+      };
+
+      sidebarToggleBtn.addEventListener('click', toggleSidebar);
+      closeSidebarBtn.addEventListener('click', toggleSidebar);
+      sidebarBackdrop.addEventListener('click', toggleSidebar);
+
+      // --- Modal Logic ---
+      const setupModal = (modalId, openBtnId, closeBtnId) => {
+        const modal = document.getElementById(modalId);
+        const openBtn = document.getElementById(openBtnId);
+        const closeBtn = document.getElementById(closeBtnId);
+        if (!modal || !openBtn || !closeBtn) return;
+
+        openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+        closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.classList.add('hidden');
+        });
+      };
+
+      setupModal('files-modal', 'view-files-btn', 'close-files-modal-btn');
+      setupModal('calendar-modal', 'view-calendar-btn', 'close-calendar-modal-btn');
+      setupModal('code-snippet-modal', 'code-snippet-btn', 'close-code-modal-btn');
+
+      // --- Emoji Picker ---
       const emojiBtn = document.getElementById('emoji-btn');
       const emojiPicker = document.getElementById('emoji-picker');
-      const recentEmojisContainer = document.getElementById('recent-emojis');
-      const emojiSearch = document.getElementById('emoji-search');
-      const emojiList = document.getElementById('emoji-list');
-
-      let allEmojis = [];
-      let recentEmojis = JSON.parse(localStorage.getItem('recentEmojis')) || [];
-
-      function renderRecentEmojis() {
-          recentEmojisContainer.innerHTML = '';
-          recentEmojis.forEach(emoji => {
-              const span = document.createElement('span');
-              span.className = 'emoji';
-              span.textContent = emoji;
-              span.addEventListener('click', () => { messageInput.value += emoji; messageInput.focus(); });
-              recentEmojisContainer.appendChild(span);
-          });
-      }
-
-      function fetchAllEmojis() {
-          const categories = ['smileys', 'animals', 'food', 'activities', 'travel', 'objects', 'symbols', 'flags'];
-          categories.forEach(category => {
-              fetch(`https://emoji-api.com/emojis?category=${category}&access_key=YOUR_ACCESS_KEY`)
-                  .then(response => response.json())
-                  .then(data => {
-                      allEmojis = allEmojis.concat(data);
-                      renderEmojiList(allEmojis);
-                  })
-                  .catch(err => console.error(err));
-          });
-      }
-
-      function renderEmojiList(emojis) {
-          emojiList.innerHTML = '';
-          emojis.forEach(emoji => {
-              const span = document.createElement('span');
-              span.className = 'emoji';
-              span.textContent = emoji.character;
-              span.addEventListener('click', () => { messageInput.value += emoji.character; messageInput.focus(); });
-              emojiList.appendChild(span);
-          });
-      }
-
-      emojiBtn.addEventListener('click', (e) => { e.stopPropagation(); emojiPicker.classList.toggle('hidden'); });
-      document.addEventListener('click', (e) => { if (!emojiPicker.contains(e.target) && !emojiBtn.contains(e.target)) { emojiPicker.classList.add('hidden'); } });
-
-      // --- Modals Logic (Files, Calendar, Code) ---
-      const filesModal = document.getElementById('files-modal');
-      const openFilesModalBtn = document.getElementById('view-files-btn');
-      const closeFilesModalBtn = document.getElementById('close-files-modal-btn');
-      openFilesModalBtn.addEventListener('click', () => {
-        filesModal.classList.remove('hidden');
-        filesModal.classList.add('flex');
-      });
-      closeFilesModalBtn.addEventListener('click', () => {
-        filesModal.classList.add('hidden');
-        filesModal.classList.remove('flex');
-      });
-      filesModal.addEventListener('click', (e) => { 
-        if (e.target === filesModal) { 
-          filesModal.classList.add('hidden');
-          filesModal.classList.remove('flex');
-        } 
-      });
-
-      const calendarModal = document.getElementById('calendar-modal');
-      const openCalendarBtn = document.getElementById('view-calendar-btn');
-      const closeCalendarBtn = document.getElementById('close-calendar-modal-btn');
-      openCalendarBtn.addEventListener('click', () => { 
-        fetchAndRenderEvents(); 
-        calendarModal.classList.remove('hidden');
-        calendarModal.classList.add('flex');
-      });
-      closeCalendarBtn.addEventListener('click', () => {
-        calendarModal.classList.add('hidden');
-        calendarModal.classList.remove('flex');
-      });
-      calendarModal.addEventListener('click', (e) => { 
-        if (e.target === calendarModal) { 
-          calendarModal.classList.add('hidden');
-          calendarModal.classList.remove('flex');
-        } 
-      });
-
-      const codeModal = document.getElementById('code-snippet-modal');
-      const openCodeBtn = document.getElementById('code-snippet-btn');
-      const closeCodeBtn = document.getElementById('close-code-modal-btn');
-      openCodeBtn.addEventListener('click', () => {
-        codeModal.classList.remove('hidden');
-        codeModal.classList.add('flex');
-      });
-      closeCodeBtn.addEventListener('click', () => {
-        codeModal.classList.add('hidden');
-        codeModal.classList.remove('flex');
-      });
-      codeModal.addEventListener('click', (e) => { 
-        if (e.target === codeModal) { 
-          codeModal.classList.add('hidden');
-          codeModal.classList.remove('flex');
-        } 
-      });
-
-      // --- Calendar Logic ---
-      const eventsList = document.getElementById('calendar-events-list');
-      const addEventForm = document.getElementById('add-event-form');
+      const emojiGrid = emojiPicker.querySelector('.grid');
+      const emojis = ['😀', '😂', '❤️', '👍', '🙏', '🎉', '🤔', '😢', '🔥', '🚀', '💡', '💯', '🙌', '😎', '😮', '🤯'];
       
-      async function fetchAndRenderEvents() {
-          const response = await fetch(`/chat/${groupId}/events`);
-          const events = await response.json();
-          renderEvents(events);
-      }
-
-      function renderEvents(events) {
-          eventsList.innerHTML = '';
-          if (events.length === 0) {
-              eventsList.innerHTML = '<p class="text-gray-500 dark:text-gray-400">No events scheduled yet.</p>';
-              return;
-          }
-          events.forEach(event => {
-              const eventEl = document.createElement('div');
-              eventEl.className = 'p-3 rounded-lg bg-gray-100 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700';
-              eventEl.dataset.eventId = event.id;
-              let deleteBtnHtml = '';
-              if (event.user_id == currentUserId || ['owner', 'admin'].includes(currentUserRole)) {
-                  deleteBtnHtml = `<button data-event-id="${event.id}" class="delete-event-btn text-red-500 hover:text-red-600 text-xs"><i class="fas fa-trash"></i></button>`;
-              }
-              eventEl.innerHTML = `
-                  <div class="flex justify-between items-start">
-                      <div>
-                          <p class="font-semibold">${event.title}</p>
-                          <p class="text-sm text-gray-500 dark:text-gray-400">${new Date(event.event_date).toLocaleDateString()}</p>
-                          <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Added by ${event.username}</p>
-                      </div>
-                      ${deleteBtnHtml}
-                  </div>
-              `;
-              eventsList.appendChild(eventEl);
+      emojis.forEach(emoji => {
+          const span = document.createElement('span');
+          span.className = 'emoji';
+          span.textContent = emoji;
+          span.addEventListener('click', () => {
+              messageInput.value += emoji;
+              emojiPicker.classList.add('hidden');
+              messageInput.focus();
           });
-      }
-
-      addEventForm.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const title = document.getElementById('event-title').value;
-          const event_date = document.getElementById('event-date').value;
-          await fetch(`/chat/${groupId}/events/create`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ title, description: '', event_date })
-          });
-          addEventForm.reset();
+          emojiGrid.appendChild(span);
       });
 
-      eventsList.addEventListener('click', (e) => {
-          const deleteBtn = e.target.closest('.delete-event-btn');
-          if (deleteBtn) {
-              const eventId = deleteBtn.dataset.eventId;
-              if (confirm('Delete this event?')) {
-                  socket.emit('deleteEvent', { room, eventId });
-              }
+      emojiBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          emojiPicker.classList.toggle('hidden');
+      });
+
+      document.addEventListener('click', (e) => {
+          if (!emojiPicker.contains(e.target) && e.target !== emojiBtn) {
+              emojiPicker.classList.add('hidden');
           }
       });
 
-      // --- Code Snippet Logic ---
+      // --- Code Snippet Form ---
       const codeSnippetForm = document.getElementById('code-snippet-form');
       codeSnippetForm.addEventListener('submit', (e) => {
           e.preventDefault();
           const language = document.getElementById('language-select').value;
           const code = document.getElementById('code-input').value;
           if (code) {
-              socket.emit('chatMessage', { room, userId: currentUserId, username: currentUsername, message: code, parentId: null, isCodeSnippet: true, language });
-              codeSnippetForm.reset();
-              codeModal.classList.add('hidden');
+              socket.emit('chatMessage', {
+                  groupId,
+                  userId,
+                  message: code,
+                  isCodeSnippet: true,
+                  language: language
+              });
+              document.getElementById('code-snippet-modal').classList.add('hidden');
+              document.getElementById('code-input').value = '';
           }
       });
 
-      // --- Socket Listeners ---
-      socket.emit('joinRoom', room);
-      socket.on('updateUserList', (users) => { userList.innerHTML = users.map(user => `<li><i class="fas fa-circle text-green-500 text-xs mr-2"></i>${user}</li>`).join(''); });
-      socket.on('chatMessage', (msg) => { appendMessage(msg); });
-      socket.on('newFile', (file) => { addFileToModal(file); appendFileMessage(file); });
-      socket.on('reactionAdded', ({ messageId, emoji }) => {
-          const messageBubble = document.querySelector(`.message-bubble[data-message-id='${messageId}']`);
-          if (messageBubble) {
-            const reactionsContainer = messageBubble.querySelector('.reactions-container');
-            const reactionEl = document.createElement('span');
-            reactionEl.className = 'bg-gray-200 dark:bg-gray-700/80 text-xs px-1.5 py-0.5 rounded-full cursor-pointer';
-            reactionEl.textContent = emoji;
-            reactionsContainer.appendChild(reactionEl);
-          }
-      });
-      socket.on('messageDeleted', (messageId) => {
-          const messageEl = document.getElementById(`message-${messageId}`);
-          if (messageEl) messageEl.remove();
-      });
-      socket.on('fileDeleted', ({ fileId, filepath }) => {
-          const fileInModal = document.querySelector(`.file-item[data-file-id='${fileId}']`);
-          if (fileInModal) fileInModal.remove();
-          const fileInChat = document.querySelector(`.message-bubble[data-filepath='${filepath}']`);
-          if (fileInChat) fileInChat.remove();
-      });
-      socket.on('newEvent', (event) => { fetchAndRenderEvents(); });
-      socket.on('eventDeleted', (eventId) => {
-          const eventEl = document.querySelector(`.p-3[data-event-id='${eventId}']`);
-          if (eventEl) eventEl.remove();
-      });
+      // --- Calendar ---
+      const addEventForm = document.getElementById('add-event-form');
+      const eventsList = document.getElementById('calendar-events-list');
 
-      messageContainer.scrollTop = messageContainer.scrollHeight;
-      let currentParentId = null;
-      messageForm.addEventListener('submit', (e) => {
-          e.preventDefault();
-          const message = messageInput.value.trim();
-          if (message) {
-            socket.emit('chatMessage', { room, userId: currentUserId, username: currentUsername, message, parentId: currentParentId, isCodeSnippet: false, language: null });
-            messageInput.value = '';
-            cancelReply();
-          }
-      });
-      let typingTimeout;
-      messageInput.addEventListener('input', () => {
-          socket.emit('typing', { room, username: currentUsername });
-          clearTimeout(typingTimeout);
-      });
-      socket.on('typing', ({ username }) => {
-          typingIndicator.textContent = `${username} is typing...`;
-          clearTimeout(typingTimeout);
-          typingTimeout = setTimeout(() => typingIndicator.textContent = '', 3000);
-      });
-      const replyInfo = document.getElementById('reply-info');
-      const replyUsernameEl = document.getElementById('reply-username');
-      const replyMessageEl = document.getElementById('reply-message');
-      messageContainer.addEventListener('click', (e) => {
-          const replyBtn = e.target.closest('.reply-btn');
-          if (replyBtn) {
-            currentParentId = replyBtn.dataset.parentId;
-            replyUsernameEl.textContent = replyBtn.dataset.parentUsername;
-            replyMessageEl.textContent = replyBtn.dataset.parentMessage.substring(0, 50) + '...';
-            replyInfo.classList.remove('hidden');
-            messageInput.focus();
-          }
-          const reactBtn = e.target.closest('.react-btn');
-          if (reactBtn) {
-            const messageId = reactBtn.closest('.message-bubble').dataset.messageId;
-            const emoji = prompt("React with an emoji:");
-            if (emoji) {
-              socket.emit('addReaction', { messageId, userId: currentUserId, emoji });
-            }
-          }
-          const deleteBtn = e.target.closest('.delete-btn');
-          if (deleteBtn) {
-              const messageId = deleteBtn.dataset.messageId;
-              if (confirm('Are you sure you want to delete this message?')) {
-                  socket.emit('deleteMessage', { room, messageId });
-              }
-          }
-      });
-      const modalFileList = document.getElementById('modal-file-list');
-      modalFileList.addEventListener('click', (e) => {
-          const deleteBtn = e.target.closest('.delete-file-btn');
-          if (deleteBtn) {
-              const fileId = deleteBtn.dataset.fileId;
-              const filepath = deleteBtn.dataset.filepath;
-              if (confirm('Are you sure you want to delete this file?')) {
-                  socket.emit('deleteFile', { room, fileId, filepath });
-              }
-          }
-      });
-
-      document.getElementById('cancel-reply').addEventListener('click', cancelReply);
-      function cancelReply() {
-          currentParentId = null;
-          replyInfo.classList.add('hidden');
-      }
-      function appendMessage(msg) {
-          const div = document.createElement('div');
-          div.className = 'message-container';
-          div.id = `message-${msg.id}`;
-          
-          const bubbleDiv = document.createElement('div');
-          bubbleDiv.className = `message-bubble w-full flex ${msg.user_id == currentUserId ? 'justify-end' : 'justify-start'}`;
-          bubbleDiv.dataset.messageId = msg.id;
-
-          let parentHtml = '';
-          if (msg.parent_message_id) {
-            parentHtml = `<div class="border-l-2 border-blue-300 dark:border-blue-500 pl-2 text-xs opacity-80 mb-1 mt-1">
-                            <strong>Replying to ${msg.parent_username}</strong>
-                          </div>`;
-          }
-
-          let messageHtml = '';
-          if (msg.is_code_snippet) {
-              const codeBlock = document.createElement('code');
-              codeBlock.className = `language-${msg.language} code-snippet`;
-              codeBlock.textContent = msg.message;
-              const preBlock = document.createElement('pre');
-              preBlock.appendChild(codeBlock);
-              messageHtml = preBlock.outerHTML;
-              setTimeout(() => hljs.highlightElement(codeBlock), 0);
-          } else {
-              messageHtml = `<p class="text-base break-words mt-1">${msg.message}</p>`;
-          }
-
-          let deleteBtnHtml = '';
-          if (msg.user_id == currentUserId || ['owner', 'admin'].includes(currentUserRole)) {
-              deleteBtnHtml = `<button class="delete-btn hover:text-red-500" data-message-id="${msg.id}" title="Delete"><i class="fas fa-trash"></i></button>`;
-          }
-
-          bubbleDiv.innerHTML = `
-            <div class="relative max-w-md md:max-w-lg message-content">
-              <div class="rounded-2xl px-4 py-2.5 ${msg.user_id == currentUserId ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}">
-                <div class="font-semibold text-sm">${msg.username}</div>
-                ${parentHtml}
-                ${messageHtml}
-              </div>
-              <div class="message-actions gap-2 text-xs text-gray-500 dark:text-gray-400 ${msg.user_id == currentUserId ? 'self' : 'other'}">
-                <button class="reply-btn hover:text-blue-500" data-parent-id="${msg.id}" data-parent-username="${msg.username}" data-parent-message="${msg.message}" title="Reply"><i class="fas fa-reply"></i></button>
-                <button class="react-btn hover:text-yellow-500" title="React"><i class="fas fa-smile"></i></button>
-                ${deleteBtnHtml}
-              </div>
-              <div class="flex items-center gap-2 mt-1.5 px-2 text-xs text-gray-400 dark:text-gray-500 ${msg.user_id == currentUserId ? 'justify-end' : ''}">
-                <span>${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                <div class="reactions-container flex gap-1"></div>
-              </div>
-            </div>
-          `;
-          div.appendChild(bubbleDiv);
-          messageContainer.appendChild(div);
-          messageContainer.scrollTop = messageContainer.scrollHeight;
-      }
-
-      function addFileToModal(file) {
-          const div = document.createElement('div');
-          div.className = 'file-item p-3 rounded-lg bg-gray-100 dark:bg-gray-900/50 hover:bg-gray-200 dark:hover:bg-gray-700/50 transition border border-gray-200 dark:border-gray-700';
-          div.dataset.fileId = file.id;
-
-          let filePreviewHtml = '';
-          if (file.mimetype && file.mimetype.startsWith('image/')) {
-              filePreviewHtml = `<img src="${file.filepath}" alt="${file.filename}" class="w-full h-32 object-cover rounded-md mb-2">`;
-          } else {
-              filePreviewHtml = `<div class="w-full h-32 rounded-md mb-2 bg-gray-200 dark:bg-gray-700 flex items-center justify-center"><i class="fas fa-file-alt text-4xl text-gray-400 dark:text-gray-500"></i></div>`;
-          }
-
-          let deleteBtnHtml = '';
-          if (file.user_id == currentUserId || ['owner', 'admin'].includes(currentUserRole)) {
-              deleteBtnHtml = `<button data-file-id="${file.id}" data-filepath="${file.filepath}" class="delete-file-btn text-red-500 hover:text-red-600 text-xs"><i class="fas fa-trash mr-1"></i> Delete</button>`;
-          }
-
-          div.innerHTML = `
-              ${filePreviewHtml}
-              <a href="${file.filepath}" target="_blank" class="text-blue-500 hover:underline text-sm break-all font-medium">${file.filename}</a>
-              <div class="flex justify-between items-center mt-2">
-                  <a href="${file.filepath.replace('/upload/', '/upload/fl_attachment/')}" class="text-green-500 hover:text-green-600 text-xs"><i class="fas fa-download mr-1"></i> Download</a>
-                  ${deleteBtnHtml}
-              </div>
-          `;
-          document.getElementById('modal-file-list').prepend(div);
-      }
-
-      function appendFileMessage(file) {
-          const div = document.createElement('div');
-          div.className = 'message-bubble w-full flex justify-start';
-          div.dataset.filepath = file.filepath;
-          div.innerHTML = `
-              <div class="max-w-xs">
-                  <div class="rounded-xl px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                      <div class="font-bold text-sm">${file.username} shared a file</div>
-                      <div class="mt-2 p-2 bg-gray-100 dark:bg-gray-600 rounded-lg flex items-center gap-3">
-                          <i class="fas fa-file-alt text-xl text-gray-500"></i>
-                          <div class="flex-grow">
-                              <a href="${file.filepath}" target="_blank" class="text-blue-500 hover:underline text-sm font-medium break-all">${file.filename}</a>
+      const fetchEvents = () => {
+          fetch(`/chat/${groupId}/events`)
+              .then(res => res.json())
+              .then(events => {
+                  eventsList.innerHTML = '';
+                  if (events.length === 0) {
+                      eventsList.innerHTML = '<p class="text-center text-gray-500">No events scheduled.</p>';
+                      return;
+                  }
+                  events.forEach(event => {
+                      const eventEl = document.createElement('div');
+                      eventEl.className = 'p-4 bg-gray-100 dark:bg-gray-700/50 rounded-lg flex justify-between items-center';
+                      eventEl.innerHTML = `
+                          <div>
+                              <p class="font-bold">${event.title}</p>
+                              <p class="text-sm text-gray-500 dark:text-gray-400">${new Date(event.date).toLocaleDateString()}</p>
                           </div>
-                      </div>
-                  </div>
-              </div>
-          `;
-          messageContainer.appendChild(div);
-          messageContainer.scrollTop = messageContainer.scrollHeight;
-      }
+                          <button data-event-id="${event.id}" class="delete-event-btn text-red-500 hover:text-red-600 text-xs"><i class="fas fa-trash"></i></button>
+                      `;
+                      eventsList.appendChild(eventEl);
+                  });
+              });
+      };
+
+      addEventForm.addEventListener('submit', e => {
+          e.preventDefault();
+          const title = document.getElementById('event-title').value;
+          const date = document.getElementById('event-date').value;
+          fetch(`/chat/${groupId}/events`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ title, date })
+          }).then(() => {
+              fetchEvents();
+              addEventForm.reset();
+          });
+      });
+
+      eventsList.addEventListener('click', e => {
+          if (e.target.closest('.delete-event-btn')) {
+              const eventId = e.target.closest('.delete-event-btn').dataset.eventId;
+              fetch(`/chat/${groupId}/events/${eventId}`, { method: 'DELETE' }).then(fetchEvents);
+          }
+      });
+
+      document.getElementById('view-calendar-btn').addEventListener('click', fetchEvents);
+      
+      // Initial highlight of existing code blocks
+      document.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+      });
     });
   </script>
 </body>
