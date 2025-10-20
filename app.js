@@ -29,7 +29,10 @@ const T = require('lib0/testing');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIO(server);
+const io = socketIO(server, {
+  // Allow socket.io to handle its own upgrade mechanism
+  // This prevents it from conflicting with the Yjs WebSocket server
+});
 
 // Yjs WebSocket server setup
 const wss = new WebSocketServer({ noServer: true });
