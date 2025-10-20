@@ -113,9 +113,15 @@ const setupWSConnection = (conn, req) => {
 };
 
 server.on('upgrade', (request, socket, head) => {
-  wss.handleUpgrade(request, socket, head, ws => {
-    setupWSConnection(ws, request);
-  });
+  const { pathname } = new URL(request.url, `http://${request.headers.host}`);
+
+  if (pathname.startsWith('/socket.io/')) {
+    // Let socket.io handle its own upgrade requests
+  } else {
+    wss.handleUpgrade(request, socket, head, ws => {
+      setupWSConnection(ws, request);
+    });
+  }
 });
 
 const PORT = process.env.PORT || 5000;
