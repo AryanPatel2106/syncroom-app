@@ -124,12 +124,16 @@ app.post('/login', async (req, res) => {
 
 app.get('/groups', isAuthenticated, async (req, res) => {
   try {
-    const groups = groupMemberships.map(gm => {
+    const groupMemberships = await GroupMember.find({ userId: req.session.user.id }).populate('groupId');
+    const groups = groupMemberships
+      .filter(gm => gm.groupId) // Filter out memberships where the group might have been deleted
+      .map(gm => {
         const group = gm.groupId.toObject();
         group.id = group._id.toString();
         group.role = gm.role;
         return group;
-    });
+      });
+    res.render('groups', { user: req.session.user, groups: groups });
   } catch (err) {
     console.error("Groups fetch error:", err);
     res.status(500).send("Server error");
