@@ -142,16 +142,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'syncroom_uploads',
-    resource_type: "auto",
-    public_id: (req, file) => Date.now() + '-' + file.originalname,
-  },
-});
-
-const upload = multer({ storage: storage });
+const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
@@ -291,6 +282,11 @@ app.post('/groups/leave/:groupId', isAuthenticated, async (req, res) => {
 
 app.post('/collab/:groupId/create', isAuthenticated, checkGroupRole(['owner', 'admin', 'member']), upload.single('docFile'), async (req, res) => {
     const { groupId } = req.params;
+    
+    if (!req.file) {
+        return res.status(400).send("No file uploaded.");
+    }
+
     const docName = req.file.originalname;
     const content = req.file.buffer.toString('utf-8');
 
@@ -386,12 +382,29 @@ app.get('/chat/:groupId', isAuthenticated, checkGroupRole(['owner', 'admin', 'me
 
 app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async (req, res) => {
   const { groupId } = req.params;
-  const filepath = req.file.path;
-  const filename = req.file.originalname;
-  const mimetype = req.file.mimetype;
   
   try {
-    const file = await File.create({ groupId, userId: req.session.user.id, filename, filepath, mimetype });
+    // Upload to Cloudinary manually
+    const result = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: 'syncroom_uploads', resource_type: 'auto' },
+            (error, result) => {
+                if (error) reject(error);
+                else resolve(result);
+            }
+        );
+        uploadStream.end(req.file.buffer);
+    });
+
+    const { originalname, mimetype } = req.file;
+    const file = await File.create({ 
+        groupId, 
+        userId: req.session.user.id, 
+        filename: originalname, 
+        filepath: result.secure_url, 
+        mimetype 
+    });
+
     const newFile = { ...file._doc, username: req.session.user.username };
     io.to(`group-${groupId}`).emit('newFile', newFile);
     res.redirect('/chat/' + groupId);
