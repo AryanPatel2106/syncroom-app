@@ -23,7 +23,9 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const { WebSocketServer } = require('ws');
-const { setupWSConnection } = require('y-websocket/bin/utils');
+const Y = require('yjs');
+const { MongodbPersistence } = require('y-mongodb-provider');
+const T = require('lib0/testing');
 
 const app = express();
 const server = http.createServer(app);
@@ -31,9 +33,86 @@ const io = socketIO(server);
 
 // Yjs WebSocket server setup
 const wss = new WebSocketServer({ noServer: true });
+const mdb = new MongodbPersistence(process.env.MONGODB_URI, {
+  collectionName: 'yjs_transactions',
+  flushSize: 100,
+  multipleCollections: true,
+});
+
+const setupWSConnection = (conn, req) => {
+  conn.binaryType = 'arraybuffer';
+  const docName = req.url.slice(1).split('?')[0];
+  const doc = new Y.Doc();
+
+  // get stored document
+  mdb.bindState(docName, doc);
+
+  const awareness = new Y.Awareness();
+  // setup awareness
+  // ...
+
+  conn.on('message', message => {
+    try {
+      const encoder = new Y.encoding.Encoder();
+      const decoder = new Y.decoding.Decoder(new Uint8Array(message));
+      const messageType = Y.decoding.readVarUint(decoder);
+      switch (messageType) {
+        case 0: // sync
+          Y.protocol.readSyncMessage(decoder, encoder, doc, conn);
+          if (Y.encoding.length(encoder) > 1) {
+            conn.send(Y.encoding.toUint8Array(encoder));
+          }
+          break;
+        case 1: // awareness
+          Y.awarenessProtocol.applyAwarenessUpdate(awareness, Y.decoding.readVarUint8Array(decoder), conn);
+          break;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  });
+
+  // Check if connection is still alive
+  let pongReceived = true;
+  const pingInterval = setInterval(() => {
+    if (!pongReceived) {
+      doc.destroy();
+      conn.close();
+      clearInterval(pingInterval);
+    } else {
+      pongReceived = false;
+      try {
+        conn.ping();
+      } catch (e) {
+        doc.destroy();
+        conn.close();
+        clearInterval(pingInterval);
+      }
+    }
+  }, 30000);
+
+  conn.on('pong', () => {
+    pongReceived = true;
+  });
+
+  conn.on('close', () => {
+    doc.destroy();
+    clearInterval(pingInterval);
+  });
+
+  // send sync step 1
+  const encoder = new Y.encoding.Encoder();
+  Y.encoding.writeVarUint(encoder, 0);
+  Y.protocol.writeSyncStep1(encoder, doc);
+  conn.send(Y.encoding.toUint8Array(encoder));
+  // broadcast awareness state
+  const awarenessEncoder = new Y.encoding.Encoder();
+  Y.encoding.writeVarUint(awarenessEncoder, 1);
+  Y.encoding.writeVarUint8Array(awarenessEncoder, Y.awarenessProtocol.encodeAwarenessUpdate(awareness, [doc.clientID]));
+  conn.send(Y.encoding.toUint8Array(awarenessEncoder));
+};
 
 server.on('upgrade', (request, socket, head) => {
-  // You may check authentication here to reject unwanted connections
   wss.handleUpgrade(request, socket, head, ws => {
     setupWSConnection(ws, request);
   });
