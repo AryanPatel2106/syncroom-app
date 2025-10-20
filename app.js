@@ -22,9 +22,23 @@ const CollabDoc = require('./models/collabDoc');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
+const { WebSocketServer } = require('ws');
+const { setupWSConnection } = require('y-websocket/bin/utils');
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
+
+// Yjs WebSocket server setup
+const wss = new WebSocketServer({ noServer: true });
+
+server.on('upgrade', (request, socket, head) => {
+  // You may check authentication here to reject unwanted connections
+  wss.handleUpgrade(request, socket, head, ws => {
+    setupWSConnection(ws, request);
+  });
+});
+
 const PORT = process.env.PORT || 5000;
 const saltRounds = 10;
 
@@ -193,10 +207,12 @@ app.post('/collab/:groupId/create', isAuthenticated, checkGroupRole(['owner', 'a
     const content = req.file.buffer.toString('utf-8');
 
     try {
+        const docId = new mongoose.Types.ObjectId().toString(); // Generate a unique ID
         const newDoc = await CollabDoc.create({
             name: docName,
             groupId,
-            content
+            content,
+            docId: docId // Save the unique ID
         });
 
         // Post a message to the chat about the new session
@@ -238,8 +254,7 @@ app.get('/collab/:docId', isAuthenticated, async (req, res) => {
         }
         res.render('collab', { 
             user: req.session.user, 
-            doc,
-            wsUrl: process.env.YJS_WEBSOCKET_URL || 'ws://localhost:1234' 
+            doc
         });
     } catch (err) {
         console.error("Collab doc fetch error:", err);

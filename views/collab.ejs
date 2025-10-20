@@ -10,6 +10,8 @@
     <div id="editor" class="border rounded-lg shadow-lg"></div>
 </div>
 
+<div id="initial-content" style="display: none;"><%- JSON.stringify(doc.content) %></div>
+
 <script type="module">
     import * as Y from 'yjs';
     import { WebsocketProvider } from 'y-websocket';
@@ -22,7 +24,7 @@
     const doc = new Y.Doc();
     
     // Use the URL provided by the server
-    const wsProvider = new WebsocketProvider('<%= wsUrl %>', '<%= doc.docId %>', doc);
+    const wsProvider = new WebsocketProvider(`wss://${window.location.host}`, '<%= doc.docId %>', doc);
 
     wsProvider.on('status', event => {
         console.log(event.status); // logs "connected" or "disconnected"
@@ -37,8 +39,9 @@
 
     const ytext = doc.getText('codemirror');
     
-    // Pre-fill the document with content from the database
-    ytext.insert(0, `<%- doc.content.replace(/`/g, '\\`') %>`);
+    // Safely get content from the hidden div
+    const initialContent = JSON.parse(document.getElementById('initial-content').textContent || '""');
+    ytext.insert(0, initialContent);
 
     const editorContainer = document.getElementById('editor');
 
