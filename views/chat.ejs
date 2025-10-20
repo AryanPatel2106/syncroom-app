@@ -95,10 +95,10 @@
             <button id="view-calendar-btn" class="w-full text-left text-gray-700 dark:text-gray-200 py-2.5 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors flex items-center font-medium"><i class="fas fa-calendar-alt w-6 text-center mr-3 text-gray-400"></i>Group Calendar</button>
         </div>
         <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
-            <form action="/chat/<%= group.id %>/upload" method="POST" enctype="multipart/form-data">
+            <form id="upload-form" action="/chat/<%= group.id %>/upload" method="POST" enctype="multipart/form-data">
               <label class="w-full text-sm bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300 py-2.5 px-4 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors font-semibold flex items-center justify-center cursor-pointer">
                 <i class="fas fa-paperclip mr-2"></i> Attach File
-                <input type="file" name="file" class="hidden" onchange="this.form.submit()" required>
+                <input type="file" id="file-input" name="file" class="hidden" required>
               </label>
             </form>
             <% if (userRole === 'owner' || userRole === 'admin') { %>
@@ -486,6 +486,23 @@
       sidebarToggleBtn.addEventListener('click', toggleSidebar);
       closeSidebarBtn.addEventListener('click', toggleSidebar);
       sidebarBackdrop.addEventListener('click', toggleSidebar);
+
+      // --- File Upload Validation ---
+      const uploadForm = document.getElementById('upload-form');
+      const fileInput = document.getElementById('file-input');
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
+      fileInput.addEventListener('change', () => {
+          const file = fileInput.files[0];
+          if (file) {
+              if (file.size > MAX_FILE_SIZE) {
+                  alert(`File is too large (${(file.size / 1024 / 1024).toFixed(2)} MB). Maximum size is 10 MB.`);
+                  fileInput.value = ''; // Reset the input
+              } else {
+                  uploadForm.submit();
+              }
+          }
+      });
 
       // --- Modal Logic ---
       const setupModal = (modalId, openBtnId, closeBtnId) => {

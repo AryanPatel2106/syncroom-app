@@ -407,7 +407,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('deleteMessage', async ({ messageId }) => {
-    if (!currentGroupId) return;
+    if (!currentGroupId || !mongoose.Types.ObjectId.isValid(messageId)) {
+        if (!mongoose.Types.ObjectId.isValid(messageId)) {
+            console.error("Invalid ObjectId received for message deletion:", messageId);
+        }
+        return;
+    }
     try {
       const message = await Message.findById(messageId);
       if (!message) return;
