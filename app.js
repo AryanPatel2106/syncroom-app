@@ -124,9 +124,12 @@ app.post('/login', async (req, res) => {
 
 app.get('/groups', isAuthenticated, async (req, res) => {
   try {
-    const groupMemberships = await GroupMember.find({ userId: req.session.user.id }).populate('groupId');
-    const groups = groupMemberships.map(gm => ({...gm.groupId._doc, role: gm.role}));
-    res.render('groups', { user: req.session.user, groups: groups });
+    const groups = groupMemberships.map(gm => {
+        const group = gm.groupId.toObject();
+        group.id = group._id.toString();
+        group.role = gm.role;
+        return group;
+    });
   } catch (err) {
     console.error("Groups fetch error:", err);
     res.status(500).send("Server error");
