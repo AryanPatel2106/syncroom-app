@@ -93,6 +93,7 @@
             <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-2 text-xs tracking-wider uppercase">Group Tools</h2>
             <button id="view-files-btn" class="w-full text-left text-gray-700 dark:text-gray-200 py-2.5 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors flex items-center font-medium"><i class="fas fa-folder-open w-6 text-center mr-3 text-gray-400"></i>View All Files</button>
             <button id="view-calendar-btn" class="w-full text-left text-gray-700 dark:text-gray-200 py-2.5 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors flex items-center font-medium"><i class="fas fa-calendar-alt w-6 text-center mr-3 text-gray-400"></i>Group Calendar</button>
+            <button id="start-video-call-btn" class="w-full text-left text-green-600 dark:text-green-400 py-2.5 px-4 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/50 transition-colors flex items-center font-medium"><i class="fas fa-video w-6 text-center mr-3"></i>Start Video Call</button>
         </div>
         <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
             <form id="upload-form" action="/chat/<%= group.id %>/upload" method="POST" enctype="multipart/form-data">
@@ -112,6 +113,16 @@
         </div>
       </aside>
       <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+      <!-- Video Call Container -->
+      <div id="video-call-container" class="hidden absolute inset-0 bg-gray-900/80 z-50 flex-col items-center justify-center p-4">
+        <h2 class="text-2xl font-bold text-white mb-4">Video Call</h2>
+        <div id="video-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-6xl">
+            <video id="local-video" autoplay muted class="w-full rounded-lg bg-black"></video>
+            <video id="remote-video" autoplay class="w-full rounded-lg bg-black"></video>
+        </div>
+        <button id="end-video-call-btn" class="mt-6 bg-red-600 text-white font-bold py-2 px-6 rounded-full hover:bg-red-700 transition-colors">End Call</button>
+      </div>
 
       <!-- Main Chat Area -->
       <main class="main-chat flex flex-col flex-grow bg-gray-100 dark:bg-gray-900">
@@ -274,6 +285,7 @@
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
+  <script src="https://unpkg.com/webrtc-adapter/out/adapter.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -282,6 +294,146 @@
       const userId = "<%= user.id %>";
       const userUsername = "<%= user.username %>";
       const userRole = "<%= userRole %>";
+
+      // --- WebRTC Implementation ---
+      const videoCallContainer = document.getElementById('video-call-container');
+      const startVideoCallBtn = document.getElementById('start-video-call-btn');
+      const endVideoCallBtn = document.getElementById('end-video-call-btn');
+      const localVideo = document.getElementById('local-video');
+      const remoteVideo = document.getElementById('remote-video');
+      let localStream;
+      let peerConnection;
+      const webrtcRoom = `webrtc-${groupId}`;
+      let otherPeerId = null; 
+
+      const configuration = {
+          iceServers: [
+              { urls: 'stun:stun.l.google.com:19302' } // Public STUN server
+          ]
+      };
+
+      async function startCall() {
+          videoCallContainer.classList.remove('hidden');
+          videoCallContainer.classList.add('flex');
+
+          try {
+              localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+              localVideo.srcObject = localStream;
+              socket.emit('webrtc-join-room', webrtcRoom);
+          } catch (e) {
+              console.error('Error accessing media devices.', e);
+              alert('Could not access camera and microphone. Please check permissions.');
+              endCall();
+          }
+      }
+
+      function endCall() {
+          if (peerConnection) {
+              peerConnection.close();
+              peerConnection = null;
+          }
+          if (localStream) {
+              localStream.getTracks().forEach(track => track.stop());
+              localStream = null;
+          }
+          videoCallContainer.classList.add('hidden');
+          videoCallContainer.classList.remove('flex');
+          remoteVideo.srcObject = null; // Clear remote video
+          socket.emit('webrtc-leave-room', webrtcRoom);
+      }
+
+      function createPeerConnection() {
+          peerConnection = new RTCPeerConnection(configuration);
+
+          peerConnection.onicecandidate = event => {
+              if (event.candidate && otherPeerId) {
+                  socket.emit('webrtc-signal', {
+                      to: otherPeerId,
+                      from: socket.id,
+                      signal: { candidate: event.candidate }
+                  });
+              }
+          };
+
+          peerConnection.ontrack = event => {
+              if (remoteVideo.srcObject !== event.streams[0]) {
+                remoteVideo.srcObject = event.streams[0];
+              }
+          };
+
+          localStream.getTracks().forEach(track => {
+              peerConnection.addTrack(track, localStream);
+          });
+      }
+
+      socket.on('webrtc-created', (room, id) => {
+          console.log('You created the call. Waiting for a peer.');
+      });
+
+      socket.on('webrtc-joined', (room, id) => {
+          console.log('A peer joined the call:', id);
+          otherPeerId = id;
+          // The initiator creates the offer
+          if(!peerConnection) {
+            createPeerConnection();
+          }
+          peerConnection.createOffer()
+              .then(offer => peerConnection.setLocalDescription(offer))
+              .then(() => {
+                  socket.emit('webrtc-signal', {
+                      to: otherPeerId,
+                      from: socket.id,
+                      signal: { sdp: peerConnection.localDescription }
+                  });
+              });
+      });
+      
+      socket.on('webrtc-ready', (room, id) => {
+        if (id !== socket.id) {
+            otherPeerId = id;
+            console.log('Peer is ready:', id);
+            if(!peerConnection) {
+                createPeerConnection();
+            }
+        }
+      });
+
+      socket.on('webrtc-signal', async (data) => {
+          if (!peerConnection) {
+            createPeerConnection();
+          }
+          
+          otherPeerId = data.from;
+
+          if (data.signal.sdp) {
+              await peerConnection.setRemoteDescription(new RTCSessionDescription(data.signal.sdp));
+              if (data.signal.sdp.type === 'offer') {
+                  peerConnection.createAnswer()
+                      .then(answer => peerConnection.setLocalDescription(answer))
+                      .then(() => {
+                          socket.emit('webrtc-signal', {
+                              to: data.from,
+                              from: socket.id,
+                              signal: { sdp: peerConnection.localDescription }
+                          });
+                      });
+              }
+          } else if (data.signal.candidate) {
+              await peerConnection.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
+          }
+      });
+      
+      socket.on('webrtc-user-left', (id) => {
+        if (otherPeerId === id) {
+            endCall();
+            // Restart call process if desired
+            alert('The other user has left the call.');
+        }
+      });
+
+      startVideoCallBtn.addEventListener('click', startCall);
+      endVideoCallBtn.addEventListener('click', endCall);
+      // --- End WebRTC ---
 
       // --- Theme Management ---
       const themeToggleBtn = document.getElementById('theme-toggle');
@@ -364,7 +516,8 @@
         const message = messageInput.value.trim();
         if (message) {
           const parentMessageId = messageInput.dataset.replyToId;
-          socket.emit('chatMessage', { groupId, userId, message, parentMessageId });
+          // QoS: Add priority to the message payload
+          socket.emit('chatMessage', { groupId, userId, message, parentMessageId, priority: 'high' });
           messageInput.value = '';
           cancelReply();
           clearTimeout(typingTimer);
@@ -389,9 +542,14 @@
 
         let messageContentHTML = '';
         if (message.is_code_snippet) {
-            messageContentHTML = `<pre><code class="language-${message.language} code-snippet">${hljs.highlight(message.message, {language: message.language}).value}</code></pre>`;
+            // Ensure hljs is available
+            if (typeof hljs !== 'undefined') {
+                messageContentHTML = `<pre><code class="language-${message.language} code-snippet">${hljs.highlight(message.message, {language: message.language, ignoreIllegals: true}).value}</code></pre>`;
+            } else {
+                messageContentHTML = `<pre><code class="language-${message.language} code-snippet">${message.message}</code></pre>`;
+            }
         } else {
-            messageContentHTML = `<p class="text-base break-words">${message.message}</p>`;
+            messageContentHTML = `<p class="text-base break-words">${message.message.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`;
         }
 
         div.innerHTML = `
@@ -563,7 +721,8 @@
                   userId,
                   message: code,
                   isCodeSnippet: true,
-                  language: language
+                  language: language,
+                  priority: 'medium' // QoS for code snippets
               });
               document.getElementById('code-snippet-modal').classList.add('hidden');
               document.getElementById('code-input').value = '';
