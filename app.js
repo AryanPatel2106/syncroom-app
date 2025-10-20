@@ -358,6 +358,26 @@ app.get('/collab/:docId', isAuthenticated, async (req, res) => {
     }
 });
 
+app.get('/collab/list/:groupId', isAuthenticated, checkGroupRole(['owner', 'admin', 'member']), async (req, res) => {
+    const { groupId } = req.params;
+    try {
+        const group = await Group.findById(groupId);
+        if (!group) {
+            return res.status(404).send("Group not found");
+        }
+        const docs = await CollabDoc.find({ groupId }).sort({ createdAt: -1 });
+        res.render('collab_list', {
+            user: req.session.user,
+            group: group,
+            docs: docs
+        });
+    } catch (err) {
+        console.error("Collab list fetch error:", err);
+        res.status(500).send("Server error");
+    }
+});
+
+
 app.get('/chat/:groupId', isAuthenticated, checkGroupRole(['owner', 'admin', 'member']), async (req, res) => {
   const { groupId } = req.params;
   try {

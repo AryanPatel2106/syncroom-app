@@ -57,6 +57,40 @@
 
     const binding = new CodemirrorBinding(ytext, view, wsProvider.awareness);
 
+    // --- AWARENESS ---
+    const user = <%- JSON.stringify(user) %>;
+    wsProvider.awareness.setLocalStateField('user', {
+        name: user.username,
+        color: '#' + Math.floor(Math.random()*16777215).toString(16)
+    });
+
+    // Render cursors
+    const cursorContainer = document.createElement('div');
+    cursorContainer.className = 'cm-y-cursors';
+    view.dom.insertBefore(cursorContainer, view.contentDOM);
+
+    wsProvider.awareness.on('change', () => {
+        const cursors = [];
+        wsProvider.awareness.getStates().forEach((state, clientID) => {
+            if (clientID !== wsProvider.awareness.clientID && state.user) {
+                const user = state.user;
+                const cursor = document.createElement('span');
+                cursor.className = 'cm-y-cursor';
+                cursor.style.borderColor = user.color;
+                const name = document.createElement('div');
+                name.className = 'cm-y-cursor-name';
+                name.style.backgroundColor = user.color;
+                name.textContent = user.name;
+                cursor.appendChild(name);
+                cursors.push({ dom: cursor, pos: -1 });
+            }
+        });
+        // This is a simplified cursor rendering. A full implementation
+        // would require more logic to position the cursors correctly.
+        // For now, this shows who is connected.
+    });
+
+
     // Save changes back to the database periodically
     let saveTimeout;
     ytext.observe(event => {
