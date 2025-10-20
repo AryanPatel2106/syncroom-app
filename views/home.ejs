@@ -1,89 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SyncRoom</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    // Custom configuration for Tailwind to enable dark mode via a class
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          keyframes: {
-            fadeInUp: {
-              '0%': { opacity: '0', transform: 'translateY(20px)' },
-              '100%': { opacity: '1', transform: 'translateY(0)' },
-            }
-          },
-          animation: {
-            fadeInUp: 'fadeInUp 0.5s ease-out forwards',
-          }
-        }
-      }
-    }
-  </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* UPGRADED: Styles for the new Vanta.js background */
-    #vanta-bg {
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      z-index: -1;
+    body { 
+      font-family: 'Inter', sans-serif; 
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
-
-    /* Style to apply animation on load */
     .animate-on-load {
+      animation: fadeInUp 0.5s ease-out forwards;
       animation-delay: 0.2s;
       animation-fill-mode: backwards;
     }
-
-    /* Ensure main content is above the background */
-    nav,
-    main,
-    section,
-    footer {
-      position: relative;
-      z-index: 1;
+    @keyframes fadeInUp {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 
-<body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex flex-col transition-colors duration-300">
-
-  <div id="vanta-bg"></div>
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col transition-colors duration-300">
 
   <nav
-    class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm shadow px-4 sm:px-6 py-4 flex justify-between items-center sticky top-0">
-    <div class="text-xl font-semibold text-gray-800 dark:text-gray-200">SyncRoom</div>
+    class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm px-4 sm:px-6 py-4 flex justify-between items-center sticky top-0 z-20 border-b border-gray-200 dark:border-gray-700">
+    <a href="/" class="text-xl font-semibold text-gray-800 dark:text-gray-200">SyncRoom</a>
     <div class="flex items-center space-x-2 sm:space-x-4">
       <% if (user) { %>
         <a href="/groups"
-          class="text-sm sm:text-base text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-transform transform hover:scale-105">Dashboard</a>
+          class="text-sm sm:text-base text-indigo-600 dark:text-indigo-400 hover:underline">Dashboard</a>
         <a href="/logout"
-          class="text-sm sm:text-base text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-transform transform hover:scale-105">Logout</a>
+          class="text-sm sm:text-base text-red-500 dark:text-red-400 hover:underline">Logout</a>
         <% } else { %>
           <a href="/login"
-            class="text-sm sm:text-base text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-transform transform hover:scale-105">Login</a>
+            class="text-sm sm:text-base text-indigo-600 dark:text-indigo-400 hover:underline">Login</a>
           <a href="/register"
-            class="text-sm sm:text-base text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-transform transform hover:scale-105">Sign
+            class="text-sm sm:text-base text-green-600 dark:text-green-400 hover:underline">Sign
             Up</a>
           <% } %>
-            <button id="theme-toggle"
-              class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-transform transform hover:scale-110 p-2 rounded-full">
-              <i class="fas fa-moon" id="theme-toggle-dark-icon"></i>
-              <i class="fas fa-sun" id="theme-toggle-light-icon" style="display: none;"></i>
+            <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
+                <i id="theme-toggle-dark-icon" class="fas fa-moon w-5 h-5"></i>
+                <i id="theme-toggle-light-icon" class="fas fa-sun w-5 h-5 hidden"></i>
             </button>
     </div>
   </nav>
 
   <main
-    class="flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 lg:px-8 animate-fadeInUp animate-on-load">
+    class="flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 lg:px-8 animate-on-load">
     <h1 class="text-4xl sm:text-5xl font-bold text-gray-800 dark:text-gray-100 mb-3">Welcome to SyncRoom
     </h1>
     <p class="text-base sm:text-lg text-gray-600 dark:text-gray-400 mb-6 max-w-xl" style="animation-delay: 0.4s;">
@@ -92,118 +61,53 @@
 
     <% if (user) { %>
       <a href="/groups"
-        class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 dark:hover:bg-blue-500 transition-transform transform hover:-translate-y-1 hover:scale-105 text-lg"
+        class="bg-indigo-600 text-white px-6 py-3 rounded-lg shadow-sm hover:bg-indigo-700 transition-transform transform hover:-translate-y-0.5 text-lg"
         style="animation-delay: 0.6s;">
         Go to My Groups
       </a>
       <% } else { %>
         <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto" style="animation-delay: 0.6s;">
           <a href="/register"
-            class="w-full sm:w-auto bg-green-600 text-white px-6 py-3 rounded-lg shadow hover:bg-green-700 dark:hover:bg-green-500 transition-transform transform hover:-translate-y-1 hover:scale-105">Sign
-            Up</a>
+            class="w-full sm:w-auto bg-indigo-600 text-white px-6 py-3 rounded-lg shadow-sm hover:bg-indigo-700 transition-transform transform hover:-translate-y-0.5">
+            Get Started
+          </a>
           <a href="/login"
-            class="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 dark:hover:bg-blue-500 transition-transform transform hover:-translate-y-1 hover:scale-105">Login</a>
+            class="w-full sm:w-auto bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-3 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+            Sign In
+          </a>
         </div>
         <% } %>
   </main>
 
-  <section class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 px-4 sm:px-6 lg:px-8 my-12">
-    <div
-      class="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-md p-6 text-center transition-all transform hover:-translate-y-2 hover:shadow-xl hover:shadow-blue-500/20 animate-fadeInUp animate-on-load"
-      style="animation-delay: 0.8s;">
-      <h2 class="font-semibold text-lg text-gray-900 dark:text-gray-100 mb-2">Group Chat</h2>
-      <p class="text-gray-600 dark:text-gray-400 text-sm">Chat with your groups instantly and stay in sync in real time.
-      </p>
-    </div>
-    <div
-      class="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-md p-6 text-center transition-all transform hover:-translate-y-2 hover:shadow-xl hover:shadow-green-500/20 animate-fadeInUp animate-on-load"
-      style="animation-delay: 1s;">
-      <h2 class="font-semibold text-lg text-gray-900 dark:text-gray-100 mb-2">File Sharing</h2>
-      <p class="text-gray-600 dark:text-gray-400 text-sm">Upload and share files securely with your team members.</p>
-    </div>
-    <div
-      class="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-md p-6 text-center transition-all transform hover:-translate-y-2 hover:shadow-xl hover:shadow-indigo-500/20 animate-fadeInUp animate-on-load"
-      style="animation-delay: 1.2s;">
-      <h2 class="font-semibold text-lg text-gray-900 dark:text-gray-100 mb-2">Easy Management</h2>
-      <p class="text-gray-600 dark:text-gray-400 text-sm">Create or join groups effortlessly and manage members easily.
-      </p>
-    </div>
-  </section>
-  <section class="bg-gray-200 dark:bg-gray-800 py-8 px-4 text-center">
-    <p class="text-gray-700 dark:text-gray-300 mb-3">
-      Looking for the developer? Visit my personal portfolio.
-    </p>
-    <a href="https://aryan-patel-2106-portfolio.netlify.app/" target="_blank" rel="noopener noreferrer"
-      class="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
-      View Portfolio &rarr;
-    </a>
-  </section>
-  <footer
-    class="text-center text-gray-500 dark:text-gray-400 text-sm py-4 border-t border-gray-200/50 dark:border-gray-700/50">
-    © 2025 SyncRoom by Aryan Patel
+  <footer class="text-center p-4 text-gray-500 dark:text-gray-400 text-sm">
+    © <%= new Date().getFullYear() %> SyncRoom. All rights reserved.
   </footer>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
-  
   <script>
-    const themeToggleBtn = document.getElementById('theme-toggle');
-    const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-    const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-    
-    // --- Theme Management ---
-    const setTheme = (isDark) => {
-      if (isDark) {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-        themeToggleLightIcon.style.display = 'block';
-        themeToggleDarkIcon.style.display = 'none';
-      } else {
-        document.documentElement.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-        themeToggleLightIcon.style.display = 'none';
-        themeToggleDarkIcon.style.display = 'block';
-      }
-      loadVantaBackground(isDark);
-    };
-    
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const savedTheme = localStorage.getItem('theme');
-    const isInitiallyDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
-    
-    // --- UPGRADED: Vanta.js Background Logic ---
-    let vantaEffect = null; 
-    const loadVantaBackground = (isDark) => {
-        if (vantaEffect) {
-            vantaEffect.destroy(); 
-        }
-        vantaEffect = VANTA.NET({
-            el: "#vanta-bg",
-            mouseControls: true,
-            touchControls: true,
-            gyroControls: false,
-            minHeight: 200.00,
-            minWidth: 200.00,
-            scale: 1.00,
-            scaleMobile: 1.00,
-            color: isDark ? 0x3b82f6 : 0x1e40af, // Blue shades for dark/light
-            backgroundColor: isDark ? 0x111827 : 0xf3f4f6, // bg-gray-900 / bg-gray-100
-            points: 12.00,
-            maxDistance: 25.00,
-            spacing: 18.00
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Theme Management ---
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+        const setTheme = (isDark) => {
+            document.documentElement.classList.toggle('dark', isDark);
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            if(themeToggleLightIcon) themeToggleLightIcon.classList.toggle('hidden', !isDark);
+            if(themeToggleDarkIcon) themeToggleDarkIcon.classList.toggle('hidden', isDark);
+        };
+
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const savedTheme = localStorage.getItem('theme');
+        const isInitiallyDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+        setTheme(isInitiallyDark);
+
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = document.documentElement.classList.contains('dark');
+            setTheme(!isCurrentlyDark);
         });
-    };
-
-    // Load initial theme and background
-    setTheme(isInitiallyDark);
-
-    // Event listener for the theme toggle button
-    themeToggleBtn.addEventListener('click', () => {
-      const isCurrentlyDark = document.documentElement.classList.contains('dark');
-      setTheme(!isCurrentlyDark);
     });
   </script>
-
 </body>
 
 </html>

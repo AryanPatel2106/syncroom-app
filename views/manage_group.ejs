@@ -6,23 +6,26 @@
     <title>Manage <%= group.name %></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        #vanta-bg {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            z-index: -1;
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         .content-container {
-            animation: fadeInUp 0.6s ease-out forwards;
+            animation: fadeInUp 0.5s ease-out forwards;
         }
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        /* For consistent avatar colors */
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
+        
         .avatar {
             display: flex;
             align-items: center;
@@ -33,38 +36,25 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 min-h-screen transition-colors duration-300">
-
-    <div id="vanta-bg"></div>
-
-    <!-- Theme Toggle -->
-    <div class="absolute top-4 right-4 z-20">
-        <button id="theme-toggle" type="button"
-            class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
-            <svg id="theme-toggle-dark-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg">
-                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
-            </svg>
-            <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg">
-                <path
-                    d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 5.05A1 1 0 003.636 6.464l.707.707a1 1 0 001.414-1.414l-.707-.707zM3 11a1 1 0 100-2H2a1 1 0 100 2h1zM6.464 16.364a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707z"
-                    fill-rule="evenodd" clip-rule="evenodd"></path>
-            </svg>
-        </button>
-    </div>
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-300">
 
     <div class="max-w-4xl mx-auto p-4 sm:p-8 content-container">
-        <div class="bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg p-6 sm:p-8 rounded-2xl shadow-2xl">
-            <div class="flex justify-between items-start mb-6">
+        <div class="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between items-start mb-8">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Manage Group</h1>
                     <p class="text-gray-600 dark:text-gray-400">Editing "<%= group.name %>"</p>
                 </div>
-                <a href="/chat/<%= groupId %>" class="text-sm bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
-                    <i class="fas fa-arrow-left"></i>
-                    Back to Chat
-                </a>
+                <div class="flex items-center gap-4">
+                    <a href="/chat/<%= groupId %>" class="text-sm bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Chat
+                    </a>
+                    <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
+                        <i id="theme-toggle-dark-icon" class="fas fa-moon w-5 h-5"></i>
+                        <i id="theme-toggle-light-icon" class="fas fa-sun w-5 h-5 hidden"></i>
+                    </button>
+                </div>
             </div>
 
             <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Members (<%= members.length %>)</h2>
@@ -80,7 +70,7 @@
                 };
                 %>
                 <% members.forEach(member => { %>
-                    <div class="flex justify-between items-center p-4 bg-gray-50/50 dark:bg-gray-700/50 rounded-xl shadow-sm">
+                    <div class="flex justify-between items-center p-4 bg-gray-100 dark:bg-gray-900/50 rounded-xl">
                         <div class="flex items-center gap-4">
                             <div class="avatar w-10 h-10 <%= getAvatarColor(member.username) %>">
                                 <%= member.username.charAt(0).toUpperCase() %>
@@ -116,7 +106,7 @@
             </div>
 
             <!-- Danger Zone -->
-            <div class="mt-10 pt-6 border-t border-red-500/30">
+            <div class="mt-10 pt-6 border-t border-red-500/20">
                 <h2 class="text-xl font-semibold text-red-500 mb-4">Danger Zone</h2>
                 <div class="bg-red-500/10 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4">
                     <div>
@@ -133,7 +123,7 @@
                             <button type="submit" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors w-full sm:w-auto">Delete Group</button>
                         </form>
                     <% } else { %>
-                        <form action="/chat/<%= groupId %>/leave" method="POST" onsubmit="return confirm('Are you sure you want to leave this group?');">
+                        <form action="/groups/leave/<%= groupId %>" method="POST" onsubmit="return confirm('Are you sure you want to leave this group?');">
                             <button type="submit" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors w-full sm:w-auto">Leave Group</button>
                         </form>
                     <% } %>
@@ -142,51 +132,29 @@
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
     <script>
-        // --- Vanta.js Background Logic ---
-        let vantaEffect = null;
-        const loadVantaBackground = (isDark) => {
-            if (vantaEffect) vantaEffect.destroy();
-            vantaEffect = VANTA.NET({
-                el: "#vanta-bg",
-                mouseControls: true,
-                touchControls: true,
-                gyroControls: false,
-                minHeight: 200.00,
-                minWidth: 200.00,
-                scale: 1.00,
-                scaleMobile: 1.00,
-                color: isDark ? 0x1e40af : 0x3b82f6,
-                backgroundColor: isDark ? 0x111827 : 0xf3f4f6,
-                points: 12.00,
-                maxDistance: 25.00,
-                spacing: 18.00
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Theme Management ---
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+            const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+            const setTheme = (isDark) => {
+                document.documentElement.classList.toggle('dark', isDark);
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                if(themeToggleLightIcon) themeToggleLightIcon.classList.toggle('hidden', !isDark);
+                if(themeToggleDarkIcon) themeToggleDarkIcon.classList.toggle('hidden', isDark);
+            };
+
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const savedTheme = localStorage.getItem('theme');
+            const isInitiallyDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+            setTheme(isInitiallyDark);
+
+            themeToggleBtn.addEventListener('click', () => {
+              const isCurrentlyDark = document.documentElement.classList.contains('dark');
+              setTheme(!isCurrentlyDark);
             });
-        };
-
-        // --- Theme Management ---
-        const themeToggleBtn = document.getElementById('theme-toggle');
-        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-
-        const setTheme = (isDark) => {
-            document.documentElement.classList.toggle('dark', isDark);
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            if(themeToggleLightIcon) themeToggleLightIcon.style.display = isDark ? 'block' : 'none';
-            if(themeToggleDarkIcon) themeToggleDarkIcon.style.display = isDark ? 'none' : 'block';
-            loadVantaBackground(isDark);
-        };
-
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const savedTheme = localStorage.getItem('theme');
-        const isInitiallyDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
-        setTheme(isInitiallyDark);
-
-        themeToggleBtn.addEventListener('click', () => {
-          const isCurrentlyDark = document.documentElement.classList.contains('dark');
-          setTheme(!isCurrentlyDark);
         });
     </script>
 </body>

@@ -5,171 +5,133 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Register - SyncRoom</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-    }
-  </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    #vanta-bg {
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      z-index: -1;
+    body { 
+      font-family: 'Inter', sans-serif; 
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     .form-container {
-        animation: fadeInUp 0.6s ease-out forwards;
+        animation: fadeInUp 0.5s ease-out forwards;
     }
     @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px) scale(0.98); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
-    .criteria-item.valid {
-        color: #10B981; /* green-500 */
-    }
-    .criteria-item.valid .fa-circle {
-        display: none;
-    }
-    .criteria-item.valid .fa-check-circle {
-        display: inline-block;
-    }
-    .criteria-item .fa-check-circle {
-        display: none;
-    }
-    html.dark .criteria-item.valid {
-        color: #34D399; /* green-400 */
-    }
+    .criteria-item.valid { color: #10B981; } /* green-500 */
+    .criteria-item.valid .fa-circle { display: none; }
+    .criteria-item.valid .fa-check-circle { display: inline-block; }
+    .criteria-item .fa-check-circle { display: none; }
+    html.dark .criteria-item.valid { color: #34D399; } /* green-400 */
   </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
-
-  <div id="vanta-bg"></div>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
 
   <div class="absolute top-4 right-4 z-10">
-      <button id="theme-toggle" class="text-gray-600 dark:text-gray-400 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm hover:text-gray-800 dark:hover:text-gray-200 transition p-3 rounded-full shadow-md" title="Toggle Theme">
-          <i class="fas fa-moon" id="theme-toggle-dark-icon"></i>
-          <i class="fas fa-sun" id="theme-toggle-light-icon" style="display: none;"></i>
+      <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
+          <i id="theme-toggle-dark-icon" class="fas fa-moon w-5 h-5"></i>
+          <i id="theme-toggle-light-icon" class="fas fa-sun w-5 h-5 hidden"></i>
       </button>
   </div>
 
   <div class="min-h-screen flex flex-col items-center justify-center p-4">
     <div class="form-container w-full max-w-sm">
-        <form id="register-form" action="/register" method="POST" class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg p-8 rounded-2xl shadow-2xl space-y-6">
-          <h2 class="text-3xl font-bold mb-2 text-center text-gray-800 dark:text-gray-200">Create Account</h2>
+        <div class="text-center mb-8">
+            <a href="/" class="text-3xl font-bold text-gray-800 dark:text-gray-200">SyncRoom</a>
+        </div>
+        <form id="register-form" action="/register" method="POST" class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-6">
+          <h2 class="text-2xl font-bold mb-1 text-center text-gray-800 dark:text-gray-200">Create Account</h2>
           <div class="space-y-4">
-            <input name="username" placeholder="Username" class="bg-gray-100 dark:bg-gray-700 border-2 border-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" required />
+            <input name="username" placeholder="Username" class="bg-gray-100 dark:bg-gray-700 border-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" required />
             
-            <input type="email" name="email" placeholder="Email" class="bg-gray-100 dark:bg-gray-700 border-2 border-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" required />
+            <input type="email" name="email" placeholder="Email" class="bg-gray-100 dark:bg-gray-700 border-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" required />
             
-            <input type="password" id="password" name="password" placeholder="Password" class="bg-gray-100 dark:bg-gray-700 border-2 border-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" required />
-            <input type="password" id="confirm-password" name="confirmPassword" placeholder="Confirm Password" class="bg-gray-100 dark:bg-gray-700 border-2 border-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition" required />
+            <input type="password" id="password" name="password" placeholder="Password" class="bg-gray-100 dark:bg-gray-700 border-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" required />
+            <input type="password" id="confirm-password" name="confirmPassword" placeholder="Confirm Password" class="bg-gray-100 dark:bg-gray-700 border-transparent text-gray-800 dark:text-gray-200 w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" required />
           </div>
 
           <div id="password-criteria" class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-              <p class="criteria-item" id="criteria-length"><i class="far fa-circle"></i><i class="fas fa-check-circle"></i> At least 8 characters</p>
-              <p class="criteria-item" id="criteria-uppercase"><i class="far fa-circle"></i><i class="fas fa-check-circle"></i> An uppercase letter</p>
-              <p class="criteria-item" id="criteria-lowercase"><i class="far fa-circle"></i><i class="fas fa-check-circle"></i> A lowercase letter</p>
-              <p class="criteria-item" id="criteria-number"><i class="far fa-circle"></i><i class="fas fa-check-circle"></i> A number</p>
-              <p class="criteria-item" id="criteria-special"><i class="far fa-circle"></i><i class="fas fa-check-circle"></i> A special character (!@#$...)</p>
-              <p class="criteria-item" id="criteria-match"><i class="far fa-circle"></i><i class="fas fa-check-circle"></i> Passwords match</p>
+              <p class="criteria-item" id="criteria-length"><i class="far fa-circle text-xs mr-2"></i><i class="fas fa-check-circle text-xs mr-2"></i>At least 8 characters</p>
+              <p class="criteria-item" id="criteria-uppercase"><i class="far fa-circle text-xs mr-2"></i><i class="fas fa-check-circle text-xs mr-2"></i>An uppercase letter</p>
+              <p class="criteria-item" id="criteria-lowercase"><i class="far fa-circle text-xs mr-2"></i><i class="fas fa-check-circle text-xs mr-2"></i>A lowercase letter</p>
+              <p class="criteria-item" id="criteria-number"><i class="far fa-circle text-xs mr-2"></i><i class="fas fa-check-circle text-xs mr-2"></i>A number</p>
+              <p class="criteria-item" id="criteria-special"><i class="far fa-circle text-xs mr-2"></i><i class="fas fa-check-circle text-xs mr-2"></i>A special character (!@#$...)</p>
+              <p class="criteria-item" id="criteria-match"><i class="far fa-circle text-xs mr-2"></i><i class="fas fa-check-circle text-xs mr-2"></i>Passwords match</p>
           </div>
 
-          <button id="register-button" type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed disabled:hover:scale-100" disabled>Register</button>
+          <button id="register-button" type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 font-semibold disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed" disabled>Register</button>
           <p class="text-center text-sm text-gray-600 dark:text-gray-400">
-            Already have an account? <a href="/login" class="text-blue-500 hover:underline font-medium">Login</a>
+            Already have an account? <a href="/login" class="text-indigo-500 hover:underline font-medium">Sign In</a>
           </p>
         </form>
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
   <script>
-    // --- Vanta.js Background Logic ---
-    let vantaEffect = null;
-    const loadVantaBackground = (isDark) => {
-        if (vantaEffect) vantaEffect.destroy();
-        vantaEffect = VANTA.NET({
-            el: "#vanta-bg",
-            mouseControls: true,
-            touchControls: true,
-            gyroControls: false,
-            minHeight: 200.00,
-            minWidth: 200.00,
-            scale: 1.00,
-            scaleMobile: 1.00,
-            color: isDark ? 0x22c55e : 0x15803d, // Green shades for dark/light
-            backgroundColor: isDark ? 0x111827 : 0xf3f4f6,
-            points: 12.00,
-            maxDistance: 25.00,
-            spacing: 18.00
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Theme Management ---
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+        const setTheme = (isDark) => {
+            document.documentElement.classList.toggle('dark', isDark);
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            if(themeToggleLightIcon) themeToggleLightIcon.classList.toggle('hidden', !isDark);
+            if(themeToggleDarkIcon) themeToggleDarkIcon.classList.toggle('hidden', isDark);
+        };
+
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const savedTheme = localStorage.getItem('theme');
+        const isInitiallyDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+        setTheme(isInitiallyDark);
+
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = document.documentElement.classList.contains('dark');
+            setTheme(!isCurrentlyDark);
         });
-    };
 
-    // --- Theme Management ---
-    const themeToggleBtn = document.getElementById('theme-toggle');
-    const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-    const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+        // --- Password Validation ---
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirm-password');
+        const registerButton = document.getElementById('register-button');
 
-    const setTheme = (isDark) => {
-        document.documentElement.classList.toggle('dark', isDark);
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
-        if(themeToggleLightIcon) themeToggleLightIcon.style.display = isDark ? 'block' : 'none';
-        if(themeToggleDarkIcon) themeToggleDarkIcon.style.display = isDark ? 'none' : 'block';
-        loadVantaBackground(isDark); // Changed from loadParticles
-    };
+        const criteria = {
+            length: document.getElementById('criteria-length'),
+            uppercase: document.getElementById('criteria-uppercase'),
+            lowercase: document.getElementById('criteria-lowercase'),
+            number: document.getElementById('criteria-number'),
+            special: document.getElementById('criteria-special'),
+            match: document.getElementById('criteria-match'),
+        };
 
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const savedTheme = localStorage.getItem('theme');
-    const isInitiallyDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
-    setTheme(isInitiallyDark);
+        function validatePassword() {
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
 
-    themeToggleBtn.addEventListener('click', () => {
-      const isCurrentlyDark = document.documentElement.classList.contains('dark');
-      setTheme(!isCurrentlyDark);
+            const isLengthValid = password.length >= 8;
+            const hasUppercase = /[A-Z]/.test(password);
+            const hasLowercase = /[a-z]/.test(password);
+            const hasNumber = /[0-9]/.test(password);
+            const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+            const doPasswordsMatch = password === confirmPassword && password.length > 0;
+
+            criteria.length.classList.toggle('valid', isLengthValid);
+            criteria.uppercase.classList.toggle('valid', hasUppercase);
+            criteria.lowercase.classList.toggle('valid', hasLowercase);
+            criteria.number.classList.toggle('valid', hasNumber);
+            criteria.special.classList.toggle('valid', hasSpecial);
+            criteria.match.classList.toggle('valid', doPasswordsMatch);
+
+            const allValid = isLengthValid && hasUppercase && hasLowercase && hasNumber && hasSpecial && doPasswordsMatch;
+            registerButton.disabled = !allValid;
+        }
+
+        passwordInput.addEventListener('input', validatePassword);
+        confirmPasswordInput.addEventListener('input', validatePassword);
     });
-
-    // --- Password Validation Logic ---
-    const passwordInput = document.getElementById('password');
-    const confirmPasswordInput = document.getElementById('confirm-password');
-    const registerButton = document.getElementById('register-button');
-    const criteria = {
-        length: document.getElementById('criteria-length'),
-        uppercase: document.getElementById('criteria-uppercase'),
-        lowercase: document.getElementById('criteria-lowercase'),
-        number: document.getElementById('criteria-number'),
-        special: document.getElementById('criteria-special'),
-        match: document.getElementById('criteria-match'),
-    };
-
-    const validatePassword = () => {
-        const password = passwordInput.value;
-        const confirmPassword = confirmPasswordInput.value;
-
-        const isLengthValid = password.length >= 8;
-        const hasUppercase = /[A-Z]/.test(password);
-        const hasLowercase = /[a-z]/.test(password);
-        const hasNumber = /[0-9]/.test(password);
-        const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-        const doPasswordsMatch = password && password === confirmPassword;
-
-        criteria.length.classList.toggle('valid', isLengthValid);
-        criteria.uppercase.classList.toggle('valid', hasUppercase);
-        criteria.lowercase.classList.toggle('valid', hasLowercase);
-        criteria.number.classList.toggle('valid', hasNumber);
-        criteria.special.classList.toggle('valid', hasSpecial);
-        criteria.match.classList.toggle('valid', doPasswordsMatch);
-
-        const isFormValid = isLengthValid && hasUppercase && hasLowercase && hasNumber && hasSpecial && doPasswordsMatch;
-        registerButton.disabled = !isFormValid;
-    };
-
-    passwordInput.addEventListener('input', validatePassword);
-    confirmPasswordInput.addEventListener('input', validatePassword);
-
   </script>
 </body>
 </html>
