@@ -1,0 +1,40 @@
+<%- include('partials/header') %>
+
+<div class="container mx-auto mt-10">
+    <h1 class="text-4xl font-bold mb-4"><%= doc.name %></h1>
+    <div id="editor" class="border rounded-lg"></div>
+</div>
+
+<script type="module">
+    import * as Y from 'yjs';
+    import { WebsocketProvider } from 'y-websocket';
+    import { CodemirrorBinding } from 'y-codemirror';
+    import { EditorView, basicSetup } from 'codemirror';
+    import { EditorState } from '@codemirror/state';
+    import { javascript } from '@codemirror/lang-javascript';
+
+    const doc = new Y.Doc();
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsProvider = new WebsocketProvider(`${wsProtocol}//${window.location.host}`, '<%= doc.docId %>', doc);
+
+    wsProvider.on('status', event => {
+        console.log(event.status); // logs "connected" or "disconnected"
+    });
+
+    const ytext = doc.getText('codemirror');
+    const editorContainer = document.getElementById('editor');
+
+    const state = EditorState.create({
+        doc: ytext.toString(),
+        extensions: [basicSetup, javascript()]
+    });
+
+    const view = new EditorView({
+        state,
+        parent: editorContainer
+    });
+
+    const binding = new CodemirrorBinding(ytext, view);
+</script>
+
+<%- include('partials/footer') %>

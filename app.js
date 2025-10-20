@@ -9,6 +9,8 @@ const multer = require('multer');
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const MongoStore = require('connect-mongo');
+const { Server } = require('ws');
+const { setupWSConnection } = require('y-websocket/bin/utils');
 
 const User = require('./models/user');
 const Group = require('./models/group');
@@ -17,6 +19,7 @@ const Message = require('./models/message');
 const File = require('./models/file');
 const Reaction = require('./models/reaction');
 const Event = require('./models/event');
+const CollabDoc = require('./models/collabDoc');
 
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
@@ -26,6 +29,20 @@ const server = http.createServer(app);
 const io = socketIO(server);
 const PORT = process.env.PORT || 5000;
 const saltRounds = 10;
+
+// --- Yjs WebSocket Server Setup ---
+const wss = new Server({ noServer: true });
+wss.on('connection', setupWSConnection);
+
+server.on('upgrade', (request, socket, head) => {
+    const { pathname } = new URL(request.url, `http://${request.headers.host}`);
+    if (pathname === '/yjs') {
+        wss.handleUpgrade(request, socket, head, ws => {
+            wss.emit('connection', ws, request);
+        });
+    }
+});
+// --- End Yjs Setup ---
 
 console.log('Attempting to connect to MongoDB. URI:', process.env.MONGODB_URI); // Debugging line
 
@@ -182,6 +199,61 @@ app.post('/groups/leave/:groupId', isAuthenticated, async (req, res) => {
         res.redirect('/groups');
     } catch (err) {
         console.error("Leave group error:", err);
+        res.status(500).send("Server error");
+    }
+});
+
+app.post('/collab/:groupId/create', isAuthenticated, checkGroupRole(['owner', 'admin', 'member']), async (req, res) => {
+    const { groupId } = req.params;
+    const { docName } = req.body;
+    try {
+        const docId = new mongoose.Types.ObjectId().toString();
+        const newDoc = await CollabDoc.create({
+            name: docName,
+            groupId,
+            docId: docId
+        });
+
+        // Post a message to the chat about the new session
+        const message = `Started a new collaborative document: <a href="/collab/${newDoc._id}" class="text-blue-400 hover:underline">${newDoc.name}</a>`;
+        const msg = await Message.create({
+            groupId,
+            userId: req.session.user.id,
+            message,
+            isCodeSnippet: false
+        });
+        
+        const newMsg = { 
+            id: msg._id, 
+            message: msg.message, 
+            user_id: req.session.user.id, 
+            username: req.session.user.username, 
+            created_at: msg.createdAt,
+            is_code_snippet: false
+        };
+        io.to(`group-${groupId}`).emit('chatMessage', newMsg);
+
+        res.redirect(`/chat/${groupId}`);
+    } catch (err) {
+        console.error("Collab doc creation error:", err);
+        res.status(500).send("Server error");
+    }
+});
+
+app.get('/collab/:docId', isAuthenticated, async (req, res) => {
+    try {
+        const doc = await CollabDoc.findById(req.params.docId);
+        if (!doc) {
+            return res.status(404).send('Document not found');
+        }
+        // Check if user is a member of the group associated with the doc
+        const member = await GroupMember.findOne({ groupId: doc.groupId, userId: req.session.user.id });
+        if (!member) {
+            return res.status(403).send('You do not have access to this document.');
+        }
+        res.render('collab', { user: req.session.user, doc });
+    } catch (err) {
+        console.error("Collab doc fetch error:", err);
         res.status(500).send("Server error");
     }
 });

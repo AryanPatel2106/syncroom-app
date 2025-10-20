@@ -88,56 +88,69 @@
           <button id="sidebar-toggle-btn" class="text-gray-300 mr-4"><i class="fas fa-bars text-xl"></i></button>
           <h1 class="text-xl font-bold"><%= group.name %></h1>
         </header>
-        <div id="message-container" class="flex-grow overflow-y-auto p-4 sm:p-6 space-y-6">
-          <% messages.forEach(msg => { %>
-            <div class="message-bubble w-full flex <%= msg.user_id == user.id ? 'justify-end' : 'justify-start' %>" data-message-id="<%= msg.id %>">
-              <div class="max-w-md md:max-w-lg">
-                <div class="rounded-xl px-4 py-2 <%= msg.user_id == user.id ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white' : 'bg-gray-700 bg-opacity-50 text-gray-200' %>">
-                  <div class="font-bold text-sm"><%= msg.username %></div>
-                  <% if (msg.parent_message_id) { %>
-                    <div class="border-l-2 border-blue-300 pl-2 text-xs opacity-80 mb-1 mt-1">
-                      <strong><%= msg.parent_username %></strong>: <%= msg.message.substring(0, 50) %>...
+        <div id="message-container" class="flex-grow overflow-y-auto p-4" id="messages">
+          <!-- Messages will be dynamically inserted here -->
+          <% messages.forEach(function(message) { %>
+            <div class="message-container mb-4" id="message-<%= message.id %>">
+              <div class="message-bubble w-full flex <%= message.user_id == user.id ? 'justify-end' : 'justify-start' %>" data-message-id="<%= message.id %>">
+                <div class="max-w-md md:max-w-lg">
+                  <div class="rounded-xl px-4 py-2 <%= message.user_id == user.id ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white' : 'bg-gray-700 bg-opacity-50 text-gray-200' %>">
+                    <div class="font-bold text-sm"><%= message.username %></div>
+                    <% if (message.parent_message_id) { %>
+                      <div class="border-l-2 border-blue-300 pl-2 text-xs opacity-80 mb-1 mt-1">
+                        <strong><%= message.parent_username %></strong>: <%= message.message.substring(0, 50) %>...
+                      </div>
+                    <% } %>
+                    <% if (message.is_code_snippet) { %>
+                      <pre><code class="language-<%= message.language %> code-snippet"><%- message.message %></code></pre>
+                    <% } else { %>
+                      <p class="text-base break-words mt-1"><%= message.message %></p>
+                    <% } %>
+                    <div class="reactions-container flex gap-1 mt-2">
+                      <% reactions.filter(r => r.message_id === message.id).forEach(reaction => { %>
+                        <span class="bg-gray-800 bg-opacity-50 text-xs px-2 py-1 rounded-full cursor-pointer"><%= reaction.emoji %></span>
+                      <% }) %>
                     </div>
-                  <% } %>
-                  <% if (msg.is_code_snippet) { %>
-                    <pre><code class="language-<%= msg.language %> code-snippet"><%- msg.message %></code></pre>
-                  <% } else { %>
-                    <p class="text-base break-words mt-1"><%= msg.message %></p>
-                  <% } %>
-                  <div class="reactions-container flex gap-1 mt-2">
-                    <% reactions.filter(r => r.message_id === msg.id).forEach(reaction => { %>
-                      <span class="bg-gray-800 bg-opacity-50 text-xs px-2 py-1 rounded-full cursor-pointer"><%= reaction.emoji %></span>
-                    <% }) %>
                   </div>
-                </div>
-                <div class="flex items-center gap-2 mt-1 px-2 text-xs text-gray-500 <%= msg.user_id == user.id ? 'justify-end' : '' %>">
-                  <span><%= new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></span>
-                  <button class="reply-btn hover:text-blue-400" data-parent-id="<%= msg.id %>" data-parent-username="<%= msg.username %>" data-parent-message="<%= msg.message %>"><i class="fas fa-reply"></i></button>
-                  <button class="react-btn hover:text-yellow-400"><i class="fas fa-smile"></i></button>
-                  <% if (msg.user_id == user.id || ['owner', 'admin'].includes(userRole)) { %>
-                    <button class="delete-btn hover:text-red-400" data-message-id="<%= msg.id %>"><i class="fas fa-trash"></i></button>
-                  <% } %>
+                  <div class="flex items-center gap-2 mt-1 px-2 text-xs text-gray-500 <%= message.user_id == user.id ? 'justify-end' : '' %>">
+                    <span><%= new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></span>
+                    <button class="reply-btn hover:text-blue-400" data-parent-id="<%= message.id %>" data-parent-username="<%= message.username %>" data-parent-message="<%= message.message %>"><i class="fas fa-reply"></i></button>
+                    <button class="react-btn hover:text-yellow-400"><i class="fas fa-smile"></i></button>
+                    <% if (message.user_id == user.id || ['owner', 'admin'].includes(userRole)) { %>
+                      <button class="delete-btn hover:text-red-400" data-message-id="<%= message.id %>"><i class="fas fa-trash"></i></button>
+                    <% } %>
+                  </div>
                 </div>
               </div>
             </div>
           <% }) %>
         </div>
-        <div class="p-4 sm:p-6 border-t border-white/10 flex-shrink-0">
-          <div id="typing-indicator" class="h-5 text-sm text-gray-400 italic"></div>
-          <div id="reply-info" class="hidden bg-black bg-opacity-20 p-2 rounded-t-lg text-sm mb-2">
-            Replying to <strong id="reply-username"></strong>: "<span id="reply-message"></span>"
-            <button id="cancel-reply" class="float-right font-bold text-red-500 hover:text-red-400">×</button>
-          </div>
-          <form id="message-form" class="relative flex items-center gap-2 sm:gap-4">
-            <div id="emoji-picker" class="hidden absolute bottom-full mb-2 bg-gray-800/80 backdrop-blur-md border border-white/10 rounded-lg p-2 shadow-lg">
-                <div class="grid grid-cols-8 gap-1"></div>
-            </div>
-            <button type="button" id="code-snippet-btn" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 text-lg"><i class="fas fa-code"></i></button>
-            <button type="button" id="emoji-btn" class="absolute left-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 text-lg"><i class="far fa-smile"></i></button>
-            <input id="message-input" class="flex-grow p-3 pl-20 bg-gray-800 bg-opacity-50 border border-transparent rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 transition" placeholder="Type a message..." autocomplete="off">
-            <button type="submit" class="bg-gradient-to-r from-sky-500 to-indigo-500 text-white px-5 py-3 rounded-lg hover:from-sky-600 hover:to-indigo-600 transition-all shadow-md"><i class="fas fa-paper-plane"></i></button>
+
+        <!-- Collab Doc Creation Form -->
+        <div class="p-4 bg-gray-800 border-t border-gray-700">
+          <form action="/collab/<%= group.id %>/create" method="POST" class="flex items-center">
+            <input type="text" name="docName" placeholder="New Collaborative Document Name" class="flex-grow bg-gray-700 text-white rounded-l-lg p-2 focus:outline-none" required>
+            <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-r-lg">
+                Start Session
+            </button>
           </form>
         </div>
+
+        <!-- Typing indicator -->
+        <div id="typing-indicator" class="h-6 px-4 text-gray-400 italic"></div>
+        <div id="reply-info" class="hidden bg-black bg-opacity-20 p-2 rounded-t-lg text-sm mb-2">
+          Replying to <strong id="reply-username"></strong>: "<span id="reply-message"></span>"
+          <button id="cancel-reply" class="float-right font-bold text-red-500 hover:text-red-400">×</button>
+        </div>
+        <form id="message-form" class="relative flex items-center gap-2 sm:gap-4">
+          <div id="emoji-picker" class="hidden absolute bottom-full mb-2 bg-gray-800/80 backdrop-blur-md border border-white/10 rounded-lg p-2 shadow-lg">
+              <div class="grid grid-cols-8 gap-1"></div>
+          </div>
+          <button type="button" id="code-snippet-btn" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 text-lg"><i class="fas fa-code"></i></button>
+          <button type="button" id="emoji-btn" class="absolute left-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 text-lg"><i class="far fa-smile"></i></button>
+          <input id="message-input" class="flex-grow p-3 pl-20 bg-gray-800 bg-opacity-50 border border-transparent rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 transition" placeholder="Type a message..." autocomplete="off">
+          <button type="submit" class="bg-gradient-to-r from-sky-500 to-indigo-500 text-white px-5 py-3 rounded-lg hover:from-sky-600 hover:to-indigo-600 transition-all shadow-md"><i class="fas fa-paper-plane"></i></button>
+        </form>
       </main>
     </div>
   </div>
