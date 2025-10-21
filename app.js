@@ -420,7 +420,12 @@ io.on('connection', (socket) => {
 
   // --- Call Initiation ---
   socket.on('start-call', (data) => {
-    socket.to(data.room).emit('call-started', { from: socket.id, username: currentUsername });
+    // The user who started the call should not receive the notification
+    // We emit to the general group chat room (data.groupId)
+    socket.to(data.groupId).emit('call-started', { 
+        from: socket.id, 
+        username: data.username 
+    });
   });
 
   // --- WebRTC Group Call Signaling ---

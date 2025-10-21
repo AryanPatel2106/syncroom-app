@@ -423,7 +423,7 @@
 
       // --- Group Call Socket Events ---
       startVideoCallBtn.addEventListener('click', () => {
-        socket.emit('start-call', { room: webrtcRoom, username: '<%= user.username %>' });
+        socket.emit('start-call', { room: webrtcRoom, groupId: groupId, username: '<%= user.username %>' });
         joinCall();
       });
 
