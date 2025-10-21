@@ -28,16 +28,21 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
-// --- Redis Adapter Setup for Scaling ---
-const pubClient = createClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' });
-const subClient = pubClient.duplicate();
+// --- Redis Adapter Setup for Scaling (Conditional) ---
+if (process.env.REDIS_URL) {
+    const pubClient = createClient({ url: process.env.REDIS_URL });
+    const subClient = pubClient.duplicate();
 
-Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
-    io.adapter(createAdapter(pubClient, subClient));
-    console.log("Socket.IO Redis adapter connected.");
-}).catch((err) => {
-    console.error("Failed to connect Redis clients for Socket.IO adapter:", err);
-});
+    Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
+        io.adapter(createAdapter(pubClient, subClient));
+        console.log("Socket.IO Redis adapter connected.");
+    }).catch((err) => {
+        console.error("Failed to connect Redis clients for Socket.IO adapter:", err);
+        console.log("Falling back to in-memory adapter.");
+    });
+} else {
+    console.log("REDIS_URL not found. Using default in-memory Socket.IO adapter.");
+}
 // -----------------------------------------
 
 // Yjs WebSocket server setup
