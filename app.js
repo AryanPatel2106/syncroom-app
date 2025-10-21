@@ -430,16 +430,23 @@ io.on('connection', (socket) => {
 
   // --- WebRTC Group Call Signaling ---
   socket.on('join-call', (data) => {
-    const clientsInRoom = io.sockets.adapter.rooms.get(data.room);
+    const room = data.room;
     const otherUsers = [];
-    if (clientsInRoom) {
-      clientsInRoom.forEach(id => {
-        if (id !== socket.id) {
-          otherUsers.push(id);
+    const clients = io.sockets.adapter.rooms.get(room);
+    if (clients) {
+      for (const clientId of clients) {
+        if (clientId !== socket.id) {
+          otherUsers.push(clientId);
         }
-      });
+      }
     }
-    socket.join(data.room);
+    
+    // Notify existing users about the new peer.
+    socket.to(room).emit('new-peer', { peerId: socket.id });
+
+    socket.join(room);
+    
+    // Send the list of existing peers to the new joiner
     socket.emit('existing-peers', otherUsers);
   });
 

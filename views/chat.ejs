@@ -461,6 +461,15 @@
           peerConnections[data.from].setRemoteDescription(new RTCSessionDescription(data.sdp));
       });
 
+      socket.on('new-peer', (data) => {
+        if (isCalling) {
+            // This client is already in the call, and a new user has joined.
+            // The new user will initiate the connection, so this client
+            // just needs to create a peer connection object and wait for the offer.
+            createPeerConnection(data.peerId, false); // false = not initiator
+        }
+      });
+
       socket.on('webrtc-ice-candidate', (data) => {
           if (peerConnections[data.from]) {
             peerConnections[data.from].addIceCandidate(new RTCIceCandidate(data.candidate));
