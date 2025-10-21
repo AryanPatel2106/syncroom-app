@@ -312,7 +312,7 @@
       const userUsername = "<%= user.username %>";
       const userRole = "<%= userRole %>";
 
-      // --- WebRTC Group Call Implementation ---
+      // --- WebRTC Group Call (Robust Debugging Version) ---
       const videoCallContainer = document.getElementById('video-call-container');
       const startVideoCallBtn = document.getElementById('start-video-call-btn');
       const endVideoCallBtn = document.getElementById('end-video-call-btn');
@@ -325,16 +325,27 @@
       const declineCallBtn = document.getElementById('decline-call-btn');
       
       let localStream;
-      let peerConnections = {}; // Store multiple peer connections { socketId: RTCPeerConnection }
+      let peerConnections = {}; // { socketId: RTCPeerConnection }
       const webrtcRoom = `webrtc-group-${groupId}`;
       let isCalling = false;
+      const myUsername = '<%= user.username %>';
 
       const configuration = {
           iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
       };
 
+      function log(level, message, ...args) {
+          const now = new Date();
+          const time = `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}.${now.getMilliseconds()}`;
+          console[level](`[${time}] ${message}`, ...args);
+      }
+
       async function joinCall() {
-          if (isCalling) return;
+          if (isCalling) {
+              log('warn', 'joinCall attempted while already in a call.');
+              return;
+          }
+          log('info', 'Attempting to join call...');
           isCalling = true;
           
           incomingCallModal.classList.add('hidden');
@@ -345,138 +356,207 @@
           try {
               localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
               localVideo.srcObject = localStream;
+              log('info', 'Local media stream acquired successfully.');
               socket.emit('join-call', { room: webrtcRoom });
+              log('info', `Emitted 'join-call' for room: ${webrtcRoom}`);
           } catch (e) {
-              console.error('Error accessing media devices.', e);
+              log('error', 'Error accessing media devices.', e);
               alert('Could not access camera and microphone. Please check permissions.');
               endCall();
           }
       }
 
       function endCall() {
+          log('info', 'Ending call...');
           isCalling = false;
           for (const peerId in peerConnections) {
-              peerConnections[peerId].close();
+              if (peerConnections[peerId]) {
+                  peerConnections[peerId].close();
+              }
           }
           peerConnections = {};
+          log('info', 'All peer connections closed.');
 
           if (localStream) {
               localStream.getTracks().forEach(track => track.stop());
               localStream = null;
+              log('info', 'Local media stream stopped.');
           }
           
           videoCallContainer.classList.add('hidden');
           videoCallContainer.classList.remove('flex');
           
-          // Remove all remote video elements
           const remoteVideos = videoGrid.querySelectorAll('.remote-video-container');
           remoteVideos.forEach(v => v.remove());
+          log('info', 'All remote video elements removed.');
 
           socket.emit('leave-call', webrtcRoom);
+          log('info', `Emitted 'leave-call' for room: ${webrtcRoom}`);
       }
 
       function createPeerConnection(peerId, isInitiator) {
+          log('info', `Creating peer connection for peer: ${peerId}, Initiator: ${isInitiator}`);
+          if (peerConnections[peerId]) {
+              log('warn', `Peer connection for ${peerId} already exists. Closing old one.`);
+              peerConnections[peerId].close();
+          }
+
           const pc = new RTCPeerConnection(configuration);
           peerConnections[peerId] = pc;
+
+          pc.onconnectionstatechange = () => {
+              log('info', `Connection state with ${peerId}: ${pc.connectionState}`);
+              if (pc.connectionState === 'failed') {
+                  pc.restartIce();
+                  log('warn', `Connection with ${peerId} failed. Restarting ICE.`);
+              }
+          };
 
           localStream.getTracks().forEach(track => {
               pc.addTrack(track, localStream);
           });
+          log('info', `Local stream tracks added to peer connection for ${peerId}.`);
 
           pc.onicecandidate = event => {
               if (event.candidate) {
+                  log('info', `Sending ICE candidate to ${peerId}`);
                   socket.emit('webrtc-ice-candidate', { to: peerId, candidate: event.candidate });
               }
           };
 
           pc.ontrack = event => {
+              log('info', `Received remote track from ${peerId}.`);
               addRemoteVideoStream(peerId, event.streams[0]);
           };
           
           if (isInitiator) {
+              log('info', `As initiator, creating offer for ${peerId}`);
               pc.createOffer()
                   .then(offer => pc.setLocalDescription(offer))
                   .then(() => {
+                      log('info', `Offer created and set as local description. Sending to ${peerId}.`);
                       socket.emit('webrtc-offer', { to: peerId, sdp: pc.localDescription });
-                  });
+                  })
+                  .catch(e => log('error', `Error creating offer for ${peerId}:`, e));
           }
           return pc;
       }
 
       function addRemoteVideoStream(peerId, stream) {
+          log('info', `Adding remote video stream for peer: ${peerId}`);
           let container = document.getElementById(`video-container-${peerId}`);
-          if (!container) {
-              container = document.createElement('div');
-              container.id = `video-container-${peerId}`;
-              container.className = 'remote-video-container relative w-full h-full bg-black rounded-lg overflow-hidden';
-              
-              const video = document.createElement('video');
-              video.autoplay = true;
-              video.playsInline = true;
-              video.className = 'w-full h-full object-cover';
-              
-              container.appendChild(video);
-              videoGrid.appendChild(container);
-              video.srcObject = stream;
+          if (container) {
+              log('warn', `Video container for ${peerId} already exists. Re-attaching stream.`);
+              container.querySelector('video').srcObject = stream;
+              return;
           }
+          
+          container = document.createElement('div');
+          container.id = `video-container-${peerId}`;
+          container.className = 'remote-video-container relative w-full h-full bg-black rounded-lg overflow-hidden';
+          
+          const video = document.createElement('video');
+          video.autoplay = true;
+          video.playsInline = true;
+          video.className = 'w-full h-full object-cover';
+          
+          container.appendChild(video);
+          videoGrid.appendChild(container);
+          video.srcObject = stream;
+          log('info', `Successfully added video element for ${peerId}.`);
       }
 
       // --- Group Call Socket Events ---
       startVideoCallBtn.addEventListener('click', () => {
-        socket.emit('start-call', { room: webrtcRoom, groupId: groupId, username: '<%= user.username %>' });
+        log('info', "Start Call button clicked.");
+        socket.emit('start-call', { room: webrtcRoom, groupId: groupId, username: myUsername });
         joinCall();
       });
 
       endVideoCallBtn.addEventListener('click', endCall);
 
       socket.on('call-started', (data) => {
+        log('info', `Incoming call from ${data.username} (${data.from})`);
         if (!isCalling) {
             incomingCallText.textContent = `${data.username} started a call.`;
             incomingCallModal.classList.remove('hidden');
-            ringtone.play();
+            ringtone.play().catch(e => log('warn', 'Ringtone play failed:', e));
         }
       });
 
-      acceptCallBtn.addEventListener('click', joinCall);
+      acceptCallBtn.addEventListener('click', () => {
+          log('info', 'Accept Call button clicked.');
+          joinCall();
+      });
       declineCallBtn.addEventListener('click', () => {
+          log('info', 'Decline Call button clicked.');
           incomingCallModal.classList.add('hidden');
           ringtone.pause();
       });
 
       socket.on('existing-peers', (otherUsers) => {
-          otherUsers.forEach(peerId => {
-              createPeerConnection(peerId, true); // true = initiator
-          });
-      });
-
-      socket.on('webrtc-offer', async (data) => {
-          const pc = createPeerConnection(data.from, false); // false = not initiator
-          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          socket.emit('webrtc-answer', { to: data.from, sdp: answer });
-      });
-
-      socket.on('webrtc-answer', (data) => {
-          peerConnections[data.from].setRemoteDescription(new RTCSessionDescription(data.sdp));
+          log('info', 'Received existing peers:', otherUsers);
+          if (otherUsers.length > 0) {
+            otherUsers.forEach(peerId => {
+                createPeerConnection(peerId, true); // This client is the initiator for existing peers
+            });
+          } else {
+            log('info', 'No existing peers in the room. Waiting for others to join.');
+          }
       });
 
       socket.on('new-peer', (data) => {
+        log('info', `New peer joined: ${data.peerId}. Waiting for their offer.`);
+        // The new peer will initiate the connection, so we just wait for the offer.
+        // We create a peer connection here to be ready.
         if (isCalling) {
-            // This client is already in the call, and a new user has joined.
-            // The new user will initiate the connection, so this client
-            // just needs to create a peer connection object and wait for the offer.
-            createPeerConnection(data.peerId, false); // false = not initiator
+            createPeerConnection(data.peerId, false); // Not the initiator
         }
       });
 
+      socket.on('webrtc-offer', async (data) => {
+          log('info', `Received WebRTC offer from ${data.from}`);
+          let pc = peerConnections[data.from];
+          if (!pc) {
+              log('warn', `No peer connection found for ${data.from}, creating one.`);
+              pc = createPeerConnection(data.from, false);
+          }
+          try {
+            await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+            log('info', `Remote description (offer) set for ${data.from}. Creating answer.`);
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            log('info', `Answer created and set as local description. Sending to ${data.from}.`);
+            socket.emit('webrtc-answer', { to: data.from, sdp: answer });
+          } catch (e) {
+            log('error', `Error handling offer from ${data.from}:`, e);
+          }
+      });
+
+      socket.on('webrtc-answer', (data) => {
+          log('info', `Received WebRTC answer from ${data.from}.`);
+          const pc = peerConnections[data.from];
+          if (pc) {
+              pc.setRemoteDescription(new RTCSessionDescription(data.sdp))
+                .catch(e => log('error', `Error setting remote description (answer) from ${data.from}:`, e));
+          } else {
+              log('warn', `Received an answer from ${data.from}, but no peer connection exists.`);
+          }
+      });
+
       socket.on('webrtc-ice-candidate', (data) => {
-          if (peerConnections[data.from]) {
-            peerConnections[data.from].addIceCandidate(new RTCIceCandidate(data.candidate));
+          log('info', `Received ICE candidate from ${data.from}.`);
+          const pc = peerConnections[data.from];
+          if (pc) {
+              pc.addIceCandidate(new RTCIceCandidate(data.candidate))
+                .catch(e => log('error', `Error adding ICE candidate from ${data.from}:`, e));
+          } else {
+              log('warn', `Received an ICE candidate from ${data.from}, but no peer connection exists.`);
           }
       });
 
       socket.on('peer-disconnected', (peerId) => {
+          log('info', `Peer ${peerId} disconnected.`);
           if (peerConnections[peerId]) {
               peerConnections[peerId].close();
               delete peerConnections[peerId];
