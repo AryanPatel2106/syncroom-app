@@ -352,6 +352,9 @@ app.get('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/'));
 });
 
+// --- File Drop Storage ---
+const fileDrops = {}; // In-memory storage for file drops { code: { file, timeoutId } }
+
 // SOCKET.IO
 const activeUsers = {}; // In-memory store for active users per group
 
@@ -509,6 +512,48 @@ io.on('connection', (socket) => {
       }
     }
   });
+
+  // --- File Drop Socket Events ---
+  socket.on('file-drop-upload', ({ fileBuffer, filename, mimetype }) => {
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    
+    const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: 'file_drops', resource_type: 'auto' },
+        (error, result) => {
+            if (error) {
+                console.error("File drop upload error:", error);
+                socket.emit('file-drop-error', 'Upload failed.');
+                return;
+            }
+
+            const fileData = {
+                filename,
+                filepath: result.secure_url,
+                mimetype
+            };
+
+            const timeoutId = setTimeout(() => {
+                delete fileDrops[code];
+                // We don't need to delete from Cloudinary for this simple implementation
+                console.log(`File drop code ${code} expired and was deleted.`);
+            }, 15 * 60 * 1000); // 15 minutes
+
+            fileDrops[code] = { file: fileData, timeoutId };
+            socket.emit('file-drop-code', code);
+        }
+    );
+    uploadStream.end(fileBuffer);
+  });
+
+  socket.on('file-drop-request', (code) => {
+    const drop = fileDrops[code.toUpperCase()];
+    if (drop) {
+        socket.emit('file-drop-found', drop.file);
+    } else {
+        socket.emit('file-drop-not-found');
+    }
+  });
+
 });
 
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
