@@ -282,7 +282,7 @@
         receiveStatus.textContent = 'File found! Starting download...';
         // Trigger download
         const a = document.createElement('a');
-        const downloadUrl = file.filepath.replace('/upload/', `/upload/fl_attachment:${encodeURIComponent(file.filename)}/`);
+        const downloadUrl = file.filepath.replace('/upload/', '/upload/fl_attachment:' + encodeURIComponent(file.filename) + '/');
         a.href = downloadUrl;
         a.download = file.filename; // Keep as a fallback
         document.body.appendChild(a);
