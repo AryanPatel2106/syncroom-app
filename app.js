@@ -508,12 +508,27 @@ io.on('connection', (socket) => {
     // Save user message
     await AiMessage.create({ userId, message, sender: 'user' });
 
+    // --- Fetch history for conversational context ---
+    const recentHistory = await AiMessage.find({ userId }).sort({ createdAt: -1 }).limit(10);
+    const history = recentHistory.reverse().map(m => ({
+        role: m.sender === 'user' ? 'user' : 'model',
+        parts: [{ text: m.message }]
+    }));
+    // ---------------------------------------------
+
     socket.to(`ai-chat-${userId}`).emit('typing', { userId: aiUser._id, username: aiUser.username, isTyping: true });
-    const aiResponseText = await getAiResponse(message);
+    const aiResponseText = await getAiResponse(message, history);
     socket.to(`ai-chat-${userId}`).emit('typing', { userId: aiUser._id, username: aiUser.username, isTyping: false });
 
-    // Save AI message
-    await AiMessage.create({ userId, message: aiResponseText, sender: 'ai' });
+    // --- VALIDATION: Prevent saving empty AI responses and handle API errors ---
+    if (aiResponseText && aiResponseText.trim() !== '') {
+        // Save AI message only if it's not empty
+        await AiMessage.create({ userId, message: aiResponseText, sender: 'ai' });
+    } else {
+        // Log that we received an empty response, but don't crash
+        console.log(`Received empty or null AI response for userId: ${userId}. Not saving to DB.`);
+    }
+    // -------------------------------------------------------------------------
 
     const aiResult = {
         message: aiResponseText,
@@ -521,7 +536,9 @@ io.on('connection', (socket) => {
         username: aiUser.username,
         created_at: new Date()
     };
-    socket.emit('aiChatMessage', { message: aiResult }); // Send back to the user who asked
+    
+    // Emit the AI response (or error message) to the user
+    io.to(`ai-chat-${userId}`).emit('aiChatMessage', aiResult);
   });
 
   // --- Call Initiation ---
