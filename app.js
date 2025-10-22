@@ -17,6 +17,7 @@ const Message = require('./models/message');
 const File = require('./models/file');
 const Reaction = require('./models/reaction');
 const Event = require('./models/event');
+const { getAiResponse } = require('./lib/ai');
 
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
@@ -362,6 +363,7 @@ const fileDrops = {}; // In-memory storage for file drops { code: { file, timeou
 
 // SOCKET.IO
 const activeUsers = {}; // In-memory store for active users per group
+const aiUser = { _id: 'ai-user-id', username: 'SyncBot' }; // Virtual user for AI
 
 io.on('connection', (socket) => {
   let currentGroupId = null;
@@ -421,6 +423,33 @@ io.on('connection', (socket) => {
       };
 
       io.to(currentGroupId).emit('chatMessage', { message: result });
+
+      // --- AI Chatbot Integration ---
+      if (message.toLowerCase().startsWith('@ai')) {
+        io.to(currentGroupId).emit('typing', { userId: aiUser._id, username: aiUser.username, isTyping: true });
+        
+        const aiResponseText = await getAiResponse(message);
+        
+        const aiMsg = await Message.create({
+          groupId: currentGroupId,
+          userId: null, // Or a dedicated AI user ID if you create one
+          message: aiResponseText,
+          isCodeSnippet: false, // Or add logic to detect if AI response is code
+          language: 'plaintext'
+        });
+
+        const aiResult = {
+          ...aiMsg.toObject(),
+          id: aiMsg._id,
+          username: aiUser.username,
+          user_id: aiUser._id,
+        };
+        
+        io.to(currentGroupId).emit('typing', { userId: aiUser._id, username: aiUser.username, isTyping: false });
+        io.to(currentGroupId).emit('chatMessage', { message: aiResult });
+      }
+      // -----------------------------
+
     } catch (err) { 
       console.error("Socket chat message error:", err); 
     }
@@ -514,6 +543,12 @@ io.on('connection', (socket) => {
       if (activeUsers[currentGroupId]) {
         activeUsers[currentGroupId].delete(currentUserId);
         io.to(currentGroupId).emit('userList', Array.from(activeUsers[currentGroupId].values()).map(name => ({ username: name })));
+        // Add AI user to the list if not already there
+        const userArray = Array.from(activeUsers[currentGroupId].values()).map(name => ({ username: name }));
+        if (!userArray.some(u => u.username === aiUser.username)) {
+            userArray.push({ username: aiUser.username });
+        }
+        io.to(currentGroupId).emit('userList', userArray);
       }
     }
   });
