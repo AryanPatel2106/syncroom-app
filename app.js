@@ -497,6 +497,14 @@ io.on('connection', (socket) => {
   });
 
   socket.on('aiChatMessage', async ({ userId, message }) => {
+    // --- VALIDATION: Prevent empty messages ---
+    if (!message || message.trim() === '') {
+        console.log(`Received empty AI chat message from userId: ${userId}. Ignoring.`);
+        // Optionally, you could emit an error back to the user here.
+        return;
+    }
+    // -----------------------------------------
+
     // Save user message
     await AiMessage.create({ userId, message, sender: 'user' });
 
