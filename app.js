@@ -75,13 +75,20 @@ const sessionStore = MongoStore.create({
     mongoUrl: process.env.MONGODB_URI,
     collectionName: 'sessions',
 });
-app.use(session({
+const sessionMiddleware = session({
   store: sessionStore,
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }
-}));
+});
+
+app.use(sessionMiddleware);
+
+// Share session with Socket.IO
+io.use((socket, next) => {
+    sessionMiddleware(socket.handshake, {}, next);
+});
 
 const isAuthenticated = (req, res, next) => {
   if (req.session.user) next();
@@ -473,10 +480,17 @@ io.on('connection', (socket) => {
     socket.join(`ai-chat-${userId}`);
     // Load history for the user
     const history = await AiMessage.find({ userId }).sort({ createdAt: 'asc' });
+    const username = socket.handshake.session?.user?.username;
+    if (!username) {
+        // This can happen if the session expires or is invalid.
+        // You might want to emit an error to the client to force a refresh/re-login.
+        console.error(`AI Chat: Could not find username for userId: ${userId}`);
+        return; 
+    }
     const formattedHistory = history.map(m => ({
         message: m.message,
         user_id: m.sender === 'user' ? userId : aiUser._id,
-        username: m.sender === 'user' ? socket.handshake.session.user.username : aiUser.username,
+        username: m.sender === 'user' ? username : aiUser.username,
         created_at: m.createdAt
     }));
     socket.emit('aiChatHistory', formattedHistory);
