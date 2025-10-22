@@ -17,6 +17,7 @@ const Message = require('./models/message');
 const File = require('./models/file');
 const Reaction = require('./models/reaction');
 const Event = require('./models/event');
+const AiMessage = require('./models/aiMessage');
 const { getAiResponse } = require('./lib/ai');
 
 const cloudinary = require('cloudinary').v2;
@@ -153,6 +154,10 @@ app.get('/groups', isAuthenticated, async (req, res) => {
     console.error("Groups fetch error:", err);
     res.status(500).send("Server error");
   }
+});
+
+app.get('/ai-chat', isAuthenticated, (req, res) => {
+    res.render('ai_chat', { user: req.session.user });
 });
 
 app.post('/groups/create', isAuthenticated, async (req, res) => {
@@ -382,7 +387,15 @@ io.on('connection', (socket) => {
     }
     activeUsers[groupId].set(userId, username);
 
-    io.to(groupId).emit('userList', Array.from(activeUsers[groupId].values()).map(name => ({ username: name })));
+    const userArray = Array.from(activeUsers[groupId].values()).map(name => ({ username: name }));
+    if (groupId === 'ai-chat-room') { // Don't add bot to its own chat user list
+        io.to(groupId).emit('userList', userArray);
+    } else {
+        if (!userArray.some(u => u.username === aiUser.username)) {
+            userArray.push({ username: aiUser.username });
+        }
+        io.to(groupId).emit('userList', userArray);
+    }
   });
 
   socket.on('chatMessage', async (data) => {
@@ -453,6 +466,40 @@ io.on('connection', (socket) => {
     } catch (err) { 
       console.error("Socket chat message error:", err); 
     }
+  });
+
+  // --- AI Chat Page Events ---
+  socket.on('joinAiChat', async ({ userId }) => {
+    socket.join(`ai-chat-${userId}`);
+    // Load history for the user
+    const history = await AiMessage.find({ userId }).sort({ createdAt: 'asc' });
+    const formattedHistory = history.map(m => ({
+        message: m.message,
+        user_id: m.sender === 'user' ? userId : aiUser._id,
+        username: m.sender === 'user' ? socket.handshake.session.user.username : aiUser.username,
+        created_at: m.createdAt
+    }));
+    socket.emit('aiChatHistory', formattedHistory);
+  });
+
+  socket.on('aiChatMessage', async ({ userId, message }) => {
+    // Save user message
+    await AiMessage.create({ userId, message, sender: 'user' });
+
+    socket.to(`ai-chat-${userId}`).emit('typing', { userId: aiUser._id, username: aiUser.username, isTyping: true });
+    const aiResponseText = await getAiResponse(message);
+    socket.to(`ai-chat-${userId}`).emit('typing', { userId: aiUser._id, username: aiUser.username, isTyping: false });
+
+    // Save AI message
+    await AiMessage.create({ userId, message: aiResponseText, sender: 'ai' });
+
+    const aiResult = {
+        message: aiResponseText,
+        user_id: aiUser._id,
+        username: aiUser.username,
+        created_at: new Date()
+    };
+    socket.emit('aiChatMessage', { message: aiResult }); // Send back to the user who asked
   });
 
   // --- Call Initiation ---
@@ -542,10 +589,8 @@ io.on('connection', (socket) => {
     if (currentGroupId && currentUserId) {
       if (activeUsers[currentGroupId]) {
         activeUsers[currentGroupId].delete(currentUserId);
-        io.to(currentGroupId).emit('userList', Array.from(activeUsers[currentGroupId].values()).map(name => ({ username: name })));
-        // Add AI user to the list if not already there
         const userArray = Array.from(activeUsers[currentGroupId].values()).map(name => ({ username: name }));
-        if (!userArray.some(u => u.username === aiUser.username)) {
+        if (currentGroupId !== 'ai-chat-room' && !userArray.some(u => u.username === aiUser.username)) {
             userArray.push({ username: aiUser.username });
         }
         io.to(currentGroupId).emit('userList', userArray);

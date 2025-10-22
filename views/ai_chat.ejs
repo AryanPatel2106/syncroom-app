@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat with SyncBot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" id="highlight-theme">
+  <style>
+    body { 
+      font-family: 'Inter', sans-serif; 
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .message-bubble { animation: slideIn 0.3s ease-out forwards; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
+    .code-snippet { font-size: 0.875rem; border-radius: 0.5rem; }
+  </style>
+</head>
+
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white h-screen overflow-hidden">
+
+  <div class="h-full flex">
+      
+      <!-- Sidebar -->
+      <aside class="sidebar flex flex-col bg-white dark:bg-gray-800 w-80 border-r border-gray-200 dark:border-gray-700">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+            <a href="/groups" class="text-gray-600 dark:text-gray-400 hover:text-indigo-500 transition-colors"><i class="fas fa-chevron-left mr-3"></i>All Groups</a>
+        </div>
+        <div class="p-6 text-center border-b border-gray-200 dark:border-gray-700">
+            <div class="w-24 h-24 rounded-full bg-indigo-100 dark:bg-indigo-900 mx-auto flex items-center justify-center mb-4">
+                <i class="fas fa-robot text-5xl text-indigo-500"></i>
+            </div>
+            <h1 class="text-2xl font-extrabold text-gray-900 dark:text-white">SyncBot</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Your AI Assistant</p>
+        </div>
+        <div class="flex-grow p-4 space-y-2">
+            <h2 class="font-semibold text-gray-600 dark:text-gray-300 mb-2 text-xs tracking-wider uppercase">About</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+                I am an AI assistant powered by Google's Gemini model. You can ask me questions, get help with code, or just have a chat.
+            </p>
+        </div>
+        <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+            <a href="/logout" class="block text-center text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-2.5 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-semibold">Logout</a>
+        </div>
+      </aside>
+
+      <!-- Main Chat Area -->
+      <main class="main-chat flex flex-col flex-grow bg-gray-100 dark:bg-gray-900">
+        <header class="flex justify-between items-center p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
+          <div class="flex items-center">
+            <h1 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">Chat with SyncBot</h1>
+          </div>
+          <div class="flex items-center space-x-2 sm:space-x-4">
+              <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none rounded-lg text-sm p-2.5">
+                  <i id="theme-toggle-dark-icon" class="fas fa-moon w-5 h-5"></i>
+                  <i id="theme-toggle-light-icon" class="fas fa-sun w-5 h-5 hidden"></i>
+              </button>
+          </div>
+        </header>
+        <div id="message-container" class="flex-grow overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
+          <!-- Messages will be dynamically inserted here -->
+        </div>
+
+        <!-- Typing indicator -->
+        <div id="typing-indicator" class="h-6 px-3 sm:px-6 text-gray-500 dark:text-gray-400 italic text-sm"></div>
+        
+        <div class="p-2 sm:p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+            <form id="message-form" class="relative flex items-center gap-2 sm:gap-4">
+              <input id="message-input" class="flex-grow p-3 sm:p-4 pl-5 pr-16 bg-gray-100 dark:bg-gray-900 border-2 border-transparent rounded-full text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Ask SyncBot anything..." autocomplete="off">
+              <button type="submit" class="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 bg-indigo-600 text-white w-10 h-10 sm:w-12 sm:h-12 rounded-full hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105 flex-shrink-0 flex items-center justify-center"><i class="fas fa-paper-plane text-lg sm:text-xl"></i></button>
+            </form>
+        </div>
+      </main>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const socket = io();
+      const userId = "<%= user.id %>";
+      const userUsername = "<%= user.username %>";
+      const aiUserId = "ai-user-id";
+      const aiUsername = "SyncBot";
+
+      // --- Theme Management ---
+      const themeToggleBtn = document.getElementById('theme-toggle');
+      const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+      const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+      const setTheme = (isDark) => {
+          document.documentElement.classList.toggle('dark', isDark);
+          localStorage.setItem('theme', isDark ? 'dark' : 'light');
+          themeToggleLightIcon.classList.toggle('hidden', !isDark);
+          themeToggleDarkIcon.classList.toggle('hidden', isDark);
+          const newHighlightTheme = isDark ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css' : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css';
+          document.getElementById('highlight-theme').setAttribute('href', newHighlightTheme);
+      };
+
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const savedTheme = localStorage.getItem('theme');
+      const isInitiallyDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+      setTheme(isInitiallyDark);
+
+      themeToggleBtn.addEventListener('click', () => {
+          const isCurrentlyDark = document.documentElement.classList.contains('dark');
+          setTheme(!isCurrentlyDark);
+      });
+
+      // --- Socket.IO Listeners ---
+      socket.emit('joinAiChat', { userId });
+
+      socket.on('aiChatMessage', (data) => {
+        addMessageToUI(data.message);
+        document.getElementById('typing-indicator').textContent = '';
+      });
+      
+      socket.on('aiChatHistory', (history) => {
+        history.forEach(message => addMessageToUI(message, true));
+      });
+
+      socket.on('typing', (data) => {
+        const typingIndicator = document.getElementById('typing-indicator');
+        if (data.isTyping && data.userId === aiUserId) {
+          typingIndicator.textContent = `${data.username} is typing...`;
+        } else {
+          typingIndicator.textContent = '';
+        }
+      });
+
+      // --- Message & Form Handling ---
+      const messageContainer = document.getElementById('message-container');
+      const messageForm = document.getElementById('message-form');
+      const messageInput = document.getElementById('message-input');
+
+      messageContainer.scrollTop = messageContainer.scrollHeight;
+
+      messageForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const message = messageInput.value.trim();
+        if (message) {
+          socket.emit('aiChatMessage', { userId, message });
+          addMessageToUI({ message, user_id: userId, username: userUsername, created_at: new Date() });
+          messageInput.value = '';
+        }
+      });
+
+      // --- UI Functions ---
+      function addMessageToUI(message, isHistory = false) {
+        const div = document.createElement('div');
+        div.className = 'message-container';
+        div.id = `message-${message.id || Date.now()}`;
+        const isSelf = message.user_id === userId;
+
+        let messageContentHTML = '';
+        if (message.isCodeSnippet) {
+            if (typeof hljs !== 'undefined') {
+                messageContentHTML = `<pre><code class="language-${message.language} code-snippet">${hljs.highlight(message.message, {language: message.language, ignoreIllegals: true}).value}</code></pre>`;
+            } else {
+                messageContentHTML = `<pre><code class="language-${message.language} code-snippet">${message.message}</code></pre>`;
+            }
+        } else {
+            messageContentHTML = `<p class="text-base break-words">${message.message.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`;
+        }
+
+        div.innerHTML = `
+          <div class="message-bubble w-full flex ${isSelf ? 'justify-end' : 'justify-start'}" data-message-id="${message.id}">
+            <div class="relative max-w-xl message-content">
+              <div class="rounded-2xl px-4 py-3 ${isSelf ? 'bg-indigo-600 text-white rounded-br-lg' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-lg shadow-sm'}">
+                <div class="font-bold text-sm mb-1">${isSelf ? userUsername : aiUsername}</div>
+                ${messageContentHTML}
+              </div>
+              <div class="flex items-center gap-2 mt-1.5 px-2 text-xs text-gray-400 dark:text-gray-500 ${isSelf ? 'justify-end' : ''}">
+                <span>${new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+              </div>
+            </div>
+          </div>`;
+        
+        if (isHistory) {
+            messageContainer.insertBefore(div, messageContainer.firstChild);
+        } else {
+            messageContainer.appendChild(div);
+            messageContainer.scrollTop = messageContainer.scrollHeight;
+        }
+      }
+      
+      // Initial highlight of existing code blocks
+      document.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+      });
+    });
+  </script>
+</body>
+</html>
