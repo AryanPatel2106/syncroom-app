@@ -510,12 +510,19 @@ io.on('connection', (socket) => {
 
     // --- Fetch history for conversational context ---
     const recentHistory = await AiMessage.find({ userId }).sort({ createdAt: -1 }).limit(10);
-    const history = recentHistory.reverse().map(m => ({
+    let history = recentHistory.reverse().map(m => ({
         role: m.sender === 'user' ? 'user' : 'model',
         parts: [{ text: m.message }]
     }));
-    // ---------------------------------------------
 
+    // --- VALIDATION: Ensure history starts with a user message ---
+    if (history.length > 0 && history[0].role !== 'user') {
+        // The API requires the first message to be from the user.
+        // If the oldest message in our history is from the model, remove it.
+        history.shift(); 
+    }
+    // -----------------------------------------------------------
+    
     socket.to(`ai-chat-${userId}`).emit('typing', { userId: aiUser._id, username: aiUser.username, isTyping: true });
     const aiResponseText = await getAiResponse(message, history);
     socket.to(`ai-chat-${userId}`).emit('typing', { userId: aiUser._id, username: aiUser.username, isTyping: false });
