@@ -279,21 +279,14 @@
                 </a>
                 <div class="flex justify-between items-center text-xs">
                     <%
-                      // Improved download URL generation with proper Cloudinary transformation
-                      let downloadUrl = file.filepath;
-                      if (file.filepath && file.filepath.includes('cloudinary.com')) {
-                        const parts = file.filepath.split('/upload/');
-                        if (parts.length === 2) {
-                          // Use fl_attachment transformation to force download with original filename and format
-                          // This preserves the original file type and forces browser download
-                          const filename = encodeURIComponent(file.filename);
-                          downloadUrl = parts[0] + '/upload/fl_attachment:' + filename + '/f_auto/' + parts[1];
-                        }
-                      } else if (!file.filepath) {
+                      // Use server-side download route for proper file handling
+                      const fileId = file._id || file.id;
+                      let downloadUrl = `/chat/<%= group.id %>/files/${fileId}/download`;
+                      if (!file.filepath) {
                         downloadUrl = '#';
                       }
                     %>
-                    <a href="<%= downloadUrl %>" download="<%= file.filename %>" class="text-green-500 hover:text-green-600 transition-colors <%= downloadUrl === '#' ? 'opacity-50 cursor-not-allowed' : '' %>" title="Download <%= file.filename %>" <%= downloadUrl === '#' ? 'onclick="return false;"' : '' %>>
+                    <a href="<%= downloadUrl %>" class="text-green-500 hover:text-green-600 transition-colors <%= downloadUrl === '#' ? 'opacity-50 cursor-not-allowed' : '' %>" title="Download <%= file.filename %>" <%= downloadUrl === '#' ? 'onclick="return false;"' : '' %>>
                       <i class="fas fa-download mr-1"></i> Download
                     </a>
                     <% if (file.user_id == user.id || ['owner', 'admin'].includes(userRole)) { %>

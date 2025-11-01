@@ -358,6 +358,41 @@ app.delete('/chat/:groupId/files/:fileId', isAuthenticated, async (req, res) => 
   }
 });
 
+// Download file route
+app.get('/chat/:groupId/files/:fileId/download', isAuthenticated, async (req, res) => {
+  const { groupId, fileId } = req.params;
+  
+  try {
+    // Check if user is a member of the group
+    const member = await GroupMember.findOne({ groupId, userId: req.session.user.id });
+    if (!member) {
+      return res.status(403).send("Access denied");
+    }
+
+    // Find the file in database
+    const file = await File.findById(fileId);
+    if (!file) {
+      return res.status(404).send("File not found");
+    }
+
+    // Redirect to Cloudinary URL with fl_attachment to force download
+    if (file.filepath && file.filepath.includes('cloudinary.com')) {
+      const parts = file.filepath.split('/upload/');
+      if (parts.length === 2) {
+        // Add fl_attachment transformation to force download
+        const downloadUrl = parts[0] + '/upload/fl_attachment/' + parts[1];
+        return res.redirect(downloadUrl);
+      }
+    }
+
+    // Fallback: redirect to original filepath
+    res.redirect(file.filepath);
+  } catch (err) {
+    console.error("File download error:", err);
+    res.status(500).send("Download failed");
+  }
+});
+
 app.get('/chat/:groupId/manage', isAuthenticated, checkGroupRole(['owner', 'admin']), async (req, res) => {
     const { groupId } = req.params;
     try {
