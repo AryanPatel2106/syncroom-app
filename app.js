@@ -358,7 +358,7 @@ app.delete('/chat/:groupId/files/:fileId', isAuthenticated, async (req, res) => 
   }
 });
 
-// Download file route - Proxy download through server
+// Download file route - Simple redirect with attachment flag
 app.get('/chat/:groupId/files/:fileId/download', isAuthenticated, async (req, res) => {
   const { groupId, fileId } = req.params;
   
@@ -375,31 +375,9 @@ app.get('/chat/:groupId/files/:fileId/download', isAuthenticated, async (req, re
       return res.status(404).send("File not found");
     }
 
-    // Set headers to force download with original filename
-    res.setHeader('Content-Disposition', `attachment; filename="${file.filename}"`);
-    res.setHeader('Content-Type', file.mimetype || 'application/octet-stream');
-    
-    // Proxy the file from Cloudinary to client
-    if (file.filepath && file.filepath.includes('cloudinary.com')) {
-      // Use axios to fetch the file from Cloudinary and stream it to the client
-      const axios = require('axios');
-      const response = await axios({
-        method: 'GET',
-        url: file.filepath,
-        responseType: 'stream'
-      });
-      
-      // Set content length if available
-      if (response.headers['content-length']) {
-        res.setHeader('Content-Length', response.headers['content-length']);
-      }
-      
-      // Pipe the stream to response
-      response.data.pipe(res);
-    } else {
-      // Fallback: redirect to original filepath
-      res.redirect(file.filepath);
-    }
+    // Simply redirect to the Cloudinary URL
+    // The browser will handle the download
+    res.redirect(file.filepath);
   } catch (err) {
     console.error("File download error:", err);
     res.status(500).send("Download failed");
