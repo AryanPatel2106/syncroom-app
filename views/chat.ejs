@@ -377,7 +377,11 @@
     </div>
   </div>
 
-  <audio id="ringtone" src="https://cdn.pixabay.com/audio/2022/02/22/audio_e5e6d7c53d.mp3" loop preload="auto"></audio>
+  <!-- Using a simple beep tone generated via Web Audio API instead of external ringtone -->
+  <audio id="ringtone" loop preload="auto">
+    <!-- Fallback: Simple notification sound as data URI (short beep) -->
+    <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSyGz/DTfTEGHm7A7+OZUQ8RVq7p5Z1DEA1Qn+Huw20kBjSO1vHLeSYGKHnK79+USg0QWrPq5ZtVGg5JouLwvW0iBC2Dz/PUgTYIHW+87+WZUxAQVK3q46BWFw9Mn+HvwXAmBjGQ1e/JdyYFKnvL7t+FPQkRXLTp5JhSEw5LpOPwvGslBS2A0PDTgDEHI3u+7eSVTg8NUqvp5pxTExBLn+DuwG0lBjGP1vDIdygGKHnJ79+TPwgQXbLp5JpUFAhLm+HvvGkhBS6Azv/SgDYHI3m+7uSYTA8OVK3n45tSEg5JnuDuvGwhBS+CzfDTfTEHIne+7eWZTw8PUqzn4ppSEQ9Knt/vvG0jBS2Ay+/TgDYHIHm+7OSXTRANVKzp4ppTEg9Jnt/vvGwhBS6AzPDTfzAFJHq+7OWYTg4OVa3o4plTEQ1Kn9/wvWwjBS+AzfDTgDEGIHm+7OSWTRAOUqzn4ppTEg5Jn9/vvG0jBS2Ay+/TgTYHIXm+7OWYTg4OVazn4ppVExBKnt/vvGshBS+Ay+/SgDUHIHm+7eOWTRANUqzn4ptTEQ9Kn9/wvWshBS6BzPDSfzEGI3q+7OWXTg4OVa3n4ppUEw5Knt/vvGwhBS+Ay+/SgDQGIHm+7eOWTRANUqzn4ptTEQ9Kn9/wvWshBS6BzPDSfzEGI3q+7OWXTg4OVa3n4ppUEw5Knt/vvGwhBS+Ay+/SgDQGIHm+7eOWTRANUqzn4ptTEQ9Kn9/wvWshBS6BzPDSfzEGI3q+7OWXTg4OVa3n4ppUEw5Knt/vvGwhBS+Ay+/SgDQGIHm+7eOWTRANUqzn4ptTEQ9Kn9/wvWshBS6BzPDSfzEGI3q+7OWXTg4OVa3n4ppUEw5Knt/vvGwhBS+Ay+/SgDQGIHm+7eOWTRANUqzn4ptTEQ9Kn9/wvWshBS6BzPDSfzEGI3q+7OWXTg4O" type="audio/wav">
+  </audio>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://unpkg.com/webrtc-adapter/out/adapter.js"></script>
@@ -407,6 +411,59 @@
       const webrtcRoom = `webrtc-group-${groupId}`;
       let isCalling = false;
       const myUsername = '<%= user.username %>';
+      
+      // Create a Web Audio API ringtone as fallback
+      let audioContext, oscillator, gainNode;
+      function playWebAudioRingtone() {
+        try {
+          if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          }
+          
+          // Stop any existing oscillator
+          if (oscillator) {
+            oscillator.stop();
+          }
+          
+          oscillator = audioContext.createOscillator();
+          gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          oscillator.frequency.value = 800; // 800 Hz tone
+          oscillator.type = 'sine';
+          gainNode.gain.value = 0.3; // 30% volume
+          
+          // Create a ringing pattern: beep for 0.5s, silence for 0.5s
+          const now = audioContext.currentTime;
+          oscillator.start(now);
+          
+          // Repeat the pattern
+          const beepDuration = 0.4;
+          const pauseDuration = 0.3;
+          const pattern = () => {
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime + beepDuration);
+            setTimeout(pattern, (beepDuration + pauseDuration) * 1000);
+          };
+          pattern();
+          
+        } catch (e) {
+          console.warn('Web Audio API ringtone failed:', e);
+        }
+      }
+      
+      function stopWebAudioRingtone() {
+        if (oscillator) {
+          try {
+            oscillator.stop();
+            oscillator = null;
+          } catch (e) {
+            console.warn('Error stopping oscillator:', e);
+          }
+        }
+      }
 
       const configuration = {
           iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
@@ -428,6 +485,8 @@
           
           incomingCallModal.classList.add('hidden');
           ringtone.pause();
+          ringtone.currentTime = 0;
+          stopWebAudioRingtone();
           videoCallContainer.classList.remove('hidden');
           videoCallContainer.classList.add('flex');
 
@@ -558,18 +617,28 @@
         if (!isCalling) {
             incomingCallText.textContent = `${data.username} started a call.`;
             incomingCallModal.classList.remove('hidden');
-            ringtone.play().catch(e => log('warn', 'Ringtone play failed:', e));
+            
+            // Try HTML5 audio first, fallback to Web Audio API
+            ringtone.play().catch(e => {
+              log('warn', 'HTML5 ringtone failed, using Web Audio API:', e);
+              playWebAudioRingtone();
+            });
         }
       });
 
       acceptCallBtn.addEventListener('click', () => {
           log('info', 'Accept Call button clicked.');
+          ringtone.pause();
+          ringtone.currentTime = 0;
+          stopWebAudioRingtone();
           joinCall();
       });
       declineCallBtn.addEventListener('click', () => {
           log('info', 'Decline Call button clicked.');
           incomingCallModal.classList.add('hidden');
           ringtone.pause();
+          ringtone.currentTime = 0;
+          stopWebAudioRingtone();
       });
 
       socket.on('existing-peers', (otherUsers) => {
