@@ -375,12 +375,15 @@ app.get('/chat/:groupId/files/:fileId/download', isAuthenticated, async (req, re
       return res.status(404).send("File not found");
     }
 
-    // Redirect to Cloudinary URL with fl_attachment to force download
+    // Redirect to Cloudinary URL with proper flags for download
     if (file.filepath && file.filepath.includes('cloudinary.com')) {
       const parts = file.filepath.split('/upload/');
       if (parts.length === 2) {
-        // Add fl_attachment transformation to force download
-        const downloadUrl = parts[0] + '/upload/fl_attachment/' + parts[1];
+        // Use fl_attachment with the original filename to force download
+        // Format: /upload/fl_attachment:filename/[rest of path]
+        const safeFilename = encodeURIComponent(file.filename);
+        const downloadUrl = parts[0] + '/upload/fl_attachment:' + safeFilename + '/' + parts[1];
+        console.log('Download URL:', downloadUrl);
         return res.redirect(downloadUrl);
       }
     }
