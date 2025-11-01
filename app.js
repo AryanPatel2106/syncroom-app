@@ -20,14 +20,19 @@ const Event = require('./models/event');
 const AiMessage = require('./models/aiMessage');
 const { getAiResponse } = require('./lib/ai');
 
-const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const fs = require('fs');
 
 const { createClient } = require("redis");
 const { createAdapter } = require("@socket.io/redis-adapter");
 
 const app = express();
 const server = http.createServer(app);
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 const io = socketIO(server);
 
 // --- Redis Adapter Setup for Scaling (Conditional) ---
@@ -58,13 +63,20 @@ mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('MongoDB connected'))
     .catch(err => console.error('MongoDB connection error:', err));
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadsDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
 });
 
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
@@ -257,39 +269,15 @@ app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async 
       return res.status(400).json({ success: false, error: "No file uploaded" });
     }
 
-    // File size limit (10MB)
-    const MAX_SIZE = 10 * 1024 * 1024;
-    if (req.file.size > MAX_SIZE) {
-      return res.status(400).json({ success: false, error: "File too large. Maximum size is 10MB." });
-    }
-
-    // Upload to Cloudinary manually with public access
-    const result = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-            { 
-              folder: 'syncroom_uploads', 
-              resource_type: 'auto',
-              type: 'upload',  // Ensures public upload
-              access_mode: 'public',  // Makes file publicly accessible
-              public_id: `${Date.now()}_${req.file.originalname.replace(/[^a-zA-Z0-9.]/g, '_')}`,
-              use_filename: true,
-              unique_filename: false
-            },
-            (error, result) => {
-                if (error) reject(error);
-                else resolve(result);
-            }
-        );
-        uploadStream.end(req.file.buffer);
-    });
-
-    const { originalname, mimetype, size } = req.file;
+    // File is already saved by multer to public/uploads
+    const { originalname, mimetype, size, filename } = req.file;
+    
+    // Store file info in database with relative path
     const file = await File.create({ 
         groupId, 
         userId: req.session.user.id, 
         filename: originalname, 
-        filepath: result.secure_url,
-        cloudinaryPublicId: result.public_id,
+        filepath: `/uploads/${filename}`, // Relative path for serving
         fileSize: size,
         mimetype 
     });
@@ -305,6 +293,14 @@ app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async 
     }
   } catch (err) {
     console.error("File upload error:", err);
+    
+    // Delete uploaded file if database save failed
+    if (req.file && req.file.filename) {
+      const filePath = path.join(uploadsDir, req.file.filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
     
     if (req.headers.accept && req.headers.accept.includes('application/json')) {
       res.status(500).json({ success: false, error: "Upload failed. Please try again." });
@@ -337,13 +333,14 @@ app.delete('/chat/:groupId/files/:fileId', isAuthenticated, async (req, res) => 
       return res.status(403).json({ success: false, error: "Permission denied" });
     }
 
-    // Delete from Cloudinary if public_id is available
-    if (file.cloudinaryPublicId) {
+    // Delete physical file from local storage
+    const filePath = path.join(__dirname, 'public', file.filepath);
+    if (fs.existsSync(filePath)) {
       try {
-        await cloudinary.uploader.destroy(file.cloudinaryPublicId);
-      } catch (cloudinaryError) {
-        console.error("Cloudinary delete error:", cloudinaryError);
-        // Continue with database deletion even if Cloudinary fails
+        fs.unlinkSync(filePath);
+      } catch (fsError) {
+        console.error("File system delete error:", fsError);
+        // Continue with database deletion even if file deletion fails
       }
     }
 
@@ -377,39 +374,24 @@ app.get('/chat/:groupId/files/:fileId/download', isAuthenticated, async (req, re
       return res.status(404).send("File not found");
     }
 
-    // Fetch file from Cloudinary and pipe to response with download headers
-    const https = require('https');
-    const url = require('url');
+    // Build absolute path to file
+    const filePath = path.join(__dirname, 'public', file.filepath);
     
-    const parsedUrl = url.parse(file.filepath);
-    
-    const options = {
-      hostname: parsedUrl.hostname,
-      port: 443,
-      path: parsedUrl.path,
-      method: 'GET'
-    };
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      console.error('File not found on disk:', filePath);
+      return res.status(404).send("File not found on server");
+    }
 
-    // Set headers to force download
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.filename)}"`);
-    res.setHeader('Content-Type', file.mimetype || 'application/octet-stream');
-    
-    const request = https.request(options, (cloudinaryRes) => {
-      // Set content length if available
-      if (cloudinaryRes.headers['content-length']) {
-        res.setHeader('Content-Length', cloudinaryRes.headers['content-length']);
+    // Send file with original filename for download
+    res.download(filePath, file.filename, (err) => {
+      if (err) {
+        console.error('File download error:', err);
+        if (!res.headersSent) {
+          res.status(500).send("Download failed");
+        }
       }
-      
-      // Pipe the response from Cloudinary to the client
-      cloudinaryRes.pipe(res);
     });
-
-    request.on('error', (err) => {
-      console.error('Download proxy error:', err);
-      res.status(500).send('Download failed');
-    });
-
-    request.end();
   } catch (err) {
     console.error("File download error:", err);
     res.status(500).send("Download failed");
@@ -462,7 +444,21 @@ app.post('/chat/:groupId/delete', isAuthenticated, checkGroupRole(['owner']), as
         // This is a simplified deletion. In a real app, you'd want to handle this more carefully,
         // maybe archiving instead of deleting, and cleaning up all associated data.
         await Message.deleteMany({ groupId });
-        await File.deleteMany({ groupId }); // You'd also delete from Cloudinary here
+        
+        // Delete all physical files for this group
+        const groupFiles = await File.find({ groupId });
+        for (const file of groupFiles) {
+          const filePath = path.join(__dirname, 'public', file.filepath);
+          if (fs.existsSync(filePath)) {
+            try {
+              fs.unlinkSync(filePath);
+            } catch (err) {
+              console.error(`Failed to delete file ${filePath}:`, err);
+            }
+          }
+        }
+        
+        await File.deleteMany({ groupId });
         await Event.deleteMany({ groupId });
         await GroupMember.deleteMany({ groupId });
         await Group.deleteOne({ _id: groupId });
@@ -782,32 +778,41 @@ io.on('connection', (socket) => {
   socket.on('file-drop-upload', ({ fileBuffer, filename, mimetype }) => {
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
     
-    const uploadStream = cloudinary.uploader.upload_stream(
-        { folder: 'file_drops', resource_type: 'auto' },
-        (error, result) => {
-            if (error) {
-                console.error("File drop upload error:", error);
-                socket.emit('file-drop-error', 'Upload failed.');
-                return;
-            }
-
-            const fileData = {
-                filename,
-                filepath: result.secure_url,
-                mimetype
-            };
-
-            const timeoutId = setTimeout(() => {
-                delete fileDrops[code];
-                // We don't need to delete from Cloudinary for this simple implementation
-                console.log(`File drop code ${code} expired and was deleted.`);
-            }, 15 * 60 * 1000); // 15 minutes
-
-            fileDrops[code] = { file: fileData, timeoutId };
-            socket.emit('file-drop-code', code);
+    try {
+      // Save file to local storage
+      const uniqueFilename = Date.now() + '-' + filename;
+      const filePath = path.join(uploadsDir, uniqueFilename);
+      
+      fs.writeFile(filePath, fileBuffer, (error) => {
+        if (error) {
+          console.error("File drop upload error:", error);
+          socket.emit('file-drop-error', 'Upload failed.');
+          return;
         }
-    );
-    uploadStream.end(fileBuffer);
+
+        const fileData = {
+          filename,
+          filepath: `/uploads/${uniqueFilename}`,
+          mimetype,
+          physicalPath: filePath
+        };
+
+        const timeoutId = setTimeout(() => {
+          // Delete physical file when code expires
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+          delete fileDrops[code];
+          console.log(`File drop code ${code} expired and was deleted.`);
+        }, 15 * 60 * 1000); // 15 minutes
+
+        fileDrops[code] = { file: fileData, timeoutId };
+        socket.emit('file-drop-code', code);
+      });
+    } catch (error) {
+      console.error("File drop upload error:", error);
+      socket.emit('file-drop-error', 'Upload failed.');
+    }
   });
 
   socket.on('file-drop-request', (code) => {
