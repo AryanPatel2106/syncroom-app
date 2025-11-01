@@ -263,12 +263,14 @@ app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async 
       return res.status(400).json({ success: false, error: "File too large. Maximum size is 10MB." });
     }
 
-    // Upload to Cloudinary manually
+    // Upload to Cloudinary manually with public access
     const result = await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
             { 
               folder: 'syncroom_uploads', 
               resource_type: 'auto',
+              type: 'upload',  // Ensures public upload
+              access_mode: 'public',  // Makes file publicly accessible
               public_id: `${Date.now()}_${req.file.originalname.replace(/[^a-zA-Z0-9.]/g, '_')}`,
               use_filename: true,
               unique_filename: false
