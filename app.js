@@ -358,7 +358,7 @@ app.delete('/chat/:groupId/files/:fileId', isAuthenticated, async (req, res) => 
   }
 });
 
-// Download file route
+// Download file route - Proxy download through server
 app.get('/chat/:groupId/files/:fileId/download', isAuthenticated, async (req, res) => {
   const { groupId, fileId } = req.params;
   
@@ -375,21 +375,31 @@ app.get('/chat/:groupId/files/:fileId/download', isAuthenticated, async (req, re
       return res.status(404).send("File not found");
     }
 
-    // Redirect to Cloudinary URL with proper flags for download
+    // Set headers to force download with original filename
+    res.setHeader('Content-Disposition', `attachment; filename="${file.filename}"`);
+    res.setHeader('Content-Type', file.mimetype || 'application/octet-stream');
+    
+    // Proxy the file from Cloudinary to client
     if (file.filepath && file.filepath.includes('cloudinary.com')) {
-      const parts = file.filepath.split('/upload/');
-      if (parts.length === 2) {
-        // Use fl_attachment with the original filename to force download
-        // Format: /upload/fl_attachment:filename/[rest of path]
-        const safeFilename = encodeURIComponent(file.filename);
-        const downloadUrl = parts[0] + '/upload/fl_attachment:' + safeFilename + '/' + parts[1];
-        console.log('Download URL:', downloadUrl);
-        return res.redirect(downloadUrl);
+      // Use axios to fetch the file from Cloudinary and stream it to the client
+      const axios = require('axios');
+      const response = await axios({
+        method: 'GET',
+        url: file.filepath,
+        responseType: 'stream'
+      });
+      
+      // Set content length if available
+      if (response.headers['content-length']) {
+        res.setHeader('Content-Length', response.headers['content-length']);
       }
+      
+      // Pipe the stream to response
+      response.data.pipe(res);
+    } else {
+      // Fallback: redirect to original filepath
+      res.redirect(file.filepath);
     }
-
-    // Fallback: redirect to original filepath
-    res.redirect(file.filepath);
   } catch (err) {
     console.error("File download error:", err);
     res.status(500).send("Download failed");
