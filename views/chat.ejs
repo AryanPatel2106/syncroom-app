@@ -243,6 +243,13 @@
             <button id="close-files-modal-btn" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"><i class="fas fa-times text-2xl"></i></button>
         </header>
         <div id="modal-file-list" class="p-3 sm:p-6 overflow-y-auto grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            <% if (files.length === 0) { %>
+              <div class="col-span-full text-center py-12">
+                <i class="fas fa-folder-open text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                <p class="text-gray-500 dark:text-gray-400 text-lg font-medium">No files uploaded yet</p>
+                <p class="text-gray-400 dark:text-gray-500 text-sm mt-2">Use the "Attach File" button in the sidebar to upload files</p>
+              </div>
+            <% } %>
             <% files.forEach(file => { %>
               <div class="file-item p-3 rounded-lg bg-gray-100 dark:bg-gray-900/50 hover:bg-gray-200 dark:hover:bg-gray-700/50 transition border border-gray-200 dark:border-gray-700" data-file-id="<%= file.id %>">
                 <% if (file.mimetype && file.mimetype.startsWith('image/')) { %>
@@ -1035,11 +1042,38 @@
       const fileLabel = document.querySelector('label[for="file-input"]');
       if (fileLabel) {
         console.log('File label found, for attribute:', fileLabel.getAttribute('for'));
-        fileLabel.addEventListener('click', () => {
-          console.log('Label clicked, should trigger file input');
+        console.log('File input element:', fileInput);
+        console.log('File input ID:', fileInput ? fileInput.id : 'NOT FOUND');
+        
+        fileLabel.addEventListener('click', (e) => {
+          console.log('Label clicked!');
+          console.log('Label for attribute:', fileLabel.getAttribute('for'));
+          console.log('Will trigger file input:', fileInput);
+          
+          // Manual trigger as fallback
+          if (fileInput && !fileInput.disabled) {
+            setTimeout(() => {
+              console.log('Manually triggering file input click...');
+              fileInput.click();
+            }, 100);
+          }
         });
       } else {
         console.error('File label not found!');
+      }
+      
+      // Test if file input exists and is accessible
+      if (fileInput) {
+        console.log('File input found successfully');
+        console.log('File input attributes:', {
+          id: fileInput.id,
+          type: fileInput.type,
+          name: fileInput.name,
+          hidden: fileInput.classList.contains('hidden'),
+          disabled: fileInput.disabled
+        });
+      } else {
+        console.error('File input NOT FOUND!');
       }
 
       // --- Modal Logic ---
@@ -1059,6 +1093,22 @@
       setupModal('files-modal', 'view-files-btn', 'close-files-modal-btn');
       setupModal('calendar-modal', 'view-calendar-btn', 'close-calendar-modal-btn');
       setupModal('code-snippet-modal', 'code-snippet-btn', 'close-code-modal-btn');
+
+      // Debug: Log file data when modal opens
+      document.getElementById('view-files-btn').addEventListener('click', () => {
+        const fileItems = document.querySelectorAll('.file-item');
+        console.log(`Files in modal: ${fileItems.length}`);
+        fileItems.forEach((item, index) => {
+          const link = item.querySelector('a[href]');
+          const downloadLink = item.querySelector('a[download]');
+          console.log(`File ${index + 1}:`, {
+            fileId: item.dataset.fileId,
+            viewUrl: link ? link.href : 'N/A',
+            downloadUrl: downloadLink ? downloadLink.href : 'N/A',
+            filename: downloadLink ? downloadLink.getAttribute('download') : 'N/A'
+          });
+        });
+      });
 
       // --- Emoji Picker ---
       const emojiBtn = document.getElementById('emoji-btn');
