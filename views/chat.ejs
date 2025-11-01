@@ -126,12 +126,12 @@
         </div>
         <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
             <div class="relative">
-              <label class="w-full text-sm bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300 py-2.5 px-4 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors font-semibold flex items-center justify-center cursor-pointer relative overflow-hidden">
+              <label for="file-input" class="w-full text-sm bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300 py-2.5 px-4 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors font-semibold flex items-center justify-center cursor-pointer relative overflow-hidden">
                 <span id="upload-text"><i class="fas fa-paperclip mr-2"></i> Attach File</span>
                 <span id="upload-progress" class="hidden"><i class="fas fa-spinner fa-spin mr-2"></i> Uploading...</span>
-                <input type="file" id="file-input" name="file" class="hidden" required>
                 <div id="upload-progress-bar" class="absolute bottom-0 left-0 h-1 bg-indigo-600 transition-all duration-300 ease-out" style="width: 0%"></div>
               </label>
+              <input type="file" id="file-input" name="file" class="hidden" required>
               <div id="upload-error" class="hidden mt-2 text-red-600 dark:text-red-400 text-xs"></div>
               <div id="upload-success" class="hidden mt-2 text-green-600 dark:text-green-400 text-xs"></div>
             </div>
