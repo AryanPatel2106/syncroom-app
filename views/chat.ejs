@@ -279,10 +279,11 @@
                 </a>
                 <div class="flex justify-between items-center text-xs">
                     <%
-                      // Direct download from Cloudinary
-                      let downloadUrl = file.filepath || '#';
+                      // Use server proxy route for forced download
+                      const fileId = file._id || file.id;
+                      let downloadUrl = file.filepath ? `/chat/${group.id}/files/${fileId}/download` : '#';
                     %>
-                    <a href="<%= downloadUrl %>" download="<%= file.filename %>" target="_blank" class="text-green-500 hover:text-green-600 transition-colors <%= downloadUrl === '#' ? 'opacity-50 cursor-not-allowed' : '' %>" title="Download <%= file.filename %>" <%= downloadUrl === '#' ? 'onclick="return false;"' : '' %>>
+                    <a href="<%= downloadUrl %>" class="text-green-500 hover:text-green-600 transition-colors <%= downloadUrl === '#' ? 'opacity-50 cursor-not-allowed' : '' %>" title="Download <%= file.filename %>" <%= downloadUrl === '#' ? 'onclick="return false;"' : '' %>>
                       <i class="fas fa-download mr-1"></i> Download
                     </a>
                     <% if (file.user_id == user.id || ['owner', 'admin'].includes(userRole)) { %>
