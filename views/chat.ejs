@@ -1114,17 +1114,16 @@
         console.log('File input element:', fileInput);
         console.log('File input ID:', fileInput ? fileInput.id : 'NOT FOUND');
         
+        // Force direct click handling to ensure file dialog opens
         fileLabel.addEventListener('click', (e) => {
           console.log('Label clicked!');
-          console.log('Label for attribute:', fileLabel.getAttribute('for'));
-          console.log('Will trigger file input:', fileInput);
+          e.preventDefault(); // Prevent default label behavior
           
-          // Manual trigger as fallback
           if (fileInput && !fileInput.disabled) {
-            setTimeout(() => {
-              console.log('Manually triggering file input click...');
-              fileInput.click();
-            }, 100);
+            console.log('Manually triggering file input click...');
+            fileInput.click(); // Directly trigger file input
+          } else {
+            console.error('File input not available or disabled');
           }
         });
       } else {
@@ -1140,6 +1139,11 @@
           name: fileInput.name,
           hidden: fileInput.classList.contains('hidden'),
           disabled: fileInput.disabled
+        });
+        
+        // Add a test click listener to verify it works
+        fileInput.addEventListener('click', () => {
+          console.log('File input clicked - dialog should open');
         });
       } else {
         console.error('File input NOT FOUND!');
