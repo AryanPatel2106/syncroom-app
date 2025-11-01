@@ -66,6 +66,35 @@
     .emoji:hover { background-color: #f3f4f6; }
     .dark .emoji:hover { background-color: #374151; }
     .code-snippet { font-size: 0.875rem; border-radius: 0.5rem; }
+    
+    /* File upload improvements */
+    .file-item { transition: opacity 0.3s ease, transform 0.3s ease; }
+    .file-item:hover { transform: translateY(-2px); }
+    
+    #upload-progress-bar {
+      transition: width 0.3s ease-out;
+      border-radius: 0 0 0.5rem 0.5rem;
+    }
+    
+    .upload-success-animation {
+      animation: bounceIn 0.5s ease-out;
+    }
+    
+    @keyframes bounceIn {
+      0% { transform: scale(0.3); opacity: 0; }
+      50% { transform: scale(1.05); }
+      70% { transform: scale(0.9); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    
+    .file-delete-animation {
+      animation: fadeOutScale 0.3s ease-out forwards;
+    }
+    
+    @keyframes fadeOutScale {
+      0% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0.8); }
+    }
   </style>
 </head>
 
@@ -96,12 +125,16 @@
             <button id="start-video-call-btn" class="w-full text-left text-green-600 dark:text-green-400 py-2.5 px-4 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/50 transition-colors flex items-center font-medium"><i class="fas fa-video w-6 text-center mr-3"></i>Start Video Call</button>
         </div>
         <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
-            <form id="upload-form" action="/chat/<%= group.id %>/upload" method="POST" enctype="multipart/form-data">
-              <label class="w-full text-sm bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300 py-2.5 px-4 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors font-semibold flex items-center justify-center cursor-pointer">
-                <i class="fas fa-paperclip mr-2"></i> Attach File
+            <div class="relative">
+              <label class="w-full text-sm bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300 py-2.5 px-4 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors font-semibold flex items-center justify-center cursor-pointer relative overflow-hidden">
+                <span id="upload-text"><i class="fas fa-paperclip mr-2"></i> Attach File</span>
+                <span id="upload-progress" class="hidden"><i class="fas fa-spinner fa-spin mr-2"></i> Uploading...</span>
                 <input type="file" id="file-input" name="file" class="hidden" required>
+                <div id="upload-progress-bar" class="absolute bottom-0 left-0 h-1 bg-indigo-600 transition-all duration-300 ease-out" style="width: 0%"></div>
               </label>
-            </form>
+              <div id="upload-error" class="hidden mt-2 text-red-600 dark:text-red-400 text-xs"></div>
+              <div id="upload-success" class="hidden mt-2 text-green-600 dark:text-green-400 text-xs"></div>
+            </div>
             <% if (userRole === 'owner' || userRole === 'admin') { %>
               <a href="/chat/<%= group.id %>/manage" class="block text-center text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-2.5 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-semibold"><i class="fas fa-users-cog mr-2"></i>Manage Group</a>
             <% } %>
@@ -213,19 +246,50 @@
             <% files.forEach(file => { %>
               <div class="file-item p-3 rounded-lg bg-gray-100 dark:bg-gray-900/50 hover:bg-gray-200 dark:hover:bg-gray-700/50 transition border border-gray-200 dark:border-gray-700" data-file-id="<%= file.id %>">
                 <% if (file.mimetype && file.mimetype.startsWith('image/')) { %>
-                  <img src="<%= file.filepath %>" alt="<%= file.filename %>" class="w-full h-24 sm:h-32 object-cover rounded-md mb-2">
+                  <div class="relative w-full h-24 sm:h-32 rounded-md mb-2 overflow-hidden">
+                    <img src="<%= file.filepath %>" alt="<%= file.filename %>" class="w-full h-full object-cover" loading="lazy" onerror="this.parentElement.innerHTML='<div class=&quot;w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center&quot;><i class=&quot;fas fa-image text-3xl text-gray-400&quot;></i></div>'">
+                  </div>
                 <% } else { %>
-                  <div class="w-full h-24 sm:h-32 rounded-md mb-2 bg-gray-200 dark:bg-gray-700 flex items-center justify-center"><i class="fas fa-file-alt text-3xl sm:text-4xl text-gray-400 dark:text-gray-500"></i></div>
-                <% } %>
-                <a href="<%= file.filepath %>" target="_blank" class="text-indigo-500 hover:underline text-xs sm:text-sm break-all font-medium"><%= file.filename %></a>
-                <div class="flex justify-between items-center mt-2 text-xs">
-                    <%
-                        const parts = file.filepath.split('/upload/');
-                        const downloadUrl = parts[0] + '/upload/fl_attachment:' + encodeURIComponent(file.filename) + '/' + parts[1];
+                  <div class="w-full h-24 sm:h-32 rounded-md mb-2 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                    <% 
+                      let iconClass = 'fa-file-alt';
+                      if (file.mimetype) {
+                        if (file.mimetype.includes('pdf')) iconClass = 'fa-file-pdf';
+                        else if (file.mimetype.includes('word') || file.mimetype.includes('document')) iconClass = 'fa-file-word';
+                        else if (file.mimetype.includes('excel') || file.mimetype.includes('spreadsheet')) iconClass = 'fa-file-excel';
+                        else if (file.mimetype.includes('powerpoint') || file.mimetype.includes('presentation')) iconClass = 'fa-file-powerpoint';
+                        else if (file.mimetype.includes('video')) iconClass = 'fa-file-video';
+                        else if (file.mimetype.includes('audio')) iconClass = 'fa-file-audio';
+                        else if (file.mimetype.includes('zip') || file.mimetype.includes('archive')) iconClass = 'fa-file-archive';
+                        else if (file.mimetype.includes('text')) iconClass = 'fa-file-alt';
+                      }
                     %>
-                    <a href="<%= downloadUrl %>" download="<%= file.filename %>" class="text-green-500 hover:text-green-600"><i class="fas fa-download mr-1"></i> Download</a>
+                    <i class="fas <%= iconClass %> text-3xl sm:text-4xl text-gray-400 dark:text-gray-500"></i>
+                  </div>
+                <% } %>
+                <a href="<%= file.filepath %>" target="_blank" class="text-indigo-500 hover:underline text-xs sm:text-sm break-all font-medium block mb-2" title="<%= file.filename %>">
+                  <%= file.filename.length > 25 ? file.filename.substring(0, 22) + '...' : file.filename %>
+                </a>
+                <div class="flex justify-between items-center text-xs">
+                    <%
+                      // Improved download URL generation with better Cloudinary handling
+                      let downloadUrl = file.filepath;
+                      if (file.filepath.includes('cloudinary.com')) {
+                        const parts = file.filepath.split('/upload/');
+                        if (parts.length === 2) {
+                          // Use fl_attachment transformation to force download with original filename
+                          const filename = encodeURIComponent(file.filename);
+                          downloadUrl = parts[0] + '/upload/fl_attachment:' + filename + '/' + parts[1];
+                        }
+                      }
+                    %>
+                    <a href="<%= downloadUrl %>" download="<%= file.filename %>" class="text-green-500 hover:text-green-600 transition-colors" title="Download <%= file.filename %>">
+                      <i class="fas fa-download mr-1"></i> Download
+                    </a>
                     <% if (file.user_id == user.id || ['owner', 'admin'].includes(userRole)) { %>
-                        <button data-file-id="<%= file.id %>" data-filepath="<%= file.filepath %>" class="delete-file-btn text-red-500 hover:text-red-600"><i class="fas fa-trash mr-1"></i> Delete</button>
+                        <button data-file-id="<%= file.id %>" data-filepath="<%= file.filepath %>" class="delete-file-btn text-red-500 hover:text-red-600 transition-colors" title="Delete <%= file.filename %>">
+                          <i class="fas fa-trash mr-1"></i> Delete
+                        </button>
                     <% } %>
                 </div>
               </div>
@@ -632,6 +696,27 @@
         }
       });
 
+      // Handle real-time file events
+      socket.on('newFile', (fileData) => {
+        // Refresh files modal if it's open
+        const filesModal = document.getElementById('files-modal');
+        if (!filesModal.classList.contains('hidden')) {
+          location.reload(); // Simple refresh for now - could be optimized with dynamic insertion
+        }
+      });
+
+      socket.on('fileDeleted', (data) => {
+        // Remove file from modal if it's open
+        const fileElement = document.querySelector(`[data-file-id="${data.fileId}"]`);
+        if (fileElement) {
+          fileElement.style.opacity = '0';
+          fileElement.style.transform = 'scale(0.8)';
+          setTimeout(() => {
+            fileElement.remove();
+          }, 300);
+        }
+      });
+
       // --- Message & Form Handling ---
       const messageContainer = document.getElementById('message-container');
       const messageForm = document.getElementById('message-form');
@@ -727,22 +812,49 @@
           const button = e.target.closest('.reply-btn');
           setupReply(button.dataset.parentId, button.dataset.parentUsername, button.dataset.parentMessage);
         }
-        // Delete file
+        // Delete file with improved feedback
         if (e.target.closest('.delete-file-btn')) {
             const button = e.target.closest('.delete-file-btn');
             const fileId = button.dataset.fileId;
             const filepath = button.dataset.filepath;
-            if (confirm('Are you sure you want to delete this file?')) {
+            const fileName = button.closest('.file-item').querySelector('a').textContent;
+            
+            if (confirm(`Are you sure you want to delete "${fileName}"? This action cannot be undone.`)) {
+                // Disable button and show loading
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Deleting...';
+                
                 fetch(`/chat/${groupId}/files/${fileId}`, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ filepath })
-                }).then(res => res.json()).then(data => {
+                })
+                .then(res => res.json())
+                .then(data => {
                     if (data.success) {
-                        button.closest('.file-item').remove();
+                        // Remove file item with animation
+                        const fileItem = button.closest('.file-item');
+                        fileItem.style.opacity = '0';
+                        fileItem.style.transform = 'scale(0.8)';
+                        setTimeout(() => {
+                            fileItem.remove();
+                        }, 300);
+                        
+                        // Show success message
+                        showUploadSuccess(`"${fileName}" deleted successfully!`);
                     } else {
-                        alert('Failed to delete file.');
+                        alert(data.error || 'Failed to delete file.');
+                        // Reset button
+                        button.disabled = false;
+                        button.innerHTML = '<i class="fas fa-trash mr-1"></i> Delete';
                     }
+                })
+                .catch(error => {
+                    console.error('Delete error:', error);
+                    alert('An error occurred while deleting the file.');
+                    // Reset button
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-trash mr-1"></i> Delete';
                 });
             }
         }
@@ -782,21 +894,125 @@
       closeSidebarBtn.addEventListener('click', toggleSidebar);
       sidebarBackdrop.addEventListener('click', toggleSidebar);
 
-      // --- File Upload Validation ---
-      const uploadForm = document.getElementById('upload-form');
+      // --- File Upload with Progress and Error Handling ---
       const fileInput = document.getElementById('file-input');
+      const uploadText = document.getElementById('upload-text');
+      const uploadProgress = document.getElementById('upload-progress');
+      const uploadProgressBar = document.getElementById('upload-progress-bar');
+      const uploadError = document.getElementById('upload-error');
+      const uploadSuccess = document.getElementById('upload-success');
       const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
-      fileInput.addEventListener('change', () => {
-          const file = fileInput.files[0];
-          if (file) {
-              if (file.size > MAX_FILE_SIZE) {
-                  alert(`File is too large (${(file.size / 1024 / 1024).toFixed(2)} MB). Maximum size is 10 MB.`);
-                  fileInput.value = ''; // Reset the input
+      function resetUploadState() {
+        uploadText.classList.remove('hidden');
+        uploadProgress.classList.add('hidden');
+        uploadProgressBar.style.width = '0%';
+        uploadError.classList.add('hidden');
+        uploadSuccess.classList.add('hidden');
+        fileInput.value = '';
+      }
+
+      function showUploadError(message) {
+        uploadError.textContent = message;
+        uploadError.classList.remove('hidden');
+        uploadProgress.classList.add('hidden');
+        uploadText.classList.remove('hidden');
+      }
+
+      function showUploadSuccess(message) {
+        uploadSuccess.textContent = message;
+        uploadSuccess.classList.remove('hidden');
+        uploadProgress.classList.add('hidden');
+        uploadText.classList.remove('hidden');
+        
+        // Hide success message after 3 seconds
+        setTimeout(() => {
+          uploadSuccess.classList.add('hidden');
+        }, 3000);
+      }
+
+      async function uploadFile(file) {
+        if (!file) return;
+
+        // Validate file size
+        if (file.size > MAX_FILE_SIZE) {
+          showUploadError(`File is too large (${(file.size / 1024 / 1024).toFixed(2)} MB). Maximum size is 10 MB.`);
+          return;
+        }
+
+        // Validate file type (basic security check)
+        const dangerousTypes = ['application/x-msdownload', 'application/x-msdos-program', 'application/x-executable'];
+        if (dangerousTypes.includes(file.type)) {
+          showUploadError('This file type is not allowed for security reasons.');
+          return;
+        }
+
+        // Show upload progress
+        uploadText.classList.add('hidden');
+        uploadProgress.classList.remove('hidden');
+        uploadError.classList.add('hidden');
+        uploadSuccess.classList.add('hidden');
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+          const xhr = new XMLHttpRequest();
+          
+          // Upload progress tracking
+          xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+              const percentComplete = (e.loaded / e.total) * 100;
+              uploadProgressBar.style.width = percentComplete + '%';
+            }
+          });
+
+          // Handle completion
+          xhr.addEventListener('load', () => {
+            if (xhr.status === 200) {
+              const response = JSON.parse(xhr.responseText);
+              if (response.success) {
+                showUploadSuccess(`${file.name} uploaded successfully!`);
+                // Emit to socket for real-time updates
+                socket.emit('newFile', response.file);
               } else {
-                  uploadForm.submit();
+                showUploadError(response.error || 'Upload failed');
               }
-          }
+            } else {
+              showUploadError('Upload failed. Please try again.');
+            }
+            resetUploadState();
+          });
+
+          // Handle errors
+          xhr.addEventListener('error', () => {
+            showUploadError('Network error occurred during upload.');
+            resetUploadState();
+          });
+
+          // Handle timeout
+          xhr.addEventListener('timeout', () => {
+            showUploadError('Upload timed out. Please try again.');
+            resetUploadState();
+          });
+
+          xhr.timeout = 60000; // 60 second timeout
+          xhr.open('POST', `/chat/${groupId}/upload`);
+          xhr.setRequestHeader('Accept', 'application/json');
+          xhr.send(formData);
+
+        } catch (error) {
+          console.error('Upload error:', error);
+          showUploadError('An unexpected error occurred.');
+          resetUploadState();
+        }
+      }
+
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          uploadFile(file);
+        }
       });
 
       // --- Modal Logic ---

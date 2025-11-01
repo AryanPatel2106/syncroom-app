@@ -252,10 +252,27 @@ app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async 
   const { groupId } = req.params;
   
   try {
+    // Check if file exists
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: "No file uploaded" });
+    }
+
+    // File size limit (10MB)
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (req.file.size > MAX_SIZE) {
+      return res.status(400).json({ success: false, error: "File too large. Maximum size is 10MB." });
+    }
+
     // Upload to Cloudinary manually
     const result = await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
-            { folder: 'syncroom_uploads', resource_type: 'auto' },
+            { 
+              folder: 'syncroom_uploads', 
+              resource_type: 'auto',
+              public_id: `${Date.now()}_${req.file.originalname.replace(/[^a-zA-Z0-9.]/g, '_')}`,
+              use_filename: true,
+              unique_filename: false
+            },
             (error, result) => {
                 if (error) reject(error);
                 else resolve(result);
@@ -264,21 +281,80 @@ app.post('/chat/:groupId/upload', isAuthenticated, upload.single('file'), async 
         uploadStream.end(req.file.buffer);
     });
 
-    const { originalname, mimetype } = req.file;
+    const { originalname, mimetype, size } = req.file;
     const file = await File.create({ 
         groupId, 
         userId: req.session.user.id, 
         filename: originalname, 
-        filepath: result.secure_url, 
+        filepath: result.secure_url,
+        cloudinaryPublicId: result.public_id,
+        fileSize: size,
         mimetype 
     });
 
     const newFile = { ...file._doc, username: req.session.user.username };
     io.to(`group-${groupId}`).emit('newFile', newFile);
-    res.redirect('/chat/' + groupId);
+    
+    // Return JSON for AJAX requests, redirect for form submissions
+    if (req.headers.accept && req.headers.accept.includes('application/json')) {
+      res.json({ success: true, file: newFile });
+    } else {
+      res.redirect('/chat/' + groupId);
+    }
   } catch (err) {
     console.error("File upload error:", err);
-    res.status(500).send("Server error");
+    
+    if (req.headers.accept && req.headers.accept.includes('application/json')) {
+      res.status(500).json({ success: false, error: "Upload failed. Please try again." });
+    } else {
+      res.status(500).send("Server error");
+    }
+  }
+});
+
+// File delete route
+app.delete('/chat/:groupId/files/:fileId', isAuthenticated, async (req, res) => {
+  const { groupId, fileId } = req.params;
+  const { filepath } = req.body;
+  
+  try {
+    // Find the file in database
+    const file = await File.findById(fileId);
+    if (!file) {
+      return res.status(404).json({ success: false, error: "File not found" });
+    }
+
+    // Check if user has permission to delete (file owner or group admin/owner)
+    const member = await GroupMember.findOne({ groupId, userId: req.session.user.id });
+    if (!member) {
+      return res.status(403).json({ success: false, error: "Not a group member" });
+    }
+
+    const canDelete = file.userId.toString() === req.session.user.id || ['owner', 'admin'].includes(member.role);
+    if (!canDelete) {
+      return res.status(403).json({ success: false, error: "Permission denied" });
+    }
+
+    // Delete from Cloudinary if public_id is available
+    if (file.cloudinaryPublicId) {
+      try {
+        await cloudinary.uploader.destroy(file.cloudinaryPublicId);
+      } catch (cloudinaryError) {
+        console.error("Cloudinary delete error:", cloudinaryError);
+        // Continue with database deletion even if Cloudinary fails
+      }
+    }
+
+    // Delete from database
+    await File.deleteOne({ _id: fileId });
+
+    // Emit deletion event to all group members
+    io.to(`group-${groupId}`).emit('fileDeleted', { fileId });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("File delete error:", err);
+    res.status(500).json({ success: false, error: "Failed to delete file" });
   }
 });
 
