@@ -281,7 +281,7 @@
                     <%
                       // Use server-side download route for proper file handling
                       const fileId = file._id || file.id;
-                      let downloadUrl = `/chat/<%= group.id %>/files/${fileId}/download`;
+                      let downloadUrl = `/chat/${group.id}/files/${fileId}/download`;
                       if (!file.filepath) {
                         downloadUrl = '#';
                       }
