@@ -146,7 +146,7 @@ app.post('/api/gemini-chat', isAuthenticated, async (req, res) => {
 
     try {
         const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = ai.getGenerativeModel({ model: 'gemini-1.5-pro' });
+        const model = ai.getGenerativeModel({ model: 'gemini-2.5-pro' });
 
         const chat = model.startChat({
             history: history || [],
