@@ -184,6 +184,17 @@ app.post('/api/gemini-chat', isAuthenticated, async (req, res) => {
 
 app.get('/register', (req, res) => res.render('register', { user: req.session.user }));
 
+// Login page (GET) - render login view for unauthenticated users
+app.get('/login', (req, res) => {
+  try {
+    if (req.session && req.session.user) return res.redirect('/home');
+    return res.render('login', { user: req.session.user });
+  } catch (err) {
+    console.error('Login GET error:', err);
+    return res.status(500).send('Server error');
+  }
+});
+
 app.post('/register', async (req, res) => {
   const { username, email, password } = req.body;
   try {
