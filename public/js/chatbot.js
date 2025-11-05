@@ -104,6 +104,9 @@ function createMessageBubble(message) {
   const isModel = message.role === 'model';
   const isLoadingMessage = isModel && message.id === 'loading-message' && isLoading;
 
+  // Ensure message.content is a string to prevent errors
+  const messageContent = message.content || '';
+
   const authorIcon = isModel ? BotIconSVG : UserIconSVG;
   const authorBg = isModel ? 'bg-indigo-600/50' : 'bg-gray-600/50';
   const messageBg = isModel ? 'bg-gray-800 rounded-tl-none' : 'bg-indigo-700 rounded-tr-none';
@@ -118,7 +121,7 @@ function createMessageBubble(message) {
         <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
       </div>`;
   } else {
-    contentHtml = `<div class="message-content">${renderMarkdown(message.content)}</div>`;
+    contentHtml = `<div class="message-content">${renderMarkdown(messageContent)}</div>`;
   }
 
   return `
