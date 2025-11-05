@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en" class="">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,14 +13,12 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
-
     /* --- Scroll Animation Setup --- */
     .fade-in-up {
       opacity: 0;
       transform: translateY(30px);
       transition: opacity 0.8s ease-out, transform 0.8s ease-out;
     }
-
     .fade-in-up.is-visible {
       opacity: 1;
       transform: translateY(0);
@@ -30,52 +27,108 @@
     .features-grid .fade-in-up:nth-child(1) { transition-delay: 0.1s; }
     .features-grid .fade-in-up:nth-child(2) { transition-delay: 0.2s; }
     .features-grid .fade-in-up:nth-child(3) { transition-delay: 0.3s; }
-
     .hero-content .fade-in-up:nth-child(1) { transition-delay: 0.1s; }
     .hero-content .fade-in-up:nth-child(2) { transition-delay: 0.2s; }
     .hero-content .fade-in-up:nth-child(3) { transition-delay: 0.3s; }
-
+    
     /* --- Moving Doodle Background --- */
     @keyframes move-doodles {
       0% { background-position: 0 0; }
       100% { background-position: 1000px 1000px; }
     }
-
     .hero-doodle-bg {
-      background-color: #F9FAFB; /* bg-gray-50 */
-      background-image: url('https://res.cloudinary.com/abhisheks-cloud/image/upload/v1730873178/syncroom_assets/bg-doodle-light_wscqgq.png');
+      background-color: #F9FAFB;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" opacity="0.05"><circle cx="50" cy="50" r="2" fill="%23667eea"/><circle cx="150" cy="100" r="2" fill="%23764ba2"/><circle cx="250" cy="150" r="2" fill="%23f093fb"/><circle cx="350" cy="200" r="2" fill="%234facfe"/><circle cx="100" cy="250" r="2" fill="%23667eea"/><circle cx="200" cy="300" r="2" fill="%23764ba2"/><circle cx="300" cy="350" r="2" fill="%23f093fb"/></svg>');
       background-repeat: repeat;
       background-size: 400px;
       animation: move-doodles 120s linear infinite;
     }
-
     .dark .hero-doodle-bg {
-      background-color: #111827; /* bg-gray-900 */
-      background-image: url('https://res.cloudinary.com/abhisheks-cloud/image/upload/v1730873177/syncroom_assets/bg-doodle-dark_gkbxke.png');
-    }
-
-    /* --- Floating Blobs --- */
-    @keyframes float {
-      0% { transform: translateY(0) translateX(0) rotate(0deg); }
-      50% { transform: translateY(-20px) translateX(10px) rotate(180deg); }
-      100% { transform: translateY(0) translateX(0) rotate(360deg); }
-    }
-
-    @keyframes float-delay {
-      0% { transform: translateY(0) translateX(0) rotate(0deg); }
-      50% { transform: translateY(15px) translateX(-10px) rotate(-180deg); }
-      100% { transform: translateY(0) translateX(0) rotate(-360deg); }
-    }
-
-    .animate-float {
-      animation: float 12s ease-in-out infinite;
+      background-color: #111827;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" opacity="0.1"><circle cx="50" cy="50" r="2" fill="%23667eea"/><circle cx="150" cy="100" r="2" fill="%23764ba2"/><circle cx="250" cy="150" r="2" fill="%23f093fb"/><circle cx="350" cy="200" r="2" fill="%234facfe"/><circle cx="100" cy="250" r="2" fill="%23667eea"/><circle cx="200" cy="300" r="2" fill="%23764ba2"/><circle cx="300" cy="350" r="2" fill="%23f093fb"/></svg>');
     }
     
-    .animate-float-delay {
-      animation: float-delay 15s ease-in-out infinite;
+    /* --- Animated Orbs --- */
+    @keyframes orbit-1 {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(100px, -50px) rotate(90deg); }
+      50% { transform: translate(150px, 50px) rotate(180deg); }
+      75% { transform: translate(50px, 100px) rotate(270deg); }
+      100% { transform: translate(0, 0) rotate(360deg); }
     }
-
-    /* --- NEW: Floating Icons & Sparkles --- */
+    @keyframes orbit-2 {
+      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+      33% { transform: translate(-80px, 100px) rotate(120deg) scale(1.2); }
+      66% { transform: translate(-120px, -60px) rotate(240deg) scale(0.9); }
+      100% { transform: translate(0, 0) rotate(360deg) scale(1); }
+    }
+    @keyframes orbit-3 {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      20% { transform: translate(120px, 80px) rotate(72deg); }
+      40% { transform: translate(80px, -100px) rotate(144deg); }
+      60% { transform: translate(-100px, -50px) rotate(216deg); }
+      80% { transform: translate(-80px, 80px) rotate(288deg); }
+      100% { transform: translate(0, 0) rotate(360deg); }
+    }
+    .animated-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(40px);
+      opacity: 0.5;
+      mix-blend-mode: multiply;
+    }
+    .dark .animated-orb {
+      mix-blend-mode: screen;
+      opacity: 0.4;
+    }
+    .orb-1 {
+      width: 300px;
+      height: 300px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      top: 10%;
+      left: 10%;
+      animation: orbit-1 25s ease-in-out infinite;
+    }
+    .orb-2 {
+      width: 250px;
+      height: 250px;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      top: 40%;
+      right: 15%;
+      animation: orbit-2 20s ease-in-out infinite;
+    }
+    .orb-3 {
+      width: 200px;
+      height: 200px;
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      bottom: 15%;
+      left: 20%;
+      animation: orbit-3 30s ease-in-out infinite;
+    }
+    
+    /* --- Pulsing Glow Effect --- */
+    @keyframes pulse-glow {
+      0%, 100% { 
+        box-shadow: 0 0 20px rgba(99, 102, 241, 0.5),
+                    0 0 40px rgba(99, 102, 241, 0.3),
+                    0 0 60px rgba(99, 102, 241, 0.1);
+        transform: scale(1);
+      }
+      50% { 
+        box-shadow: 0 0 30px rgba(99, 102, 241, 0.8),
+                    0 0 60px rgba(99, 102, 241, 0.5),
+                    0 0 90px rgba(99, 102, 241, 0.2);
+        transform: scale(1.05);
+      }
+    }
+    .feature-card {
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .feature-card:hover {
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+    
+    /* --- Floating Icons & Sparkles --- */
     @keyframes tumble-float {
       0% { transform: translateY(0) translateX(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg); opacity: 0.7; }
       25% { transform: translateY(-20px) translateX(15px) rotateX(20deg) rotateY(45deg) rotateZ(10deg); opacity: 0.8; }
@@ -89,7 +142,6 @@
       50% { transform: translateY(-10px) scale(1) rotate(180deg); opacity: 1; }
       100% { transform: translateY(0) scale(0.8) rotate(360deg); opacity: 0.5; }
     }
-
     .hero-icon {
       position: absolute;
       display: block;
@@ -97,47 +149,41 @@
       background-repeat: no-repeat;
       z-index: 5;
     }
-
     .icon-chat {
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF" opacity="0.6"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/></svg>');
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23667eea" opacity="0.6"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/></svg>');
       width: 60px; height: 60px;
       top: 10%; left: 10%;
       animation: tumble-float 25s linear infinite -2s;
     }
     
     .icon-file {
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF" opacity="0.6"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6z"/></svg>');
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f093fb" opacity="0.6"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6z"/></svg>');
       width: 50px; height: 50px;
       top: 20%; left: 80%;
       animation: tumble-float 20s linear infinite -5s;
     }
-
     .icon-users {
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF" opacity="0.6"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V18h14v-1.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V18h6v-1.5c0-2.33-4.67-3.5-7-3.5z"/></svg>');
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234facfe" opacity="0.6"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V18h14v-1.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V18h6v-1.5c0-2.33-4.67-3.5-7-3.5z"/></svg>');
       width: 70px; height: 70px;
       top: 75%; left: 60%;
       animation: tumble-float 30s linear infinite -8s;
     }
-
     .icon-upload {
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF" opacity="0.6"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>');
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23764ba2" opacity="0.6"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>');
       width: 60px; height: 60px;
       top: 80%; left: 15%;
       animation: tumble-float 22s linear infinite -12s;
     }
-
     .icon-sparkle {
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF" opacity="0.7"><path d="M12 0l2.5 9.5L24 12l-9.5 2.5L12 24l-2.5-9.5L0 12l9.5-2.5L12 0z"/></svg>');
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23fbbf24" opacity="0.8"><path d="M12 0l2.5 9.5L24 12l-9.5 2.5L12 24l-2.5-9.5L0 12l9.5-2.5L12 0z"/></svg>');
       width: 20px; height: 20px;
       animation: twinkle-float 8s ease-in-out infinite;
     }
-
     .sparkle-1 { top: 15%; left: 50%; animation-duration: 7s; animation-delay: -1s; }
     .sparkle-2 { top: 60%; left: 90%; animation-duration: 6s; animation-delay: -3s; }
     .sparkle-3 { top: 70%; left: 30%; animation-duration: 8s; animation-delay: -5s; }
     .sparkle-4 { top: 30%; left: 30%; animation-duration: 5s; animation-delay: -2s; }
-
-
+    
     /* Fix for loader animation */
     .loader {
       border-top-color: theme('colors.indigo.600');
@@ -151,32 +197,25 @@
     }
   </style>
 </head>
-
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
-
   <nav class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm px-4 sm:px-6 py-4 flex justify-between items-center sticky top-0 z-50 border-b border-gray-200 dark:border-gray-700">
     <a href="/" class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">SyncRoom</a>
     <div class="flex items-center space-x-2 sm:space-x-4">
-      <% if (user) { %>
-        <a href="/groups" class="text-sm sm:text-base font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-500 transition-colors">Dashboard</a>
-        <a href="/logout" class="text-sm sm:text-base font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-500 transition-colors">Logout</a>
-      <% } else { %>
-        <a href="/login" class="hidden sm:block text-sm sm:text-base font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-500 transition-colors">Login</a>
-        <a href="/register" class="text-sm sm:text-base bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition-colors transform hover:scale-105">Sign Up</a>
-      <% } %>
+      <a href="#features" class="text-sm sm:text-base font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-500 transition-colors">Features</a>
+      <a href="#file-drop" class="text-sm sm:text-base font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-500 transition-colors">File Drop</a>
+      <a href="#cta" class="text-sm sm:text-base bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition-colors transform hover:scale-105">Sign Up</a>
       <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none rounded-lg text-sm p-2.5">
         <i id="theme-toggle-dark-icon" class="fas fa-moon w-5 h-5"></i>
         <i id="theme-toggle-light-icon" class="fas fa-sun w-5 h-5 hidden"></i>
       </button>
     </div>
   </nav>
-
+  
   <main class="flex-1">
     <section class="py-20 sm:py-28 hero-doodle-bg relative overflow-hidden">
-        
-        <div class="absolute top-1/4 left-1/4 w-72 h-72 bg-indigo-300/30 dark:bg-indigo-800/30 rounded-full filter blur-xl opacity-70 animate-float z-0"></div>
-        <div class="absolute bottom-1/4 right-1/4 w-56 h-56 bg-purple-300/30 dark:bg-purple-800/30 rounded-full filter blur-xl opacity-70 animate-float-delay z-0"></div>
-
+        <div class="animated-orb orb-1"></div>
+        <div class="animated-orb orb-2"></div>
+        <div class="animated-orb orb-3"></div>
         <div class="absolute inset-0 z-5 overflow-hidden">
           <span class="hero-icon icon-chat"></span>
           <span class="hero-icon icon-file"></span>
@@ -187,7 +226,6 @@
           <span class="hero-icon icon-sparkle sparkle-3"></span>
           <span class="hero-icon icon-sparkle sparkle-4"></span>
         </div>
-
       <div class="container mx-auto px-6 text-center relative z-10">
         <div class="max-w-3xl mx-auto hero-content">
           <h1 class="text-4xl sm:text-6xl font-extrabold text-gray-900 dark:text-white mb-4 fade-in-up">Connect & Collaborate Instantly</h1>
@@ -195,28 +233,22 @@
             SyncRoom is your all-in-one platform for seamless team communication. Create groups, chat in real-time, and share files securely.
           </p>
           <div class="flex justify-center items-center space-x-4 fade-in-up">
-            <% if (user) { %>
-              <a href="/groups" class="bg-indigo-600 text-white px-8 py-3 rounded-lg shadow-lg font-semibold hover:bg-indigo-700 transition-transform transform hover:-translate-y-1 text-lg">
-                Go to Dashboard
-              </a>
-            <% } else { %>
-              <a href="/register" class="bg-indigo-600 text-white px-8 py-3 rounded-lg shadow-lg font-semibold hover:bg-indigo-700 transition-transform transform hover:-translate-y-1 text-lg">
-                Get Started for Free
-              </a>
-              <a href="/login" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-8 py-3 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition sm:hidden">
-                Sign In
-              </a>
-            <% } %>
+            <a href="#cta" class="bg-indigo-600 text-white px-8 py-3 rounded-lg shadow-lg font-semibold hover:bg-indigo-700 transition-transform transform hover:-translate-y-1 text-lg">
+              Get Started for Free
+            </a>
+            <a href="#features" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-8 py-3 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+              Learn More
+            </a>
           </div>
         </div>
       </div>
     </section>
-
+    
     <section id="file-drop" class="py-20 sm:py-24 bg-gray-100 dark:bg-gray-800/50">
       <div class="container mx-auto px-6">
           <div class="text-center mb-12 fade-in-up">
             <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">Instant File Drop</h2>
-            <p class="text-lg text-gray-600 dark:text-gray-400 mt-2">Share files instantly with a secret code.</p>
+            <p class="text-lg text-gray-600 dark:text-gray-400 mt-2">Share files instantly with a secret code. No account required.</p>
           </div>
           <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 fade-in-up">
             <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
@@ -226,7 +258,7 @@
                         <i class="fas fa-cloud-upload-alt mr-2"></i> Choose a file to send
                     </label>
                     <input type="file" id="file-drop-input" class="hidden">
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-3">Max file size: 100MB. Code expires in 15 minutes.</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-3">Max file size: 10MB. Code expires in 15 minutes.</p>
                 </div>
                 <div id="send-progress-container" class="hidden text-center">
                     <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4 mx-auto"></div>
@@ -238,7 +270,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
                 <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Receive File</h3>
                 <div class="flex flex-col space-y-4">
@@ -252,29 +283,29 @@
           </div>
       </div>
     </section>
-
-    <section class="bg-white dark:bg-gray-800 py-20 sm:py-24">
+    
+    <section id="features" class="bg-white dark:bg-gray-800 py-20 sm:py-24">
       <div class="container mx-auto px-6">
         <div class="text-center mb-12 fade-in-up">
           <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">Everything You Need to Stay in Sync</h2>
           <p class="text-lg text-gray-600 dark:text-gray-400 mt-2">Powerful features built for modern teams.</p>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 features-grid">
-          <div class="bg-gray-50 dark:bg-gray-900 p-8 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up">
+          <div class="bg-gray-50 dark:bg-gray-900 p-8 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up feature-card">
             <div class="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-full w-12 h-12 flex items-center justify-center mb-4">
               <i class="fas fa-comments text-xl"></i>
             </div>
             <h3 class="text-xl font-bold mb-2">Real-Time Chat</h3>
             <p class="text-gray-600 dark:text-gray-400">Engage in dynamic conversations with message reactions, replies, and typing indicators.</p>
           </div>
-          <div class="bg-gray-50 dark:bg-gray-900 p-8 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up">
+          <div class="bg-gray-50 dark:bg-gray-900 p-8 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up feature-card">
             <div class="bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 rounded-full w-12 h-12 flex items-center justify-center mb-4">
               <i class="fas fa-cloud-upload-alt text-xl"></i>
             </div>
             <h3 class="text-xl font-bold mb-2">Secure File Sharing</h3>
             <p class="text-gray-600 dark:text-gray-400">Easily upload and share images, documents, and other files within your groups.</p>
           </div>
-          <div class="bg-gray-50 dark:bg-gray-900 p-8 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up">
+          <div class="bg-gray-50 dark:bg-gray-900 p-8 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up feature-card">
             <div class="bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 rounded-full w-12 h-12 flex items-center justify-center mb-4">
               <i class="fas fa-users-cog text-xl"></i>
             </div>
@@ -284,23 +315,23 @@
         </div>
       </div>
     </section>
-
-    <section class="py-20 sm:py-28">
+    
+    <section id="cta" class="py-20 sm:py-28 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
       <div class="container mx-auto px-6 text-center">
         <div class="max-w-2xl mx-auto fade-in-up">
-          <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">Ready to Get Started?</h2>
-          <p class="text-lg text-gray-600 dark:text-gray-400 mb-8">Create an account in seconds and start collaborating with your team today.</p>
-          <a href="/register" class="bg-indigo-600 text-white px-10 py-4 rounded-lg shadow-lg font-semibold hover:bg-indigo-700 transition-transform transform hover:-translate-y-1 text-lg">
+          <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">Ready to Get Started?</h2>
+          <p class="text-lg text-white/90 mb-8">Create an account in seconds and start collaborating with your team today.</p>
+          <a href="#" class="bg-white text-indigo-600 px-10 py-4 rounded-lg shadow-lg font-semibold hover:bg-gray-100 transition-transform transform hover:-translate-y-1 text-lg inline-block">
             Sign Up Now
           </a>
         </div>
       </div>
     </section>
   </main>
-
+  
   <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
     <div class="container mx-auto py-8 px-6 text-center text-gray-500 dark:text-gray-400">
-      <p>&copy; <%= new Date().getFullYear() %> SyncRoom. All rights reserved.</p>
+      <p>&copy; 2024 SyncRoom. All rights reserved.</p>
       <div class="flex justify-center space-x-6 mt-4">
         <a href="#" class="hover:text-indigo-500 transition-colors"><i class="fab fa-twitter"></i></a>
         <a href="#" class="hover:text-indigo-500 transition-colors"><i class="fab fa-github"></i></a>
@@ -308,173 +339,146 @@
       </div>
     </div>
   </footer>
-
-  <script src="/socket.io/socket.io.js"></script>
+  
   <script>
     // --- Theme Management ---
     const themeToggleBtn = document.getElementById('theme-toggle');
     const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
     const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-
-    if (themeToggleBtn) { // Add check for safety
-      const setTheme = (isDark) => {
-        document.documentElement.classList.toggle('dark', isDark);
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
-        if (themeToggleLightIcon) themeToggleLightIcon.classList.toggle('hidden', !isDark);
-        if (themeToggleDarkIcon) themeToggleDarkIcon.classList.toggle('hidden', isDark);
-      };
-
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const savedTheme = localStorage.getItem('theme');
-      const isInitiallyDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
-      setTheme(isInitiallyDark);
-
-      themeToggleBtn.addEventListener('click', () => {
-        const isCurrentlyDark = document.documentElement.classList.contains('dark');
-        setTheme(!isCurrentlyDark);
-      });
-    }
-
-    // --- File Drop Feature ---
-    try {
-      const socket = io();
-
-      const fileInput = document.getElementById('file-drop-input');
-      const sendContainer = document.getElementById('send-container');
-      const progressContainer = document.getElementById('send-progress-container');
-      const uploadStatus = document.getElementById('upload-status');
-      const secretCodeContainer = document.getElementById('secret-code-container');
-      const secretCodeDisplay = document.getElementById('secret-code-display');
-
-      const receiveCodeInput = document.getElementById('receive-code-input');
-      const receiveBtn = document.getElementById('receive-btn');
-      const receiveStatus = document.getElementById('receive-status');
-
-      if (fileInput && sendContainer && progressContainer) {
-        fileInput.addEventListener('change', (event) => {
-          const file = event.target.files[0];
-          if (!file) return;
-
-          if (file.size > 100 * 1024 * 1024) { // 100MB limit
-            alert('File is too large. Max size is 100MB.');
-            event.target.value = null; // Reset file input
-            return;
-          }
-
-          sendContainer.classList.add('hidden');
-          progressContainer.classList.remove('hidden');
-          secretCodeContainer.classList.add('hidden');
-          uploadStatus.textContent = 'Uploading...';
-
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            socket.emit('file-drop-upload', {
-              fileBuffer: e.target.result,
-              filename: file.name,
-              mimetype: file.type
-            });
+    
+    const setTheme = (isDark) => {
+      document.documentElement.classList.toggle('dark', isDark);
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      themeToggleLightIcon.classList.toggle('hidden', !isDark);
+      themeToggleDarkIcon.classList.toggle('hidden', isDark);
+    };
+    
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const savedTheme = localStorage.getItem('theme');
+    const isInitiallyDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+    setTheme(isInitiallyDark);
+    
+    themeToggleBtn.addEventListener('click', () => {
+      const isCurrentlyDark = document.documentElement.classList.contains('dark');
+      setTheme(!isCurrentlyDark);
+    });
+    
+    // --- File Drop Feature (Demo) ---
+    const fileInput = document.getElementById('file-drop-input');
+    const sendContainer = document.getElementById('send-container');
+    const progressContainer = document.getElementById('send-progress-container');
+    const uploadStatus = document.getElementById('upload-status');
+    const secretCodeContainer = document.getElementById('secret-code-container');
+    const secretCodeDisplay = document.getElementById('secret-code-display');
+    const receiveCodeInput = document.getElementById('receive-code-input');
+    const receiveBtn = document.getElementById('receive-btn');
+    const receiveStatus = document.getElementById('receive-status');
+    
+    // Store files in memory for demo
+    const fileStorage = {};
+    
+    fileInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File is too large. Max size is 10MB.');
+        event.target.value = null;
+        return;
+      }
+      
+      sendContainer.classList.add('hidden');
+      progressContainer.classList.remove('hidden');
+      secretCodeContainer.classList.add('hidden');
+      uploadStatus.textContent = 'Uploading...';
+      
+      // Simulate upload delay
+      setTimeout(() => {
+        const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          fileStorage[code] = {
+            name: file.name,
+            type: file.type,
+            data: e.target.result,
+            timestamp: Date.now()
           };
-          reader.readAsArrayBuffer(file);
-          event.target.value = null; // Reset file input after reading
-        });
-      }
-
-      if (receiveBtn && receiveCodeInput && receiveStatus) {
-        receiveBtn.addEventListener('click', () => {
-          const code = receiveCodeInput.value.trim();
-          if (code.length !== 6) {
-            receiveStatus.textContent = 'Code must be 6 characters.';
-            return;
-          }
-          receiveStatus.textContent = 'Searching...';
-          socket.emit('file-drop-request', code);
-        });
-      }
-
-      // Socket event listeners
-      socket.on('file-drop-code', (code) => {
-        if (uploadStatus && secretCodeDisplay && secretCodeContainer) {
+          
           uploadStatus.textContent = 'Upload Complete!';
           secretCodeDisplay.textContent = code;
           secretCodeContainer.classList.remove('hidden');
-        }
-      });
-
-      socket.on('file-drop-error', (message) => {
-        alert(`Error: ${message}`);
-        if (sendContainer && progressContainer) {
-          sendContainer.classList.remove('hidden');
-          progressContainer.classList.add('hidden');
-        }
-      });
-
-      socket.on('file-drop-found', (file) => {
-        if (receiveStatus && receiveCodeInput) {
-          receiveStatus.textContent = 'File found! Starting download...';
-          const a = document.createElement('a');
           
-          if (file.filepath && file.filepath.includes('/upload/')) {
-            const parts = file.filepath.split('/upload/');
-            const publicIdWithFolder = parts[1];
-            const downloadUrl = parts[0] + '/upload/fl_attachment:' + encodeURIComponent(file.filename) + '/' + publicIdWithFolder;
-            a.href = downloadUrl;
-          } else {
-            a.href = file.filepath; // Fallback
-          }
-
-          a.download = file.filename;
+          // Auto cleanup after 15 minutes
+          setTimeout(() => {
+            delete fileStorage[code];
+          }, 15 * 60 * 1000);
+        };
+        reader.readAsDataURL(file);
+      }, 1500);
+      
+      event.target.value = null;
+    });
+    
+    receiveBtn.addEventListener('click', () => {
+      const code = receiveCodeInput.value.trim().toUpperCase();
+      if (code.length !== 6) {
+        receiveStatus.textContent = 'Code must be 6 characters.';
+        return;
+      }
+      
+      receiveStatus.textContent = 'Searching...';
+      
+      setTimeout(() => {
+        const file = fileStorage[code];
+        if (file) {
+          receiveStatus.textContent = 'File found! Starting download...';
+          receiveStatus.classList.remove('text-red-500');
+          receiveStatus.classList.add('text-green-500');
+          
+          const a = document.createElement('a');
+          a.href = file.data;
+          a.download = file.name;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
           
-          receiveCodeInput.value = ''; // Clear input
-          setTimeout(() => { receiveStatus.textContent = ''; }, 3000);
-        }
-      });
-
-      socket.on('file-drop-not-found', () => {
-        if (receiveStatus) {
+          receiveCodeInput.value = '';
+          setTimeout(() => { 
+            receiveStatus.textContent = '';
+            receiveStatus.classList.remove('text-green-500');
+            receiveStatus.classList.add('text-red-500');
+          }, 3000);
+        } else {
           receiveStatus.textContent = 'Invalid or expired code. Please try again.';
+          receiveStatus.classList.add('text-red-500');
         }
-      });
-
-    } catch (e) {
-      console.error("Socket.IO failed to initialize. Are you running this on a server?", e);
-      if (document.getElementById('file-drop')) {
-        document.getElementById('file-drop').innerHTML = '<div class="container mx-auto px-6 text-center"><p class="text-red-500 font-semibold">Error: The file drop feature requires a server connection. Please run this as part of a Node.js application.</p></div>';
-      }
-    }
-  </script>
-
-  <script>
+      }, 800);
+    });
+    
+    // --- Scroll Animations ---
     document.addEventListener("DOMContentLoaded", () => {
-      try {
-        const observerOptions = {
-          root: null, // observe in relation to the viewport
-          rootMargin: "0px",
-          threshold: 0.1 // trigger when 10% of the element is visible
-        };
-
-        const observerCallback = (entries, observer) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add("is-visible");
-              observer.unobserve(entry.target); // Stop observing once animated
-            }
-          });
-        };
-
-        const observer = new IntersectionObserver(observerCallback, observerOptions);
-
-        const targets = document.querySelectorAll(".fade-in-up");
-        targets.forEach(target => {
-          observer.observe(target);
+      const observerOptions = {
+        root: null,
+        rootMargin: "0px",
+        threshold: 0.1
+      };
+      
+      const observerCallback = (entries, observer) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
         });
-      } catch (e) {
-        console.error("Intersection Observer failed: ", e);
-      }
+      };
+      
+      const observer = new IntersectionObserver(observerCallback, observerOptions);
+      const targets = document.querySelectorAll(".fade-in-up");
+      targets.forEach(target => {
+        observer.observe(target);
+      });
     });
   </script>
-
 </body>
 </html>
