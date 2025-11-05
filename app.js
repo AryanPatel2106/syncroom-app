@@ -9,6 +9,7 @@ const multer = require('multer');
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const MongoStore = require('connect-mongo');
+const { GoogleGenAI } = require("@google/genai");
 
 const User = require('./models/user');
 const Group = require('./models/group');
@@ -124,15 +125,18 @@ const checkGroupRole = (roles) => async (req, res, next) => {
     }
 };
 
-app.get('/', (req, res) => res.render('home', { user: req.session.user }));
-app.get('/login', (req, res) => res.render('login', { user: req.session.user }));
-app.get('/register', (req, res) => res.render('register', { user: req.session.user }));
-app.get('/chatbot', isAuthenticated, (req, res) => res.render('chatbot', { user: req.session.user }));
+app.get('/home', isAuthenticated, (req, res) => {
+    res.render('home', { user: req.session.user });
+});
 
-app.post('/api/chat', isAuthenticated, async (req, res) => {
+app.get('/ai-chat', isAuthenticated, (req, res) => {
+    res.render('ai_chat', { user: req.session.user });
+});
+
+app.post('/api/gemini-chat', isAuthenticated, async (req, res) => {
     const { message, history } = req.body;
 
-    if (!process.env.API_KEY) {
+    if (!process.env.GEMINI_API_KEY) {
         return res.status(500).send('API key is not configured on the server.');
     }
 
@@ -141,13 +145,13 @@ app.post('/api/chat', isAuthenticated, async (req, res) => {
     }
 
     try {
-        const ai = new GoogleGenAI(process.env.API_KEY);
+        const ai = new GoogleGenAI(process.env.GEMINI_API_KEY);
         const model = ai.getGenerativeModel({ model: 'gemini-pro' });
 
         const chat = model.startChat({
             history: history || [],
             generationConfig: {
-                maxOutputTokens: 1000,
+                maxOutputTokens: 2000,
             },
         });
 
@@ -155,7 +159,9 @@ app.post('/api/chat', isAuthenticated, async (req, res) => {
 
         res.setHeader('Content-Type', 'text/plain');
         for await (const chunk of result.stream) {
-            res.write(chunk.text());
+            if (chunk && typeof chunk.text === 'function') {
+                res.write(chunk.text());
+            }
         }
         res.end();
 
@@ -164,6 +170,8 @@ app.post('/api/chat', isAuthenticated, async (req, res) => {
         res.status(500).send('An error occurred while communicating with the AI service.');
     }
 });
+
+app.get('/register', (req, res) => res.render('register', { user: req.session.user }));
 
 app.post('/register', async (req, res) => {
   const { username, email, password } = req.body;
@@ -210,10 +218,6 @@ app.get('/groups', isAuthenticated, async (req, res) => {
     console.error("Groups fetch error:", err);
     res.status(500).send("Server error");
   }
-});
-
-app.get('/ai-chat', isAuthenticated, (req, res) => {
-    res.render('ai_chat', { user: req.session.user });
 });
 
 app.post('/groups/create', isAuthenticated, async (req, res) => {
@@ -862,5 +866,7 @@ io.on('connection', (socket) => {
   });
 
 });
+
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
