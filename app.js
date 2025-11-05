@@ -84,6 +84,17 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 
+// Root route - redirect authenticated users to /home, otherwise to /login
+app.get('/', (req, res) => {
+  try {
+    if (req.session && req.session.user) return res.redirect('/home');
+    return res.redirect('/login');
+  } catch (err) {
+    console.error('Root route error:', err);
+    return res.status(500).send('Server error');
+  }
+});
+
 const sessionStore = MongoStore.create({
     mongoUrl: process.env.MONGODB_URI,
     collectionName: 'sessions',
