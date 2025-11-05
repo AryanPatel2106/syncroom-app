@@ -9,7 +9,7 @@ const multer = require('multer');
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const MongoStore = require('connect-mongo');
-const { GoogleGenAI } = require("@google/genai");
+const { GoogleGenerativeAI } = require("@google/genai");
 
 const User = require('./models/user');
 const Group = require('./models/group');
@@ -145,7 +145,7 @@ app.post('/api/gemini-chat', isAuthenticated, async (req, res) => {
     }
 
     try {
-        const ai = new GoogleGenAI(process.env.GEMINI_API_KEY);
+        const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = ai.getGenerativeModel({ model: 'gemini-pro' });
 
         const chat = model.startChat({
