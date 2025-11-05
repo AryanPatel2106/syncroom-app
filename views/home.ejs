@@ -35,34 +35,108 @@
     .hero-content .fade-in-up:nth-child(2) { transition-delay: 0.2s; }
     .hero-content .fade-in-up:nth-child(3) { transition-delay: 0.3s; }
 
-
     /* --- Moving Doodle Background --- */
     @keyframes move-doodles {
-      0% {
-        background-position: 0 0;
-      }
-      100% {
-        /* This large value ensures a long, slow, non-repeating drift */
-        background-position: 1000px 1000px;
-      }
+      0% { background-position: 0 0; }
+      100% { background-position: 1000px 1000px; }
     }
 
-    /* Light Mode Doodle Background */
     .hero-doodle-bg {
       background-color: #F9FAFB; /* bg-gray-50 */
-      /* URL for the LIGHT pattern */
       background-image: url('https://res.cloudinary.com/abhisheks-cloud/image/upload/v1730873178/syncroom_assets/bg-doodle-light_wscqgq.png');
       background-repeat: repeat;
-      background-size: 400px; /* Controls the size of the doodles */
+      background-size: 400px;
       animation: move-doodles 120s linear infinite;
     }
 
-    /* Dark Mode Doodle Background */
     .dark .hero-doodle-bg {
       background-color: #111827; /* bg-gray-900 */
-      /* URL for the DARK pattern (like your screenshot) */
       background-image: url('https://res.cloudinary.com/abhisheks-cloud/image/upload/v1730873177/syncroom_assets/bg-doodle-dark_gkbxke.png');
     }
+
+    /* --- Floating Blobs --- */
+    @keyframes float {
+      0% { transform: translateY(0) translateX(0) rotate(0deg); }
+      50% { transform: translateY(-20px) translateX(10px) rotate(180deg); }
+      100% { transform: translateY(0) translateX(0) rotate(360deg); }
+    }
+
+    @keyframes float-delay {
+      0% { transform: translateY(0) translateX(0) rotate(0deg); }
+      50% { transform: translateY(15px) translateX(-10px) rotate(-180deg); }
+      100% { transform: translateY(0) translateX(0) rotate(-360deg); }
+    }
+
+    .animate-float {
+      animation: float 12s ease-in-out infinite;
+    }
+    
+    .animate-float-delay {
+      animation: float-delay 15s ease-in-out infinite;
+    }
+
+    /* --- NEW: Floating Icons & Sparkles --- */
+    @keyframes tumble-float {
+      0% { transform: translateY(0) translateX(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg); opacity: 0.7; }
+      25% { transform: translateY(-20px) translateX(15px) rotateX(20deg) rotateY(45deg) rotateZ(10deg); opacity: 0.8; }
+      50% { transform: translateY(10px) translateX(-20px) rotateX(90deg) rotateY(0deg) rotateZ(-20deg); opacity: 0.9; }
+      75% { transform: translateY(-10px) translateX(10px) rotateX(20deg) rotateY(-45deg) rotateZ(10deg); opacity: 0.8; }
+      100% { transform: translateY(0) translateX(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg); opacity: 0.7; }
+    }
+    
+    @keyframes twinkle-float {
+      0% { transform: translateY(0) scale(0.8) rotate(0deg); opacity: 0.5; }
+      50% { transform: translateY(-10px) scale(1) rotate(180deg); opacity: 1; }
+      100% { transform: translateY(0) scale(0.8) rotate(360deg); opacity: 0.5; }
+    }
+
+    .hero-icon {
+      position: absolute;
+      display: block;
+      background-size: contain;
+      background-repeat: no-repeat;
+      z-index: 5;
+    }
+
+    .icon-chat {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF" opacity="0.6"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/></svg>');
+      width: 60px; height: 60px;
+      top: 10%; left: 10%;
+      animation: tumble-float 25s linear infinite -2s;
+    }
+    
+    .icon-file {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF" opacity="0.6"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6z"/></svg>');
+      width: 50px; height: 50px;
+      top: 20%; left: 80%;
+      animation: tumble-float 20s linear infinite -5s;
+    }
+
+    .icon-users {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF" opacity="0.6"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V18h14v-1.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V18h6v-1.5c0-2.33-4.67-3.5-7-3.5z"/></svg>');
+      width: 70px; height: 70px;
+      top: 75%; left: 60%;
+      animation: tumble-float 30s linear infinite -8s;
+    }
+
+    .icon-upload {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF" opacity="0.6"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>');
+      width: 60px; height: 60px;
+      top: 80%; left: 15%;
+      animation: tumble-float 22s linear infinite -12s;
+    }
+
+    .icon-sparkle {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFFFFF" opacity="0.7"><path d="M12 0l2.5 9.5L24 12l-9.5 2.5L12 24l-2.5-9.5L0 12l9.5-2.5L12 0z"/></svg>');
+      width: 20px; height: 20px;
+      animation: twinkle-float 8s ease-in-out infinite;
+    }
+
+    .sparkle-1 { top: 15%; left: 50%; animation-duration: 7s; animation-delay: -1s; }
+    .sparkle-2 { top: 60%; left: 90%; animation-duration: 6s; animation-delay: -3s; }
+    .sparkle-3 { top: 70%; left: 30%; animation-duration: 8s; animation-delay: -5s; }
+    .sparkle-4 { top: 30%; left: 30%; animation-duration: 5s; animation-delay: -2s; }
+
 
     /* Fix for loader animation */
     .loader {
@@ -100,6 +174,20 @@
   <main class="flex-1">
     <section class="py-20 sm:py-28 hero-doodle-bg relative overflow-hidden">
         
+        <div class="absolute top-1/4 left-1/4 w-72 h-72 bg-indigo-300/30 dark:bg-indigo-800/30 rounded-full filter blur-xl opacity-70 animate-float z-0"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-56 h-56 bg-purple-300/30 dark:bg-purple-800/30 rounded-full filter blur-xl opacity-70 animate-float-delay z-0"></div>
+
+        <div class="absolute inset-0 z-5 overflow-hidden">
+          <span class="hero-icon icon-chat"></span>
+          <span class="hero-icon icon-file"></span>
+          <span class="hero-icon icon-users"></span>
+          <span class="hero-icon icon-upload"></span>
+          <span class="hero-icon icon-sparkle sparkle-1"></span>
+          <span class="hero-icon icon-sparkle sparkle-2"></span>
+          <span class="hero-icon icon-sparkle sparkle-3"></span>
+          <span class="hero-icon icon-sparkle sparkle-4"></span>
+        </div>
+
       <div class="container mx-auto px-6 text-center relative z-10">
         <div class="max-w-3xl mx-auto hero-content">
           <h1 class="text-4xl sm:text-6xl font-extrabold text-gray-900 dark:text-white mb-4 fade-in-up">Connect & Collaborate Instantly</h1>
@@ -352,7 +440,6 @@
 
     } catch (e) {
       console.error("Socket.IO failed to initialize. Are you running this on a server?", e);
-      // Display a user-friendly message if not on a server
       if (document.getElementById('file-drop')) {
         document.getElementById('file-drop').innerHTML = '<div class="container mx-auto px-6 text-center"><p class="text-red-500 font-semibold">Error: The file drop feature requires a server connection. Please run this as part of a Node.js application.</p></div>';
       }
