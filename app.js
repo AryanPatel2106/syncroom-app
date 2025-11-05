@@ -127,6 +127,43 @@ const checkGroupRole = (roles) => async (req, res, next) => {
 app.get('/', (req, res) => res.render('home', { user: req.session.user }));
 app.get('/login', (req, res) => res.render('login', { user: req.session.user }));
 app.get('/register', (req, res) => res.render('register', { user: req.session.user }));
+app.get('/chatbot', isAuthenticated, (req, res) => res.render('chatbot', { user: req.session.user }));
+
+app.post('/api/chat', isAuthenticated, async (req, res) => {
+    const { message, history } = req.body;
+
+    if (!process.env.API_KEY) {
+        return res.status(500).send('API key is not configured on the server.');
+    }
+
+    if (!message) {
+        return res.status(400).send('Message is required.');
+    }
+
+    try {
+        const ai = new GoogleGenAI(process.env.API_KEY);
+        const model = ai.getGenerativeModel({ model: 'gemini-pro' });
+
+        const chat = model.startChat({
+            history: history || [],
+            generationConfig: {
+                maxOutputTokens: 1000,
+            },
+        });
+
+        const result = await chat.sendMessageStream(message);
+
+        res.setHeader('Content-Type', 'text/plain');
+        for await (const chunk of result.stream) {
+            res.write(chunk.text());
+        }
+        res.end();
+
+    } catch (error) {
+        console.error("AI chat API error:", error);
+        res.status(500).send('An error occurred while communicating with the AI service.');
+    }
+});
 
 app.post('/register', async (req, res) => {
   const { username, email, password } = req.body;
