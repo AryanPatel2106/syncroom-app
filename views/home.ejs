@@ -15,32 +15,97 @@
       -moz-osx-font-smoothing: grayscale;
     }
 
+    /* --- Scroll Animation Setup --- */
     .fade-in-up {
-      animation: fadeInUp 0.8s ease-out forwards;
       opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
     }
 
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    .fade-in-up.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    /* Staggered delays for feature cards */
+    .features-grid .fade-in-up:nth-child(1) { transition-delay: 0.1s; }
+    .features-grid .fade-in-up:nth-child(2) { transition-delay: 0.2s; }
+    .features-grid .fade-in-up:nth-child(3) { transition-delay: 0.3s; }
+
+    /* Hero heading staggered delays */
+    .hero-content .fade-in-up:nth-child(1) { transition-delay: 0.1s; }
+    .hero-content .fade-in-up:nth-child(2) { transition-delay: 0.2s; }
+    .hero-content .fade-in-up:nth-child(3) { transition-delay: 0.3s; }
+
+
+    /* --- Hero Animated Background --- */
+    .hero-animated-bg {
+      background: linear-gradient(135deg, 
+        theme('colors.indigo.50') 0%, 
+        theme('colors.purple.50') 25%,
+        theme('colors.gray.50') 50%,
+        theme('colors.indigo.50') 75%,
+        theme('colors.purple.50') 100%
+      );
+      background-size: 400% 400%;
+      animation: gradient-flow 15s ease infinite;
     }
 
-    .fade-in-up:nth-child(1) { animation-delay: 0.1s; }
-    .fade-in-up:nth-child(2) { animation-delay: 0.2s; }
-    .fade-in-up:nth-child(3) { animation-delay: 0.3s; }
-    .fade-in-up:nth-child(4) { animation-delay: 0.4s; }
+    .dark .hero-animated-bg {
+      background: linear-gradient(135deg, 
+        theme('colors.gray.900') 0%, 
+        theme('colors.indigo.900') 25%,
+        theme('colors.gray.800') 50%,
+        theme('colors.purple.900') 75%,
+        theme('colors.gray.900') 100%
+      );
+      background-size: 400% 400%;
+      animation: gradient-flow 15s ease infinite;
+    }
+
+    @keyframes gradient-flow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* --- Floating Blobs --- */
+    @keyframes float {
+      0% { transform: translateY(0) translateX(0) rotate(0deg); }
+      50% { transform: translateY(-20px) translateX(10px) rotate(180deg); }
+      100% { transform: translateY(0) translateX(0) rotate(360deg); }
+    }
+
+    @keyframes float-delay {
+      0% { transform: translateY(0) translateX(0) rotate(0deg); }
+      50% { transform: translateY(15px) translateX(-10px) rotate(-180deg); }
+      100% { transform: translateY(0) translateX(0) rotate(-360deg); }
+    }
+
+    .animate-float {
+      animation: float 12s ease-in-out infinite;
+    }
+    
+    .animate-float-delay {
+      animation: float-delay 15s ease-in-out infinite;
+    }
+
+    /* Fix for loader animation */
+    .loader {
+      border-top-color: theme('colors.indigo.600');
+      animation: spin 1s linear infinite;
+    }
+    .dark .loader {
+      border-top-color: theme('colors.indigo.400');
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
 
-  <!-- Navigation -->
   <nav class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm px-4 sm:px-6 py-4 flex justify-between items-center sticky top-0 z-50 border-b border-gray-200 dark:border-gray-700">
     <a href="/" class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">SyncRoom</a>
     <div class="flex items-center space-x-2 sm:space-x-4">
@@ -58,11 +123,14 @@
     </div>
   </nav>
 
-  <!-- Hero Section -->
   <main class="flex-1">
-    <section class="py-20 sm:py-28">
-      <div class="container mx-auto px-6 text-center">
-        <div class="max-w-3xl mx-auto">
+    <section class="py-20 sm:py-28 hero-animated-bg relative overflow-hidden">
+        
+        <div class="absolute top-1/4 left-1/4 w-72 h-72 bg-indigo-300/30 dark:bg-indigo-800/30 rounded-full filter blur-xl opacity-70 animate-float z-0"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-56 h-56 bg-purple-300/30 dark:bg-purple-800/30 rounded-full filter blur-xl opacity-70 animate-float-delay z-0"></div>
+
+      <div class="container mx-auto px-6 text-center relative z-10">
+        <div class="max-w-3xl mx-auto hero-content">
           <h1 class="text-4xl sm:text-6xl font-extrabold text-gray-900 dark:text-white mb-4 fade-in-up">Connect & Collaborate Instantly</h1>
           <p class="text-lg sm:text-xl text-gray-600 dark:text-gray-400 mb-8 fade-in-up">
             SyncRoom is your all-in-one platform for seamless team communication. Create groups, chat in real-time, and share files securely.
@@ -85,77 +153,69 @@
       </div>
     </section>
 
-    <!-- File Drop Section -->
     <section id="file-drop" class="py-20 sm:py-24 bg-gray-100 dark:bg-gray-800/50">
-        <div class="container mx-auto px-6">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">Instant File Drop</h2>
-                <p class="text-lg text-gray-600 dark:text-gray-400 mt-2">Share files instantly with a secret code.</p>
-            </div>
-            <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- Send File Card -->
-                <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
-                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Send File</h3>
-                    <div id="send-container">
-                        <label for="file-drop-input" class="w-full cursor-pointer bg-indigo-600 text-white px-6 py-3 rounded-lg shadow-md font-semibold hover:bg-indigo-700 transition-colors transform hover:scale-105 inline-block text-center">
-                            <i class="fas fa-cloud-upload-alt mr-2"></i> Choose a file to send
-                        </label>
-                        <input type="file" id="file-drop-input" class="hidden">
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-3">Max file size: 100MB. Code expires in 15 minutes.</p>
-                    </div>
-                    <div id="send-progress-container" class="hidden text-center">
-                        <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4 mx-auto"></div>
-                        <p id="upload-status" class="text-lg font-medium text-gray-700 dark:text-gray-300">Uploading...</p>
-                        <div id="secret-code-container" class="hidden mt-4">
-                            <p class="text-lg font-medium">Your secret code is:</p>
-                            <div id="secret-code-display" class="text-4xl font-bold text-indigo-500 tracking-widest bg-gray-100 dark:bg-gray-700 rounded-lg p-4 mt-2 inline-block">
-                                <!-- Code will be injected here -->
+      <div class="container mx-auto px-6">
+          <div class="text-center mb-12 fade-in-up">
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">Instant File Drop</h2>
+            <p class="text-lg text-gray-600 dark:text-gray-400 mt-2">Share files instantly with a secret code.</p>
+          </div>
+          <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 fade-in-up">
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Send File</h3>
+                <div id="send-container">
+                    <label for="file-drop-input" class="w-full cursor-pointer bg-indigo-600 text-white px-6 py-3 rounded-lg shadow-md font-semibold hover:bg-indigo-700 transition-colors transform hover:scale-105 inline-block text-center">
+                        <i class="fas fa-cloud-upload-alt mr-2"></i> Choose a file to send
+                    </label>
+                    <input type="file" id="file-drop-input" class="hidden">
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-3">Max file size: 100MB. Code expires in 15 minutes.</p>
+                </div>
+                <div id="send-progress-container" class="hidden text-center">
+                    <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4 mx-auto"></div>
+                    <p id="upload-status" class="text-lg font-medium text-gray-700 dark:text-gray-300">Uploading...</p>
+                    <div id="secret-code-container" class="hidden mt-4">
+                        <p class="text-lg font-medium">Your secret code is:</p>
+                        <div id="secret-code-display" class="text-4xl font-bold text-indigo-500 tracking-widest bg-gray-100 dark:bg-gray-700 rounded-lg p-4 mt-2 inline-block">
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Receive File Card -->
-                <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
-                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Receive File</h3>
-                    <div class="flex flex-col space-y-4">
-                        <input type="text" id="receive-code-input" placeholder="Enter 6-digit code" maxlength="6" class="text-center text-2xl font-mono tracking-widest bg-gray-100 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
-                        <button id="receive-btn" class="w-full bg-green-500 text-white px-6 py-3 rounded-lg shadow-md font-semibold hover:bg-green-600 transition-colors transform hover:scale-105">
-                            <i class="fas fa-download mr-2"></i> Get File
-                        </button>
-                        <p id="receive-status" class="text-center text-red-500 font-medium h-4"></p>
                     </div>
                 </div>
             </div>
-        </div>
+
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Receive File</h3>
+                <div class="flex flex-col space-y-4">
+                    <input type="text" id="receive-code-input" placeholder="Enter 6-digit code" maxlength="6" class="text-center text-2xl font-mono tracking-widest bg-gray-100 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+                    <button id="receive-btn" class="w-full bg-green-500 text-white px-6 py-3 rounded-lg shadow-md font-semibold hover:bg-green-600 transition-colors transform hover:scale-105">
+                        <i class="fas fa-download mr-2"></i> Get File
+                    </button>
+                    <p id="receive-status" class="text-center text-red-500 font-medium h-4"></p>
+                </div>
+            </div>
+          </div>
+      </div>
     </section>
 
-    <!-- Features Section -->
     <section class="bg-white dark:bg-gray-800 py-20 sm:py-24">
       <div class="container mx-auto px-6">
-        <div class="text-center mb-12">
+        <div class="text-center mb-12 fade-in-up">
           <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">Everything You Need to Stay in Sync</h2>
           <p class="text-lg text-gray-600 dark:text-gray-400 mt-2">Powerful features built for modern teams.</p>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <!-- Feature 1 -->
-          <div class="bg-gray-50 dark:bg-gray-900 p-8 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 fade-in-up">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 features-grid">
+          <div class="bg-gray-50 dark:bg-gray-900 p-8 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up">
             <div class="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-full w-12 h-12 flex items-center justify-center mb-4">
               <i class="fas fa-comments text-xl"></i>
             </div>
             <h3 class="text-xl font-bold mb-2">Real-Time Chat</h3>
             <p class="text-gray-600 dark:text-gray-400">Engage in dynamic conversations with message reactions, replies, and typing indicators.</p>
           </div>
-          <!-- Feature 2 -->
-          <div class="bg-gray-50 dark:bg-gray-900 p-8 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 fade-in-up">
+          <div class="bg-gray-50 dark:bg-gray-900 p-8 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up">
             <div class="bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 rounded-full w-12 h-12 flex items-center justify-center mb-4">
               <i class="fas fa-cloud-upload-alt text-xl"></i>
             </div>
             <h3 class="text-xl font-bold mb-2">Secure File Sharing</h3>
             <p class="text-gray-600 dark:text-gray-400">Easily upload and share images, documents, and other files within your groups.</p>
           </div>
-          <!-- Feature 3 -->
-          <div class="bg-gray-50 dark:bg-gray-900 p-8 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 fade-in-up">
+          <div class="bg-gray-50 dark:bg-gray-900 p-8 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up">
             <div class="bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 rounded-full w-12 h-12 flex items-center justify-center mb-4">
               <i class="fas fa-users-cog text-xl"></i>
             </div>
@@ -166,10 +226,9 @@
       </div>
     </section>
 
-    <!-- CTA Section -->
     <section class="py-20 sm:py-28">
       <div class="container mx-auto px-6 text-center">
-        <div class="max-w-2xl mx-auto">
+        <div class="max-w-2xl mx-auto fade-in-up">
           <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">Ready to Get Started?</h2>
           <p class="text-lg text-gray-600 dark:text-gray-400 mb-8">Create an account in seconds and start collaborating with your team today.</p>
           <a href="/register" class="bg-indigo-600 text-white px-10 py-4 rounded-lg shadow-lg font-semibold hover:bg-indigo-700 transition-transform transform hover:-translate-y-1 text-lg">
@@ -180,7 +239,6 @@
     </section>
   </main>
 
-  <!-- Footer -->
   <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
     <div class="container mx-auto py-8 px-6 text-center text-gray-500 dark:text-gray-400">
       <p>&copy; <%= new Date().getFullYear() %> SyncRoom. All rights reserved.</p>
@@ -199,110 +257,166 @@
     const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
     const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
 
-    const setTheme = (isDark) => {
-      document.documentElement.classList.toggle('dark', isDark);
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
-      if (themeToggleLightIcon) themeToggleLightIcon.classList.toggle('hidden', !isDark);
-      if (themeToggleDarkIcon) themeToggleDarkIcon.classList.toggle('hidden', isDark);
-    };
+    if (themeToggleBtn) { // Add check for safety
+      const setTheme = (isDark) => {
+        document.documentElement.classList.toggle('dark', isDark);
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        if (themeToggleLightIcon) themeToggleLightIcon.classList.toggle('hidden', !isDark);
+        if (themeToggleDarkIcon) themeToggleDarkIcon.classList.toggle('hidden', isDark);
+      };
 
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const savedTheme = localStorage.getItem('theme');
-    const isInitiallyDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
-    setTheme(isInitiallyDark);
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const savedTheme = localStorage.getItem('theme');
+      const isInitiallyDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+      setTheme(isInitiallyDark);
 
-    themeToggleBtn.addEventListener('click', () => {
-      const isCurrentlyDark = document.documentElement.classList.contains('dark');
-      setTheme(!isCurrentlyDark);
-    });
+      themeToggleBtn.addEventListener('click', () => {
+        const isCurrentlyDark = document.documentElement.classList.contains('dark');
+        setTheme(!isCurrentlyDark);
+      });
+    }
 
     // --- File Drop Feature ---
-    const socket = io();
+    try {
+      const socket = io();
 
-    const fileInput = document.getElementById('file-drop-input');
-    const sendContainer = document.getElementById('send-container');
-    const progressContainer = document.getElementById('send-progress-container');
-    const uploadStatus = document.getElementById('upload-status');
-    const secretCodeContainer = document.getElementById('secret-code-container');
-    const secretCodeDisplay = document.getElementById('secret-code-display');
+      const fileInput = document.getElementById('file-drop-input');
+      const sendContainer = document.getElementById('send-container');
+      const progressContainer = document.getElementById('send-progress-container');
+      const uploadStatus = document.getElementById('upload-status');
+      const secretCodeContainer = document.getElementById('secret-code-container');
+      const secretCodeDisplay = document.getElementById('secret-code-display');
 
-    const receiveCodeInput = document.getElementById('receive-code-input');
-    const receiveBtn = document.getElementById('receive-btn');
-    const receiveStatus = document.getElementById('receive-status');
+      const receiveCodeInput = document.getElementById('receive-code-input');
+      const receiveBtn = document.getElementById('receive-btn');
+      const receiveStatus = document.getElementById('receive-status');
 
-    fileInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
+      if (fileInput && sendContainer && progressContainer) {
+        fileInput.addEventListener('change', (event) => {
+          const file = event.target.files[0];
+          if (!file) return;
 
-        if (file.size > 100 * 1024 * 1024) { // 100MB limit
+          if (file.size > 100 * 1024 * 1024) { // 100MB limit
             alert('File is too large. Max size is 100MB.');
+            event.target.value = null; // Reset file input
             return;
-        }
+          }
 
-        sendContainer.classList.add('hidden');
-        progressContainer.classList.remove('hidden');
-        secretCodeContainer.classList.add('hidden');
-        uploadStatus.textContent = 'Uploading...';
+          sendContainer.classList.add('hidden');
+          progressContainer.classList.remove('hidden');
+          secretCodeContainer.classList.add('hidden');
+          uploadStatus.textContent = 'Uploading...';
 
-        // We need to read the file into a buffer to send over Socket.IO
-        const reader = new FileReader();
-        reader.onload = (e) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
             socket.emit('file-drop-upload', {
-                fileBuffer: e.target.result,
-                filename: file.name,
-                mimetype: file.type
+              fileBuffer: e.target.result,
+              filename: file.name,
+              mimetype: file.type
             });
-        };
-        reader.readAsArrayBuffer(file);
-    });
+          };
+          reader.readAsArrayBuffer(file);
+          event.target.value = null; // Reset file input after reading
+        });
+      }
 
-    socket.on('file-drop-code', (code) => {
-        uploadStatus.textContent = 'Upload Complete!';
-        secretCodeDisplay.textContent = code;
-        secretCodeContainer.classList.remove('hidden');
-    });
-
-    socket.on('file-drop-error', (message) => {
-        alert(`Error: ${message}`);
-        sendContainer.classList.remove('hidden');
-        progressContainer.classList.add('hidden');
-    });
-
-    receiveBtn.addEventListener('click', () => {
-        const code = receiveCodeInput.value.trim();
-        if (code.length !== 6) {
+      if (receiveBtn && receiveCodeInput && receiveStatus) {
+        receiveBtn.addEventListener('click', () => {
+          const code = receiveCodeInput.value.trim();
+          if (code.length !== 6) {
             receiveStatus.textContent = 'Code must be 6 characters.';
             return;
+          }
+          receiveStatus.textContent = 'Searching...';
+          socket.emit('file-drop-request', code);
+        });
+      }
+
+      // Socket event listeners
+      socket.on('file-drop-code', (code) => {
+        if (uploadStatus && secretCodeDisplay && secretCodeContainer) {
+          uploadStatus.textContent = 'Upload Complete!';
+          secretCodeDisplay.textContent = code;
+          secretCodeContainer.classList.remove('hidden');
         }
-        receiveStatus.textContent = '';
-        socket.emit('file-drop-request', code);
+      });
+
+      socket.on('file-drop-error', (message) => {
+        alert(`Error: ${message}`);
+        if (sendContainer && progressContainer) {
+          sendContainer.classList.remove('hidden');
+          progressContainer.classList.add('hidden');
+        }
+      });
+
+      socket.on('file-drop-found', (file) => {
+        if (receiveStatus && receiveCodeInput) {
+          receiveStatus.textContent = 'File found! Starting download...';
+          const a = document.createElement('a');
+          
+          if (file.filepath && file.filepath.includes('/upload/')) {
+            const parts = file.filepath.split('/upload/');
+            const publicIdWithFolder = parts[1];
+            const downloadUrl = parts[0] + '/upload/fl_attachment:' + encodeURIComponent(file.filename) + '/' + publicIdWithFolder;
+            a.href = downloadUrl;
+          } else {
+            a.href = file.filepath; // Fallback
+          }
+
+          a.download = file.filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          
+          receiveCodeInput.value = ''; // Clear input
+          setTimeout(() => { receiveStatus.textContent = ''; }, 3000);
+        }
+      });
+
+      socket.on('file-drop-not-found', () => {
+        if (receiveStatus) {
+          receiveStatus.textContent = 'Invalid or expired code. Please try again.';
+        }
+      });
+
+    } catch (e) {
+      console.error("Socket.IO failed to initialize. Are you running this on a server?", e);
+      // Display a user-friendly message if not on a server
+      if (document.getElementById('file-drop')) {
+        document.getElementById('file-drop').innerHTML = '<div class="container mx-auto px-6 text-center"><p class="text-red-500 font-semibold">Error: The file drop feature requires a server connection. Please run this as part of a Node.js application.</p></div>';
+      }
+    }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      try {
+        const observerOptions = {
+          root: null, // observe in relation to the viewport
+          rootMargin: "0px",
+          threshold: 0.1 // trigger when 10% of the element is visible
+        };
+
+        const observerCallback = (entries, observer) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("is-visible");
+              observer.unobserve(entry.target); // Stop observing once animated
+            }
+          });
+        };
+
+        const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+        const targets = document.querySelectorAll(".fade-in-up");
+        targets.forEach(target => {
+          observer.observe(target);
+        });
+      } catch (e) {
+        console.error("Intersection Observer failed: ", e);
+      }
     });
-
-    socket.on('file-drop-found', (file) => {
-        receiveStatus.textContent = 'File found! Starting download...';
-        // Trigger download
-        const a = document.createElement('a');
-        
-        // Robustly construct the download URL
-        const parts = file.filepath.split('/upload/');
-        const publicIdWithFolder = parts[1];
-        const downloadUrl = parts[0] + '/upload/fl_attachment:' + encodeURIComponent(file.filename) + '/' + publicIdWithFolder;
-
-        a.href = downloadUrl;
-        a.download = file.filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        setTimeout(() => { receiveStatus.textContent = ''; }, 3000);
-    });
-
-    socket.on('file-drop-not-found', () => {
-        receiveStatus.textContent = 'Invalid code. Please try again.';
-    });
-
   </script>
 
 </body>
-
 </html>
