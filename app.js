@@ -9,7 +9,7 @@ const multer = require('multer');
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const MongoStore = require('connect-mongo');
-const { GoogleGenerativeAI } = require("@google/genai");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const User = require('./models/user');
 const Group = require('./models/group');
