@@ -13,7 +13,125 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
-    /* --- Scroll Animation Setup --- */
+    
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.6);
+      backdrop-filter: blur(5px);
+      animation: fadeIn 0.3s ease-out;
+    }
+    
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-content {
+      background-color: white;
+      margin: auto;
+      padding: 0;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 900px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      animation: slideUp 0.4s ease-out;
+      position: relative;
+    }
+    
+    .dark .modal-content {
+      background-color: #1f2937;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .close-btn {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #999;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 10;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.05);
+    }
+    
+    .close-btn:hover {
+      color: #333;
+      background: rgba(0,0,0,0.1);
+      transform: rotate(90deg);
+    }
+    
+    .dark .close-btn {
+      color: #ccc;
+      background: rgba(255,255,255,0.1);
+    }
+    
+    .dark .close-btn:hover {
+      color: #fff;
+      background: rgba(255,255,255,0.2);
+    }
+    
+    /* Team Member Card */
+    .team-card {
+      transition: all 0.3s ease;
+    }
+    
+    .team-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+    }
+    
+    /* Video Container */
+    .video-container {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+    
+    .video-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* Scroll Animation Setup */
     .fade-in-up {
       opacity: 0;
       transform: translateY(30px);
@@ -31,7 +149,7 @@
     .hero-content .fade-in-up:nth-child(2) { transition-delay: 0.2s; }
     .hero-content .fade-in-up:nth-child(3) { transition-delay: 0.3s; }
     
-    /* --- Moving Doodle Background --- */
+    /* Moving Doodle Background */
     @keyframes move-doodles {
       0% { background-position: 0 0; }
       100% { background-position: 1000px 1000px; }
@@ -48,7 +166,7 @@
       background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" opacity="0.1"><circle cx="50" cy="50" r="2" fill="%23667eea"/><circle cx="150" cy="100" r="2" fill="%23764ba2"/><circle cx="250" cy="150" r="2" fill="%23f093fb"/><circle cx="350" cy="200" r="2" fill="%234facfe"/><circle cx="100" cy="250" r="2" fill="%23667eea"/><circle cx="200" cy="300" r="2" fill="%23764ba2"/><circle cx="300" cy="350" r="2" fill="%23f093fb"/></svg>');
     }
     
-    /* --- Animated Orbs --- */
+    /* Animated Orbs */
     @keyframes orbit-1 {
       0% { transform: translate(0, 0) rotate(0deg); }
       25% { transform: translate(100px, -50px) rotate(90deg); }
@@ -106,7 +224,7 @@
       animation: orbit-3 30s ease-in-out infinite;
     }
     
-    /* --- Pulsing Glow Effect --- */
+    /* Pulsing Glow Effect */
     @keyframes pulse-glow {
       0%, 100% { 
         box-shadow: 0 0 20px rgba(99, 102, 241, 0.5),
@@ -128,7 +246,7 @@
       animation: pulse-glow 2s ease-in-out infinite;
     }
     
-    /* --- Floating Icons & Sparkles --- */
+    /* Floating Icons & Sparkles */
     @keyframes tumble-float {
       0% { transform: translateY(0) translateX(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg); opacity: 0.7; }
       25% { transform: translateY(-20px) translateX(15px) rotateX(20deg) rotateY(45deg) rotateZ(10deg); opacity: 0.8; }
@@ -184,7 +302,6 @@
     .sparkle-3 { top: 70%; left: 30%; animation-duration: 8s; animation-delay: -5s; }
     .sparkle-4 { top: 30%; left: 30%; animation-duration: 5s; animation-delay: -2s; }
     
-    /* Fix for loader animation */
     .loader {
       border-top-color: theme('colors.indigo.600');
       animation: spin 1s linear infinite;
@@ -196,39 +313,13 @@
       to { transform: rotate(360deg); }
     }
     
-    /* --- Watery Button Effects --- */
+    /* Watery Button Effects */
     @keyframes water-wave {
       0% {
         transform: translateX(-100%) translateY(-50%) rotate(0deg);
       }
       100% {
         transform: translateX(100%) translateY(-50%) rotate(360deg);
-      }
-    }
-    
-    @keyframes liquid-morph {
-      0%, 100% {
-        border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-      }
-      25% {
-        border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
-      }
-      50% {
-        border-radius: 50% 60% 30% 60% / 30% 60% 70% 40%;
-      }
-      75% {
-        border-radius: 60% 40% 60% 40% / 70% 30% 50% 60%;
-      }
-    }
-    
-    @keyframes ripple {
-      0% {
-        transform: scale(0);
-        opacity: 1;
-      }
-      100% {
-        transform: scale(4);
-        opacity: 0;
       }
     }
     
@@ -281,7 +372,6 @@
       transform: translateY(0);
     }
     
-    /* Watery Nav Bar */
     .water-nav {
       position: relative;
       overflow: hidden;
@@ -302,67 +392,6 @@
       animation: water-wave 8s linear infinite;
     }
     
-    /* Liquid Blob Background */
-    @keyframes blob-animation {
-      0%, 100% {
-        transform: translate(0, 0) scale(1) rotate(0deg);
-        border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-      }
-      25% {
-        transform: translate(20px, -50px) scale(1.1) rotate(90deg);
-        border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
-      }
-      50% {
-        transform: translate(-20px, 20px) scale(0.9) rotate(180deg);
-        border-radius: 50% 60% 30% 60% / 30% 60% 70% 40%;
-      }
-      75% {
-        transform: translate(30px, 30px) scale(1.05) rotate(270deg);
-        border-radius: 60% 40% 60% 40% / 70% 30% 50% 60%;
-      }
-    }
-    
-    .liquid-blob {
-      position: absolute;
-      filter: blur(60px);
-      opacity: 0.6;
-      animation: blob-animation 20s ease-in-out infinite;
-      mix-blend-mode: multiply;
-    }
-    
-    .dark .liquid-blob {
-      mix-blend-mode: screen;
-      opacity: 0.4;
-    }
-    
-    .blob-1 {
-      width: 400px;
-      height: 400px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      top: -100px;
-      left: -100px;
-      animation-delay: 0s;
-    }
-    
-    .blob-2 {
-      width: 350px;
-      height: 350px;
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      top: 100px;
-      right: -100px;
-      animation-delay: -5s;
-    }
-    
-    .blob-3 {
-      width: 300px;
-      height: 300px;
-      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-      bottom: -50px;
-      left: 50%;
-      animation-delay: -10s;
-    }
-    
-    /* Water Droplet Effect on Hover */
     .water-card {
       position: relative;
       overflow: hidden;
@@ -392,7 +421,17 @@
       box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.4);
     }
     
-    /* Ripple Click Effect */
+    @keyframes ripple {
+      0% {
+        transform: scale(0);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(4);
+        opacity: 0;
+      }
+    }
+    
     .ripple-effect {
       position: relative;
       overflow: hidden;
@@ -406,7 +445,6 @@
       pointer-events: none;
     }
     
-    /* Glass Morphism Effect */
     .glass-effect {
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
@@ -419,7 +457,6 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
     
-    /* Floating Animation for Elements */
     @keyframes float-gentle {
       0%, 100% {
         transform: translateY(0px) rotate(0deg);
@@ -431,65 +468,6 @@
     
     .float-animation {
       animation: float-gentle 6s ease-in-out infinite;
-    }
-    
-    /* Liquid Loading Bar */
-    @keyframes liquid-fill {
-      0% {
-        clip-path: polygon(
-          0% 45%,
-          15% 44%,
-          32% 50%,
-          54% 60%,
-          70% 61%,
-          84% 59%,
-          100% 52%,
-          100% 100%,
-          0% 100%
-        );
-      }
-      50% {
-        clip-path: polygon(
-          0% 60%,
-          16% 65%,
-          34% 66%,
-          51% 62%,
-          67% 50%,
-          84% 45%,
-          100% 46%,
-          100% 100%,
-          0% 100%
-        );
-      }
-      100% {
-        clip-path: polygon(
-          0% 45%,
-          15% 44%,
-          32% 50%,
-          54% 60%,
-          70% 61%,
-          84% 59%,
-          100% 52%,
-          100% 100%,
-          0% 100%
-        );
-      }
-    }
-    
-    .liquid-progress {
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .liquid-progress::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-      animation: liquid-fill 3s ease-in-out infinite;
     }
   </style>
 </head>
@@ -505,21 +483,15 @@
         <span class="relative z-10">File Drop</span>
         <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-indigo-600 group-hover:w-full transition-all duration-300"></span>
       </a>
-      <% if (user) { %>
-        <a href="/groups" class="text-sm sm:text-base bg-green-600 text-white px-4 py-2 rounded-lg shadow-md liquid-button ripple-effect flex items-center">
-          <i class="fas fa-th-large mr-2"></i> Dashboard
-        </a>
-        <a href="/logout" class="text-sm sm:text-base font-medium text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-500 transition-all duration-300 relative group">
-          <span class="relative z-10">Logout</span>
-          <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-red-600 group-hover:w-full transition-all duration-300"></span>
-        </a>
-      <% } else { %>
-        <a href="/login" class="text-sm sm:text-base font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-500 transition-all duration-300 relative group">
-          <span class="relative z-10">Login</span>
-          <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-indigo-600 group-hover:w-full transition-all duration-300"></span>
-        </a>
-        <a href="/register" class="text-sm sm:text-base bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md liquid-button ripple-effect">Sign Up</a>
-      <% } %>
+      <button id="learn-btn" class="text-sm sm:text-base bg-purple-600 text-white px-4 py-2 rounded-lg shadow-md liquid-button ripple-effect">
+        <i class="fas fa-graduation-cap mr-1"></i> Learn
+      </button>
+      <button id="developed-btn" class="text-sm sm:text-base bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md liquid-button ripple-effect">
+        <i class="fas fa-users mr-1"></i> Developed by
+      </button>
+      <button id="help-btn" class="text-sm sm:text-base bg-amber-600 text-white px-4 py-2 rounded-lg shadow-md liquid-button ripple-effect">
+        <i class="fas fa-question-circle mr-1"></i> Help
+      </button>
       <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none rounded-lg text-sm p-2.5 liquid-button ripple-effect">
         <i id="theme-toggle-dark-icon" class="fas fa-moon w-5 h-5"></i>
         <i id="theme-toggle-light-icon" class="fas fa-sun w-5 h-5 hidden"></i>
@@ -527,14 +499,342 @@
     </div>
   </nav>
   
+  <!-- Learn Modal -->
+  <div id="learn-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" data-modal="learn-modal">&times;</span>
+      <div class="p-8">
+        <h2 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-6 flex items-center">
+          <i class="fas fa-graduation-cap mr-3"></i> Learn About SyncRoom
+        </h2>
+        
+        <div class="space-y-8">
+          <!-- Project Overview -->
+          <div class="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg">
+            <h3 class="text-xl font-semibold mb-3 text-gray-900 dark:text-white flex items-center">
+              <i class="fas fa-book text-indigo-500 mr-2"></i> Project Overview
+            </h3>
+            <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+              SyncRoom is a comprehensive real-time collaboration platform designed to facilitate seamless communication and file sharing among teams. Built using modern web technologies, it demonstrates the implementation of WebSocket communication, user authentication, group management, and secure file handling.
+            </p>
+          </div>
+          
+          <!-- Animated Video Section -->
+          <div class="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 p-6 rounded-lg">
+            <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white flex items-center">
+              <i class="fas fa-video text-purple-500 mr-2"></i> Project Demo Video
+            </h3>
+            <div class="video-container">
+              <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
+              <i class="fas fa-info-circle mr-1"></i> Watch this demo to understand how SyncRoom works and its key features
+            </p>
+          </div>
+          
+          <!-- Technologies Used -->
+          <div class="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg">
+            <h3 class="text-xl font-semibold mb-3 text-gray-900 dark:text-white flex items-center">
+              <i class="fas fa-code text-green-500 mr-2"></i> Technologies & Concepts
+            </h3>
+            <ul class="space-y-2 text-gray-700 dark:text-gray-300">
+              <li><i class="fas fa-check-circle text-green-500 mr-2"></i> <strong>Frontend:</strong> HTML5, CSS3, JavaScript, Tailwind CSS</li>
+              <li><i class="fas fa-check-circle text-green-500 mr-2"></i> <strong>Backend:</strong> Node.js, Express.js</li>
+              <li><i class="fas fa-check-circle text-green-500 mr-2"></i> <strong>Real-time Communication:</strong> Socket.IO (WebSocket)</li>
+              <li><i class="fas fa-check-circle text-green-500 mr-2"></i> <strong>Database:</strong> MongoDB with Mongoose ODM</li>
+              <li><i class="fas fa-check-circle text-green-500 mr-2"></i> <strong>Authentication:</strong> JWT (JSON Web Tokens), bcrypt</li>
+              <li><i class="fas fa-check-circle text-green-500 mr-2"></i> <strong>File Storage:</strong> Multer for file uploads</li>
+            </ul>
+          </div>
+          
+          <!-- How We Built It -->
+          <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 p-6 rounded-lg">
+            <h3 class="text-xl font-semibold mb-3 text-gray-900 dark:text-white flex items-center">
+              <i class="fas fa-hammer text-blue-500 mr-2"></i> How We Built This Project
+            </h3>
+            <div class="space-y-3 text-gray-700 dark:text-gray-300">
+              <p><strong>1. Planning & Design:</strong> We started by identifying user requirements and designing the database schema for users, groups, messages, and files.</p>
+              <p><strong>2. Backend Development:</strong> Created RESTful APIs using Express.js for user management, authentication, and group operations.</p>
+              <p><strong>3. Real-time Features:</strong> Implemented Socket.IO to enable real-time messaging, typing indicators, and online status updates.</p>
+              <p><strong>4. Frontend Development:</strong> Built responsive UI components with modern animations and dark mode support.</p>
+              <p><strong>5. Security Implementation:</strong> Added JWT-based authentication, password hashing, and input validation.</p>
+              <p><strong>6. Testing & Deployment:</strong> Performed extensive testing and deployed the application to a cloud platform.</p>
+            </div>
+          </div>
+          
+          <!-- References -->
+          <div class="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg">
+            <h3 class="text-xl font-semibold mb-3 text-gray-900 dark:text-white flex items-center">
+              <i class="fas fa-bookmark text-red-500 mr-2"></i> References
+            </h3>
+            <ul class="space-y-2 text-gray-700 dark:text-gray-300">
+              <li><i class="fas fa-external-link-alt text-indigo-500 mr-2"></i> <a href="https://socket.io/docs/" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">Socket.IO Documentation</a></li>
+              <li><i class="fas fa-external-link-alt text-indigo-500 mr-2"></i> <a href="https://expressjs.com/" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">Express.js Guide</a></li>
+              <li><i class="fas fa-external-link-alt text-indigo-500 mr-2"></i> <a href="https://mongoosejs.com/docs/" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">Mongoose ODM Documentation</a></li>
+              <li><i class="fas fa-external-link-alt text-indigo-500 mr-2"></i> <a href="https://jwt.io/introduction" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">JWT Authentication Guide</a></li>
+              <li><i class="fas fa-external-link-alt text-indigo-500 mr-2"></i> <a href="https://tailwindcss.com/docs" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">Tailwind CSS Documentation</a></li>
+              <li><i class="fas fa-book text-indigo-500 mr-2"></i> "Web Application Development with Node.js" - Prescribed Textbook</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Developed By Modal -->
+  <div id="developed-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" data-modal="developed-modal">&times;</span>
+      <div class="p-8">
+        <h2 class="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-8 text-center flex items-center justify-center">
+          <i class="fas fa-users mr-3"></i> Developed By
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Team Member 1 -->
+          <div class="team-card bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 p-6 rounded-xl shadow-lg text-center">
+            <div class="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-indigo-300 dark:border-indigo-600">
+              <img src="https://ui-avatars.com/api/?name=John+Doe&size=128&background=667eea&color=fff" alt="Team Member 1" class="w-full h-full object-cover">
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">John Doe</h3>
+            <p class="text-indigo-600 dark:text-indigo-400 font-semibold mb-2">Full Stack Developer</p>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mb-1">Reg No: 2021001</p>
+            <div class="mt-4 flex justify-center space-x-3">
+              <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-indigo-600"><i class="fab fa-github text-xl"></i></a>
+              <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-indigo-600"><i class="fab fa-linkedin text-xl"></i></a>
+            </div>
+          </div>
+          
+          <!-- Team Member 2 -->
+          <div class="team-card bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-900 p-6 rounded-xl shadow-lg text-center">
+            <div class="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-blue-300 dark:border-blue-600">
+              <img src="https://ui-avatars.com/api/?name=Jane+Smith&size=128&background=4facfe&color=fff" alt="Team Member 2" class="w-full h-full object-cover">
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Jane Smith</h3>
+            <p class="text-blue-600 dark:text-blue-400 font-semibold mb-2">Backend Developer</p>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mb-1">Reg No: 2021002</p>
+            <div class="mt-4 flex justify-center space-x-3">
+              <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-blue-600"><i class="fab fa-github text-xl"></i></a>
+              <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-blue-600"><i class="fab fa-linkedin text-xl"></i></a>
+            </div>
+          </div>
+          
+          <!-- Your Info (Center/Lead) -->
+          <div class="team-card bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-900 p-6 rounded-xl shadow-lg text-center border-2 border-purple-300 dark:border-purple-600">
+            <div class="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-purple-400 dark:border-purple-500">
+              <img src="https://ui-avatars.com/api/?name=Your+Name&size=128&background=f093fb&color=fff" alt="Your Photo" class="w-full h-full object-cover">
+            </div>
+            <div class="absolute top-4 right-4 bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+              Project Lead
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Your Name</h3>
+            <p class="text-purple-600 dark:text-purple-400 font-semibold mb-2">Frontend Developer</p>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mb-1">Reg No: 2021003</p>
+            <div class="mt-4 flex justify-center space-x-3">
+              <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-purple-600"><i class="fab fa-github text-xl"></i></a>
+              <a href="#" class="text-gray-600 dark:text-gray-400 hover:text-purple-600"><i class="fab fa-linkedin text-xl"></i></a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-8 bg-gray-50 dark:bg-gray-800 p-6 rounded-lg text-center">
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+            <i class="fas fa-quote-left text-indigo-400 mr-2"></i>
+            This project was developed as part of our web development course, showcasing real-time communication and collaborative features using modern web technologies.
+            <i class="fas fa-quote-right text-indigo-400 ml-2"></i>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Help Modal -->
+  <div id="help-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" data-modal="help-modal">&times;</span>
+      <div class="p-8">
+        <h2 class="text-3xl font-bold text-amber-600 dark:text-amber-400 mb-6 flex items-center">
+          <i class="fas fa-question-circle mr-3"></i> Help & User Guide
+        </h2>
+        
+        <div class="space-y-6">
+          <!-- Getting Started -->
+          <div class="bg-amber-50 dark:bg-gray-800 p-6 rounded-lg border-l-4 border-amber-500">
+            <h3 class="text-xl font-semibold mb-3 text-gray-900 dark:text-white flex items-center">
+              <i class="fas fa-rocket text-amber-500 mr-2"></i> Getting Started
+            </h3>
+            <ol class="space-y-2 text-gray-700 dark:text-gray-300 list-decimal list-inside">
+              <li><strong>Create Account:</strong> Click "Sign Up" and fill in your details (username, email, password)</li>
+              <li><strong>Login:</strong> Use your credentials to access your dashboard</li>
+              <li><strong>Create/Join Group:</strong> Create a new group or join existing ones using group codes</li>
+            </ol>
+          </div>
+          
+          <!-- How to Use Features -->
+          <div class="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg">
+            <h3 class="text-xl font-semibold mb-3 text-gray-900 dark:text-white flex items-center">
+              <i class="fas fa-cog text-blue-500 mr-2"></i> Using Core Features
+            </h3>
+            <div class="space-y-4 text-gray-700 dark:text-gray-300">
+              <div class="border-l-4 border-indigo-500 pl-4">
+                <h4 class="font-bold text-indigo-600 dark:text-indigo-400 mb-1">💬 Real-Time Chat</h4>
+                <ul class="space-y-1 text-sm ml-4">
+                  <li>• Select a group from your dashboard</li>
+                  <li>• Type your message in the input field at the bottom</li>
+                  <li>• Press Enter or click Send to post messages</li>
+                  <li>• React to messages with emojis</li>
+                  <li>• Reply to specific messages using the reply button</li>
+                </ul>
+              </div>
+              
+              <div class="border-l-4 border-green-500 pl-4">
+                <h4 class="font-bold text-green-600 dark:text-green-400 mb-1">📁 File Sharing</h4>
+                <ul class="space-y-1 text-sm ml-4">
+                  <li>• Click the paperclip icon in the chat input</li>
+                  <li>• Select file(s) from your device (max 10MB each)</li>
+                  <li>• Supported formats: Images, PDFs, Documents, Videos</li>
+                  <li>• Click on shared files to download or preview</li>
+                </ul>
+              </div>
+              
+              <div class="border-l-4 border-purple-500 pl-4">
+                <h4 class="font-bold text-purple-600 dark:text-purple-400 mb-1">👥 Group Management</h4>
+                <ul class="space-y-1 text-sm ml-4">
+                  <li>• Create groups with custom names and descriptions</li>
+                  <li>• Invite members using unique group codes</li>
+                  <li>• Assign roles: Owner (full control), Admin (moderate), Member (basic)</li>
+                  <li>• Remove members or leave groups from settings</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Instant File Drop -->
+          <div class="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 p-6 rounded-lg">
+            <h3 class="text-xl font-semibold mb-3 text-gray-900 dark:text-white flex items-center">
+              <i class="fas fa-paper-plane text-purple-500 mr-2"></i> Instant File Drop (No Account Required)
+            </h3>
+            <div class="grid md:grid-cols-2 gap-4 text-gray-700 dark:text-gray-300 text-sm">
+              <div>
+                <h4 class="font-bold text-purple-600 dark:text-purple-400 mb-2">📤 Sending Files:</h4>
+                <ol class="list-decimal list-inside space-y-1">
+                  <li>Scroll to "Instant File Drop" section</li>
+                  <li>Click "Choose a file to send"</li>
+                  <li>Select your file (max 10MB)</li>
+                  <li>Copy the 6-digit code shown</li>
+                  <li>Share code with recipient (expires in 15 min)</li>
+                </ol>
+              </div>
+              <div>
+                <h4 class="font-bold text-green-600 dark:text-green-400 mb-2">📥 Receiving Files:</h4>
+                <ol class="list-decimal list-inside space-y-1">
+                  <li>Get the 6-digit code from sender</li>
+                  <li>Enter code in "Receive File" section</li>
+                  <li>Click "Get File" button</li>
+                  <li>File downloads automatically</li>
+                  <li>Code becomes invalid after use</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Project Execution Flow -->
+          <div class="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg">
+            <h3 class="text-xl font-semibold mb-3 text-gray-900 dark:text-white flex items-center">
+              <i class="fas fa-project-diagram text-indigo-500 mr-2"></i> Project Execution Flow
+            </h3>
+            <div class="space-y-3 text-gray-700 dark:text-gray-300">
+              <div class="flex items-start space-x-3">
+                <span class="bg-indigo-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">1</span>
+                <p><strong>User Registration/Login:</strong> Authentication validates credentials and creates secure session tokens</p>
+              </div>
+              <div class="flex items-start space-x-3">
+                <span class="bg-indigo-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">2</span>
+                <p><strong>Dashboard Access:</strong> User sees all groups they're part of with real-time status indicators</p>
+              </div>
+              <div class="flex items-start space-x-3">
+                <span class="bg-indigo-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">3</span>
+                <p><strong>Group Selection:</strong> WebSocket connection establishes for real-time communication</p>
+              </div>
+              <div class="flex items-start space-x-3">
+                <span class="bg-indigo-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">4</span>
+                <p><strong>Message Processing:</strong> Messages broadcast to all connected group members instantly</p>
+              </div>
+              <div class="flex items-start space-x-3">
+                <span class="bg-indigo-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">5</span>
+                <p><strong>File Upload:</strong> Files stored securely on server and metadata saved in database</p>
+              </div>
+              <div class="flex items-start space-x-3">
+                <span class="bg-indigo-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">6</span>
+                <p><strong>Results Display:</strong> All messages, files, and user activities appear in real-time with timestamps</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Interpreting Results -->
+          <div class="bg-blue-50 dark:bg-gray-800 p-6 rounded-lg">
+            <h3 class="text-xl font-semibold mb-3 text-gray-900 dark:text-white flex items-center">
+              <i class="fas fa-chart-line text-blue-500 mr-2"></i> Understanding the Interface
+            </h3>
+            <div class="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
+              <p><i class="fas fa-circle text-green-500 mr-2"></i><strong>Green Dot:</strong> User is currently online and active</p>
+              <p><i class="fas fa-circle text-gray-400 mr-2"></i><strong>Gray Dot:</strong> User is offline or inactive</p>
+              <p><i class="fas fa-check-double text-blue-500 mr-2"></i><strong>Double Check:</strong> Message has been read by recipients</p>
+              <p><i class="fas fa-check text-gray-500 mr-2"></i><strong>Single Check:</strong> Message delivered but not read</p>
+              <p><i class="fas fa-paperclip text-indigo-500 mr-2"></i><strong>Paperclip Icon:</strong> Message contains file attachments</p>
+              <p><i class="fas fa-crown text-yellow-500 mr-2"></i><strong>Crown Icon:</strong> Group owner with full permissions</p>
+              <p><i class="fas fa-shield-alt text-purple-500 mr-2"></i><strong>Shield Icon:</strong> Group admin with moderation rights</p>
+            </div>
+          </div>
+          
+          <!-- Troubleshooting -->
+          <div class="bg-red-50 dark:bg-gray-800 p-6 rounded-lg">
+            <h3 class="text-xl font-semibold mb-3 text-gray-900 dark:text-white flex items-center">
+              <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> Common Issues & Solutions
+            </h3>
+            <div class="space-y-3 text-gray-700 dark:text-gray-300 text-sm">
+              <div>
+                <p class="font-bold text-red-600 dark:text-red-400">❌ Messages not sending?</p>
+                <p class="ml-4">→ Check internet connection, refresh page, or re-login</p>
+              </div>
+              <div>
+                <p class="font-bold text-red-600 dark:text-red-400">❌ File upload failing?</p>
+                <p class="ml-4">→ Ensure file is under 10MB and in supported format</p>
+              </div>
+              <div>
+                <p class="font-bold text-red-600 dark:text-red-400">❌ Can't join group?</p>
+                <p class="ml-4">→ Verify group code is correct and group still exists</p>
+              </div>
+              <div>
+                <p class="font-bold text-red-600 dark:text-red-400">❌ Not receiving notifications?</p>
+                <p class="ml-4">→ Enable browser notifications in settings</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Contact Support -->
+          <div class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white p-6 rounded-lg text-center">
+            <h3 class="text-xl font-bold mb-2">Still Need Help?</h3>
+            <p class="mb-4">Our support team is here to assist you!</p>
+            <div class="flex justify-center space-x-4">
+              <a href="mailto:support@syncroom.com" class="bg-white text-indigo-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition">
+                <i class="fas fa-envelope mr-2"></i> Email Support
+              </a>
+              <a href="#" class="bg-white/20 backdrop-blur text-white px-6 py-2 rounded-lg font-semibold hover:bg-white/30 transition">
+                <i class="fas fa-comments mr-2"></i> Live Chat
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
   <main class="flex-1">
     <section class="py-20 sm:py-28 hero-doodle-bg relative overflow-hidden">
         <div class="animated-orb orb-1"></div>
         <div class="animated-orb orb-2"></div>
         <div class="animated-orb orb-3"></div>
-        <div class="liquid-blob blob-1"></div>
-        <div class="liquid-blob blob-2"></div>
-        <div class="liquid-blob blob-3"></div>
         <div class="absolute inset-0 z-5 overflow-hidden">
           <span class="hero-icon icon-chat"></span>
           <span class="hero-icon icon-file"></span>
@@ -552,21 +852,12 @@
             SyncRoom is your all-in-one platform for seamless team communication. Create groups, chat in real-time, and share files securely.
           </p>
           <div class="flex justify-center items-center space-x-4 fade-in-up">
-            <% if (user) { %>
-              <a href="/groups" class="bg-green-600 text-white px-8 py-3 rounded-lg shadow-lg font-semibold text-lg liquid-button ripple-effect relative z-10 flex items-center">
-                <i class="fas fa-th-large mr-2"></i> Go to Dashboard
-              </a>
-              <a href="#features" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-8 py-3 rounded-lg font-semibold liquid-button ripple-effect relative z-10">
-                Learn More
-              </a>
-            <% } else { %>
-              <a href="/register" class="bg-indigo-600 text-white px-8 py-3 rounded-lg shadow-lg font-semibold text-lg liquid-button ripple-effect relative z-10">
-                Get Started for Free
-              </a>
-              <a href="#features" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-8 py-3 rounded-lg font-semibold liquid-button ripple-effect relative z-10">
-                Learn More
-              </a>
-            <% } %>
+            <a href="/register" class="bg-indigo-600 text-white px-8 py-3 rounded-lg shadow-lg font-semibold text-lg liquid-button ripple-effect relative z-10">
+              Get Started for Free
+            </a>
+            <a href="#features" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-8 py-3 rounded-lg font-semibold liquid-button ripple-effect relative z-10">
+              Learn More
+            </a>
           </div>
         </div>
       </div>
@@ -647,19 +938,11 @@
     <section id="cta" class="py-20 sm:py-28 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
       <div class="container mx-auto px-6 text-center">
         <div class="max-w-2xl mx-auto fade-in-up">
-          <% if (user) { %>
-            <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4 float-animation">Welcome back, <%= user.username %>!</h2>
-            <p class="text-lg text-white/90 mb-8">Jump back into your groups and continue collaborating with your team.</p>
-            <a href="/groups" class="bg-white text-green-600 px-10 py-4 rounded-lg shadow-lg font-semibold text-lg liquid-button ripple-effect flex items-center justify-center w-fit mx-auto">
-              <i class="fas fa-th-large mr-2"></i> Go to Dashboard
-            </a>
-          <% } else { %>
-            <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4 float-animation">Ready to Get Started?</h2>
-            <p class="text-lg text-white/90 mb-8">Create an account in seconds and start collaborating with your team today.</p>
-            <a href="/register" class="bg-white text-indigo-600 px-10 py-4 rounded-lg shadow-lg font-semibold text-lg inline-block liquid-button ripple-effect">
-              Sign Up Now
-            </a>
-          <% } %>
+          <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4 float-animation">Ready to Get Started?</h2>
+          <p class="text-lg text-white/90 mb-8">Create an account in seconds and start collaborating with your team today.</p>
+          <a href="/register" class="bg-white text-indigo-600 px-10 py-4 rounded-lg shadow-lg font-semibold text-lg inline-block liquid-button ripple-effect">
+            Sign Up Now
+          </a>
         </div>
       </div>
     </section>
@@ -697,6 +980,55 @@
     themeToggleBtn.addEventListener('click', () => {
       const isCurrentlyDark = document.documentElement.classList.contains('dark');
       setTheme(!isCurrentlyDark);
+    });
+    
+    // --- Modal Management ---
+    const learnBtn = document.getElementById('learn-btn');
+    const developedBtn = document.getElementById('developed-btn');
+    const helpBtn = document.getElementById('help-btn');
+    const learnModal = document.getElementById('learn-modal');
+    const developedModal = document.getElementById('developed-modal');
+    const helpModal = document.getElementById('help-modal');
+    const closeBtns = document.querySelectorAll('.close-btn');
+    
+    const openModal = (modal) => {
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    };
+    
+    const closeModal = (modal) => {
+      modal.classList.remove('active');
+      document.body.style.overflow = 'auto';
+    };
+    
+    learnBtn.addEventListener('click', () => openModal(learnModal));
+    developedBtn.addEventListener('click', () => openModal(developedModal));
+    helpBtn.addEventListener('click', () => openModal(helpModal));
+    
+    closeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const modalId = btn.getAttribute('data-modal');
+        const modal = document.getElementById(modalId);
+        closeModal(modal);
+      });
+    });
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal')) {
+        closeModal(e.target);
+      }
+    });
+    
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        [learnModal, developedModal, helpModal].forEach(modal => {
+          if (modal.classList.contains('active')) {
+            closeModal(modal);
+          }
+        });
+      }
     });
     
     // --- Ripple Effect on Click ---
