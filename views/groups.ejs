@@ -32,7 +32,7 @@
     .group-avatar {
       width: 48px;
       height: 48px;
-      border-radius: 16px; /* Squircle shape */
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -41,12 +41,145 @@
       color: white;
     }
     .tab-btn.active-tab {
-        color: #4f46e5; /* indigo-600 */
-        background-color: #eef2ff; /* indigo-50 */
+        color: #4f46e5;
+        background-color: #eef2ff;
     }
     .dark .tab-btn.active-tab {
-        color: #c7d2fe; /* indigo-200 */
-        background-color: #3730a3; /* indigo-800 */
+        color: #c7d2fe;
+        background-color: #3730a3;
+    }
+    
+    /* --- Watery/Liquid Button Effects --- */
+    @keyframes water-wave {
+      0% { transform: translateX(-100%) translateY(-50%) rotate(0deg); }
+      100% { transform: translateX(100%) translateY(-50%) rotate(360deg); }
+    }
+    
+    @keyframes ripple {
+      0% { transform: scale(0); opacity: 1; }
+      100% { transform: scale(4); opacity: 0; }
+    }
+    
+    .liquid-button {
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+    }
+    
+    .liquid-button::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.6);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    
+    .liquid-button:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+    
+    .liquid-button::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      animation: water-wave 3s linear infinite;
+    }
+    
+    .liquid-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5), 0 8px 10px -6px rgba(99, 102, 241, 0.4);
+    }
+    
+    .liquid-button:active {
+      transform: translateY(0);
+    }
+    
+    .ripple-effect {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.6);
+      animation: ripple 0.6s ease-out;
+      pointer-events: none;
+    }
+    
+    /* Glass Morphism */
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .dark .glass-effect {
+      background: rgba(17, 24, 39, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Water Card Effect */
+    .water-card {
+      position: relative;
+      overflow: hidden;
+      transition: all 0.5s cubic-bezier(0.23, 1, 0.320, 1);
+    }
+    
+    .water-card::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+      transform: translate(-50%, -50%);
+      transition: width 0.8s ease-out, height 0.8s ease-out;
+    }
+    
+    .water-card:hover::before {
+      width: 500px;
+      height: 500px;
+    }
+    
+    .water-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.4);
+    }
+    
+    /* Floating Animation */
+    @keyframes float-gentle {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(2deg); }
+    }
+    
+    .float-animation {
+      animation: float-gentle 4s ease-in-out infinite;
+    }
+    
+    /* Animated Background */
+    @keyframes gradient-shift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    
+    .animated-gradient {
+      background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #4facfe);
+      background-size: 400% 400%;
+      animation: gradient-shift 15s ease infinite;
     }
   </style>
 </head>
@@ -79,10 +212,10 @@
           </span>
           <input type="text" id="searchInput" placeholder="Search your groups..." class="w-full pl-12 pr-4 py-3 rounded-full text-gray-900 dark:text-white bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-all duration-300">
         </div>
-        <button id="open-modal-btn" class="w-full sm:w-auto flex-shrink-0 bg-indigo-600 text-white px-6 py-3 rounded-full shadow-md flex items-center justify-center font-semibold hover:bg-indigo-700 transition-transform hover:scale-105">
+        <button id="open-modal-btn" class="w-full sm:w-auto flex-shrink-0 bg-indigo-600 text-white px-6 py-3 rounded-full shadow-md flex items-center justify-center font-semibold liquid-button ripple-effect">
           <i class="fas fa-plus mr-2"></i> Create or Join
         </button>
-        <a href="/ai-chat" class="w-full sm:w-auto flex-shrink-0 bg-purple-600 text-white px-6 py-3 rounded-full shadow-md flex items-center justify-center font-semibold hover:bg-purple-700 transition-transform hover:scale-105">
+        <a href="/ai-chat" class="w-full sm:w-auto flex-shrink-0 bg-purple-600 text-white px-6 py-3 rounded-full shadow-md flex items-center justify-center font-semibold liquid-button ripple-effect">
             <i class="fas fa-robot mr-2"></i> Chat with AI
         </a>
       </div>
@@ -95,7 +228,7 @@
           <i class="fas fa-users text-5xl text-gray-400 dark:text-gray-500 mb-4"></i>
           <h2 class="text-2xl font-bold text-gray-700 dark:text-gray-300">Your Dashboard is Empty</h2>
           <p class="text-gray-500 dark:text-gray-400 mt-2">Create a new group or join an existing one to start collaborating.</p>
-          <button id="open-modal-btn-empty" class="mt-6 bg-indigo-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-indigo-700 transition-transform hover:scale-105">
+          <button id="open-modal-btn-empty" class="mt-6 bg-indigo-600 text-white px-6 py-3 rounded-full font-semibold liquid-button ripple-effect">
             Get Started
           </button>
         </div>
@@ -105,10 +238,10 @@
           groups.forEach((group, index) => { 
             const colorClass = colors[Math.abs(group.name.charCodeAt(0)) % colors.length];
         %>
-          <div class="group-card bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl border border-gray-200 dark:border-gray-700 p-6 flex flex-col transition-all duration-300 hover:-translate-y-1.5 transform animate-fade-in-up" data-index="<%= index %>">
+          <div class="group-card bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col animate-fade-in-up water-card glass-effect" data-index="<%= index %>">
             <div class="flex-grow">
               <div class="flex items-center space-x-4 mb-4">
-                <div class="group-avatar <%= colorClass %>">
+                <div class="group-avatar <%= colorClass %> float-animation">
                   <%= group.name.charAt(0).toUpperCase() %>
                 </div>
                 <div>
@@ -118,7 +251,7 @@
               </div>
               <p class="text-gray-600 dark:text-gray-400 text-sm mb-6 line-clamp-2">A collaborative space for your team to share ideas and files.</p>
             </div>
-            <a href="/chat/<%= group.id %>" class="text-center w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105">
+            <a href="/chat/<%= group.id %>" class="text-center w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md liquid-button ripple-effect">
               Enter Chat <i class="fas fa-arrow-right ml-2"></i>
             </a>
           </div>
@@ -148,7 +281,7 @@
           <form action="/groups/create" method="POST" class="space-y-4">
             <input type="text" name="name" placeholder="Group Name" class="w-full p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
             <input type="password" name="key" placeholder="Group Key (Password)" class="w-full p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
-            <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-md hover:shadow-lg transform hover:-translate-y-0.5">Create Group</button>
+            <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold shadow-md liquid-button ripple-effect">Create Group</button>
           </form>
         </div>
         
@@ -158,7 +291,7 @@
           <form action="/groups/join" method="POST" class="space-y-4">
             <input type="text" name="name" placeholder="Group Name" class="w-full p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
             <input type="password" name="key" placeholder="Group Key (Password)" class="w-full p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
-            <button type="submit" class="w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition-colors shadow-md hover:shadow-lg transform hover:-translate-y-0.5">Join Group</button>
+            <button type="submit" class="w-full bg-green-500 text-white py-3 rounded-lg font-semibold shadow-md liquid-button ripple-effect">Join Group</button>
           </form>
         </div>
       </div>
@@ -254,7 +387,32 @@
             const index = parseInt(el.dataset.index, 10);
             el.style.animationDelay = `${index * 100}ms`;
         });
+        
+        // --- Ripple Effect on Click ---
+        document.addEventListener('click', function(e) {
+          const target = e.target.closest('.ripple-effect');
+          if (!target) return;
+          
+          const ripple = document.createElement('span');
+          ripple.classList.add('ripple');
+          
+          const rect = target.getBoundingClientRect();
+          const size = Math.max(rect.width, rect.height);
+          const x = e.clientX - rect.left - size / 2;
+          const y = e.clientY - rect.top - size / 2;
+          
+          ripple.style.width = ripple.style.height = size + 'px';
+          ripple.style.left = x + 'px';
+          ripple.style.top = y + 'px';
+          
+          target.appendChild(ripple);
+          
+          setTimeout(() => {
+            ripple.remove();
+          }, 600);
+        });
     });
   </script>
 </body>
 </html>
+
