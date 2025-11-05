@@ -27,67 +27,41 @@
       transform: translateY(0);
     }
     
-    /* Staggered delays for feature cards */
     .features-grid .fade-in-up:nth-child(1) { transition-delay: 0.1s; }
     .features-grid .fade-in-up:nth-child(2) { transition-delay: 0.2s; }
     .features-grid .fade-in-up:nth-child(3) { transition-delay: 0.3s; }
 
-    /* Hero heading staggered delays */
     .hero-content .fade-in-up:nth-child(1) { transition-delay: 0.1s; }
     .hero-content .fade-in-up:nth-child(2) { transition-delay: 0.2s; }
     .hero-content .fade-in-up:nth-child(3) { transition-delay: 0.3s; }
 
 
-    /* --- Hero Animated Background --- */
-    .hero-animated-bg {
-      background: linear-gradient(135deg, 
-        theme('colors.indigo.50') 0%, 
-        theme('colors.purple.50') 25%,
-        theme('colors.gray.50') 50%,
-        theme('colors.indigo.50') 75%,
-        theme('colors.purple.50') 100%
-      );
-      background-size: 400% 400%;
-      animation: gradient-flow 15s ease infinite;
+    /* --- Moving Doodle Background --- */
+    @keyframes move-doodles {
+      0% {
+        background-position: 0 0;
+      }
+      100% {
+        /* This large value ensures a long, slow, non-repeating drift */
+        background-position: 1000px 1000px;
+      }
     }
 
-    .dark .hero-animated-bg {
-      background: linear-gradient(135deg, 
-        theme('colors.gray.900') 0%, 
-        theme('colors.indigo.900') 25%,
-        theme('colors.gray.800') 50%,
-        theme('colors.purple.900') 75%,
-        theme('colors.gray.900') 100%
-      );
-      background-size: 400% 400%;
-      animation: gradient-flow 15s ease infinite;
+    /* Light Mode Doodle Background */
+    .hero-doodle-bg {
+      background-color: #F9FAFB; /* bg-gray-50 */
+      /* URL for the LIGHT pattern */
+      background-image: url('https://res.cloudinary.com/abhisheks-cloud/image/upload/v1730873178/syncroom_assets/bg-doodle-light_wscqgq.png');
+      background-repeat: repeat;
+      background-size: 400px; /* Controls the size of the doodles */
+      animation: move-doodles 120s linear infinite;
     }
 
-    @keyframes gradient-flow {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    /* --- Floating Blobs --- */
-    @keyframes float {
-      0% { transform: translateY(0) translateX(0) rotate(0deg); }
-      50% { transform: translateY(-20px) translateX(10px) rotate(180deg); }
-      100% { transform: translateY(0) translateX(0) rotate(360deg); }
-    }
-
-    @keyframes float-delay {
-      0% { transform: translateY(0) translateX(0) rotate(0deg); }
-      50% { transform: translateY(15px) translateX(-10px) rotate(-180deg); }
-      100% { transform: translateY(0) translateX(0) rotate(-360deg); }
-    }
-
-    .animate-float {
-      animation: float 12s ease-in-out infinite;
-    }
-    
-    .animate-float-delay {
-      animation: float-delay 15s ease-in-out infinite;
+    /* Dark Mode Doodle Background */
+    .dark .hero-doodle-bg {
+      background-color: #111827; /* bg-gray-900 */
+      /* URL for the DARK pattern (like your screenshot) */
+      background-image: url('https://res.cloudinary.com/abhisheks-cloud/image/upload/v1730873177/syncroom_assets/bg-doodle-dark_gkbxke.png');
     }
 
     /* Fix for loader animation */
@@ -124,11 +98,8 @@
   </nav>
 
   <main class="flex-1">
-    <section class="py-20 sm:py-28 hero-animated-bg relative overflow-hidden">
+    <section class="py-20 sm:py-28 hero-doodle-bg relative overflow-hidden">
         
-        <div class="absolute top-1/4 left-1/4 w-72 h-72 bg-indigo-300/30 dark:bg-indigo-800/30 rounded-full filter blur-xl opacity-70 animate-float z-0"></div>
-        <div class="absolute bottom-1/4 right-1/4 w-56 h-56 bg-purple-300/30 dark:bg-purple-800/30 rounded-full filter blur-xl opacity-70 animate-float-delay z-0"></div>
-
       <div class="container mx-auto px-6 text-center relative z-10">
         <div class="max-w-3xl mx-auto hero-content">
           <h1 class="text-4xl sm:text-6xl font-extrabold text-gray-900 dark:text-white mb-4 fade-in-up">Connect & Collaborate Instantly</h1>
