@@ -13,7 +13,159 @@
       font-family: 'Inter', sans-serif; 
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      position: relative;
+      overflow: hidden;
     }
+    
+    /* ===== ANIMATED BACKGROUND ORBS ===== */
+    .animated-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    
+    .animated-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      animation-timing-function: ease-in-out;
+      animation-iteration-count: infinite;
+      will-change: transform;
+    }
+    
+    .dark .animated-orb {
+      opacity: 0.08;
+      filter: blur(100px);
+    }
+    
+    @keyframes float-orb-1 {
+      0%, 100% { 
+        transform: translate(0, 0) scale(1);
+      }
+      25% { 
+        transform: translate(100px, -80px) scale(1.1);
+      }
+      50% { 
+        transform: translate(200px, 50px) scale(0.9);
+      }
+      75% { 
+        transform: translate(80px, 120px) scale(1.05);
+      }
+    }
+    
+    @keyframes float-orb-2 {
+      0%, 100% { 
+        transform: translate(0, 0) scale(1) rotate(0deg);
+      }
+      33% { 
+        transform: translate(-120px, 100px) scale(1.15) rotate(120deg);
+      }
+      66% { 
+        transform: translate(-80px, -90px) scale(0.85) rotate(240deg);
+      }
+    }
+    
+    @keyframes float-orb-3 {
+      0%, 100% { 
+        transform: translate(0, 0) scale(1);
+      }
+      20% { 
+        transform: translate(150px, 90px) scale(1.2);
+      }
+      40% { 
+        transform: translate(100px, -120px) scale(0.8);
+      }
+      60% { 
+        transform: translate(-110px, -60px) scale(1.1);
+      }
+      80% { 
+        transform: translate(-90px, 100px) scale(0.9);
+      }
+    }
+    
+    .orb-1 {
+      width: 500px;
+      height: 500px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      top: -10%;
+      left: -10%;
+      animation: float-orb-1 35s infinite;
+    }
+    
+    .orb-2 {
+      width: 400px;
+      height: 400px;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      top: 30%;
+      right: -5%;
+      animation: float-orb-2 28s infinite;
+      animation-delay: -5s;
+    }
+    
+    .orb-3 {
+      width: 450px;
+      height: 450px;
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      bottom: -10%;
+      left: 10%;
+      animation: float-orb-3 40s infinite;
+      animation-delay: -10s;
+    }
+    
+    .orb-4 {
+      width: 350px;
+      height: 350px;
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+      bottom: 20%;
+      right: 15%;
+      animation: float-orb-1 32s infinite reverse;
+      animation-delay: -15s;
+    }
+    
+    /* ===== FLOATING PARTICLES ===== */
+    @keyframes particle-float {
+      0% {
+        transform: translateY(0) translateX(0) rotate(0deg);
+        opacity: 0;
+      }
+      10% {
+        opacity: 0.6;
+      }
+      90% {
+        opacity: 0.3;
+      }
+      100% {
+        transform: translateY(-100vh) translateX(50px) rotate(360deg);
+        opacity: 0;
+      }
+    }
+    
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.8) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: particle-float linear infinite;
+    }
+    
+    .dark .particle {
+      background: radial-gradient(circle, rgba(147, 197, 253, 0.5) 0%, transparent 70%);
+    }
+    
+    /* Content wrapper to ensure everything is above background */
+    .content-wrapper {
+      position: relative;
+      z-index: 1;
+    }
+    
     .message-bubble { animation: slideIn 0.3s ease-out forwards; }
     @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     
@@ -226,7 +378,15 @@
 
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white h-screen overflow-hidden">
 
-  <div class="h-full flex">
+  <!-- Animated Background -->
+  <div class="animated-background">
+    <div class="animated-orb orb-1"></div>
+    <div class="animated-orb orb-2"></div>
+    <div class="animated-orb orb-3"></div>
+    <div class="animated-orb orb-4"></div>
+  </div>
+
+  <div class="h-full flex content-wrapper">
       
       <!-- Sidebar -->
       <aside id="chat-sidebar" class="sidebar flex flex-col bg-white dark:bg-gray-800">
@@ -504,6 +664,36 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // === CREATE FLOATING PARTICLES ===
+      function createParticles() {
+        const background = document.querySelector('.animated-background');
+        const particleCount = 15; // Subtle amount - won't overwhelm
+        
+        for (let i = 0; i < particleCount; i++) {
+          const particle = document.createElement('div');
+          particle.classList.add('particle');
+          
+          // Random horizontal position
+          particle.style.left = Math.random() * 100 + '%';
+          
+          // Random delay for staggered effect
+          particle.style.animationDelay = Math.random() * 20 + 's';
+          
+          // Random duration between 15-30 seconds
+          particle.style.animationDuration = (15 + Math.random() * 15) + 's';
+          
+          // Vary particle size slightly
+          const size = 3 + Math.random() * 3;
+          particle.style.width = size + 'px';
+          particle.style.height = size + 'px';
+          
+          background.appendChild(particle);
+        }
+      }
+      
+      // Initialize particles
+      createParticles();
+      
       // === RIPPLE EFFECT ===
       document.addEventListener('click', function(e) {
         const target = e.target.closest('.ripple-effect');
