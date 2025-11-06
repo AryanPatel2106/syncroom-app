@@ -82,6 +82,7 @@ const upload = multer({
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/video', express.static(path.join(__dirname, 'video')));
 app.set('view engine', 'ejs');
 
 // Root route - redirect authenticated users to /home, otherwise to /login
