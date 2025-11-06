@@ -819,6 +819,47 @@
         }
       });
       
+      // === AI ASSISTANT GLOBAL FUNCTIONS ===
+      // Define these here so they have access to socket, groupId, userId, aiPopup, aiResultContainer
+      window.copyImprovedText = function(text, btn) {
+        navigator.clipboard.writeText(text).then(() => {
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '<i class="fas fa-check mr-1"></i>Copied!';
+          setTimeout(() => {
+            btn.innerHTML = originalHTML;
+          }, 2000);
+        }).catch(err => {
+          console.error('Copy failed:', err);
+          alert('Failed to copy text');
+        });
+      };
+      
+      window.sendImprovedText = function(text, btn) {
+        try {
+          // Send the improved text to the group
+          socket.emit('chatMessage', { 
+            groupId, 
+            userId, 
+            message: text
+          });
+          
+          // Close the popup
+          aiPopup.classList.remove('active');
+          
+          // Clear the result
+          aiResultContainer.innerHTML = '';
+          
+          // Show success feedback
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '<i class="fas fa-check mr-1"></i>Sent!';
+          btn.classList.add('opacity-50', 'cursor-not-allowed');
+          btn.disabled = true;
+        } catch (error) {
+          console.error('Error sending improved text:', error);
+          alert('Failed to send message. Please try again.');
+        }
+      };
+      
       // === RIPPLE EFFECT ===
       document.addEventListener('click', function(e) {
         const target = e.target.closest('.ripple-effect');
@@ -848,51 +889,6 @@
       const userId = "<%= user.id %>";
       const userUsername = "<%= user.username %>";
       const userRole = "<%= userRole %>";
-
-      // === AI ASSISTANT GLOBAL FUNCTIONS ===
-      // These must be defined after socket, groupId, userId are available
-      window.copyImprovedText = function(text, btn) {
-        navigator.clipboard.writeText(text).then(() => {
-          const originalHTML = btn.innerHTML;
-          btn.innerHTML = '<i class="fas fa-check mr-1"></i>Copied!';
-          setTimeout(() => {
-            btn.innerHTML = originalHTML;
-          }, 2000);
-        });
-      };
-      
-      window.sendImprovedText = function(text, btn) {
-        try {
-          // Send the improved text to the group
-          socket.emit('chatMessage', { 
-            groupId, 
-            userId, 
-            message: text
-          });
-          
-          // Close the popup
-          const aiPopup = document.getElementById('ai-assistant-popup');
-          const aiResultContainer = document.getElementById('ai-result-container');
-          
-          if (aiPopup) {
-            aiPopup.classList.remove('active');
-          }
-          
-          // Clear the result
-          if (aiResultContainer) {
-            aiResultContainer.innerHTML = '';
-          }
-          
-          // Show success feedback
-          const originalHTML = btn.innerHTML;
-          btn.innerHTML = '<i class="fas fa-check mr-1"></i>Sent!';
-          btn.classList.add('opacity-50', 'cursor-not-allowed');
-          btn.disabled = true;
-        } catch (error) {
-          console.error('Error sending improved text:', error);
-          alert('Failed to send message. Please try again.');
-        }
-      };
 
       // --- WebRTC Group Call (Robust Debugging Version) ---
       const videoCallContainer = document.getElementById('video-call-container');
