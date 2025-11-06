@@ -13,219 +13,42 @@
       font-family: 'Inter', sans-serif; 
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      position: relative;
-      overflow: hidden;
     }
-    
-    /* ===== ANIMATED GRADIENT BACKGROUND ===== */
-    .chat-background {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-      background-size: 400% 400%;
-      animation: gradientShift 15s ease infinite;
-      opacity: 0.03;
-    }
-    
-    .dark .chat-background {
-      opacity: 0.05;
-      background: linear-gradient(-45deg, #1a1a2e, #16213e, #0f3460, #533483);
-    }
-    
-    @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    
-    /* ===== FLOATING ORBS ===== */
-    .animated-orbs {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      overflow: hidden;
-      pointer-events: none;
-    }
-    
-    .orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(60px);
-      opacity: 0.1;
-      will-change: transform;
-    }
-    
-    .dark .orb { opacity: 0.06; filter: blur(80px); }
-    
-    @keyframes float1 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      25% { transform: translate(120px, -100px) scale(1.1); }
-      50% { transform: translate(240px, 60px) scale(0.9); }
-      75% { transform: translate(100px, 140px) scale(1.05); }
-    }
-    
-    @keyframes float2 {
-      0%, 100% { transform: translate(0, 0) rotate(0deg); }
-      33% { transform: translate(-140px, 120px) rotate(120deg); }
-      66% { transform: translate(-100px, -100px) rotate(240deg); }
-    }
-    
-    @keyframes float3 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      50% { transform: translate(180px, -120px) scale(1.2); }
-    }
-    
-    .orb-1 {
-      width: 500px; height: 500px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      top: -10%; left: -10%;
-      animation: float1 35s infinite ease-in-out;
-    }
-    
-    .orb-2 {
-      width: 400px; height: 400px;
-      background: linear-gradient(135deg, #f093fb, #f5576c);
-      top: 40%; right: -5%;
-      animation: float2 28s infinite ease-in-out;
-      animation-delay: -7s;
-    }
-    
-    .orb-3 {
-      width: 450px; height: 450px;
-      background: linear-gradient(135deg, #4facfe, #00f2fe);
-      bottom: -10%; left: 20%;
-      animation: float3 40s infinite ease-in-out;
-      animation-delay: -15s;
-    }
-    
-    /* ===== SPARKLE PARTICLES ===== */
-    @keyframes sparkle {
-      0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
-      50% { opacity: 1; transform: scale(1) rotate(180deg); }
-    }
-    
-    .sparkle {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      background: radial-gradient(circle, rgba(99, 102, 241, 0.8), transparent);
-      border-radius: 50%;
-      animation: sparkle 3s infinite ease-in-out;
-      pointer-events: none;
-    }
-    
-    .dark .sparkle {
-      background: radial-gradient(circle, rgba(147, 197, 253, 0.6), transparent);
-    }
-    
-    /* Content wrapper above background */
-    .content-layer {
-      position: relative;
-      z-index: 1;
-    }
-    
-    /* ===== MESSAGE BUBBLE ENHANCEMENTS ===== */
-    .message-bubble { 
-      animation: messageSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-      transition: all 0.2s ease;
-    }
-    
-    @keyframes messageSlideIn { 
-      from { 
-        opacity: 0; 
-        transform: translateY(20px) scale(0.95); 
-      } 
-      to { 
-        opacity: 1; 
-        transform: translateY(0) scale(1); 
-      } 
-    }
-    
-    .message-bubble:hover {
-      transform: translateY(-2px);
-    }
-    
-    /* Glowing message effect for new messages */
-    @keyframes messageGlow {
-      0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
-      50% { box-shadow: 0 0 20px 5px rgba(99, 102, 241, 0.2); }
-      100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
-    }
-    
-    .message-new {
-      animation: messageGlow 1.5s ease-out;
-    }
+    .message-bubble { animation: slideIn 0.3s ease-out forwards; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     
     .message-actions {
       display: none;
       position: absolute;
       top: -1rem;
-      background-color: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
+      background-color: #fff;
       border-radius: 9999px;
       padding: 0.25rem 0.5rem;
-      box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.15);
-      border: 1px solid rgba(229, 231, 235, 0.8);
-      animation: popIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 4px 12px -1px rgb(0 0 0 / 0.08);
+      border: 1px solid #e5e7eb;
     }
-    
-    @keyframes popIn {
-      0% { opacity: 0; transform: scale(0.8) translateY(5px); }
-      100% { opacity: 1; transform: scale(1) translateY(0); }
-    }
-    
     .dark .message-actions {
-      background-color: rgba(31, 41, 55, 0.95);
-      border-color: rgba(55, 65, 81, 0.8);
+      background-color: #1f2937;
+      border-color: #374151;
     }
     .message-content:hover .message-actions { display: flex; }
     .message-actions.self { right: 0.5rem; }
     .message-actions.other { left: 0.5rem; }
 
-    /* ===== ENHANCED SCROLLBAR ===== */
-    ::-webkit-scrollbar { width: 10px; }
-    ::-webkit-scrollbar-track { 
-      background: rgba(0, 0, 0, 0.03); 
-      border-radius: 10px;
-    }
-    ::-webkit-scrollbar-thumb { 
-      background: linear-gradient(180deg, #c7d2fe, #a5b4fc); 
-      border-radius: 10px;
-      transition: background 0.3s;
-    }
-    .dark ::-webkit-scrollbar-track { 
-      background: rgba(255, 255, 255, 0.03); 
-    }
-    .dark ::-webkit-scrollbar-thumb { 
-      background: linear-gradient(180deg, #4b5563, #6b7280); 
-    }
-    ::-webkit-scrollbar-thumb:hover { 
-      background: linear-gradient(180deg, #818cf8, #6366f1); 
-    }
-    .dark ::-webkit-scrollbar-thumb:hover { 
-      background: linear-gradient(180deg, #6b7280, #9ca3af); 
-    }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
+    ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+    .dark ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
 
-    /* ===== SIDEBAR ENHANCEMENTS ===== */
     .sidebar { 
-      width: 280px;
+      width: 280px; /* Slightly reduce sidebar width */
       border-right: 1px solid #e5e7eb;
       flex-shrink: 0;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      backdrop-filter: blur(10px);
-      background: rgba(255, 255, 255, 0.98);
+      transition: transform 0.3s ease-in-out;
     }
-    .dark .sidebar { 
-      border-right-color: #374151; 
-      background: rgba(17, 24, 39, 0.98);
-    }
+    .dark .sidebar { border-right-color: #374151; }
     .mobile-header, .sidebar-close-btn, .sidebar-backdrop { display: none; }
     @media (max-width: 1023px) {
       .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 40; transform: translateX(-100%); background: #fff; width: 85%; max-width: 320px; }
@@ -398,134 +221,12 @@
     .notification-pulse {
       animation: pulse-glow 2s ease-in-out infinite;
     }
-    
-    /* ===== WHATSAPP-STYLE VIDEO CALL UI ===== */
-    #video-call-container {
-      background: linear-gradient(135deg, #0d1117 0%, #1a1f2e 100%);
-      backdrop-filter: blur(20px);
-    }
-    
-    .video-call-header {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      padding: 1.5rem;
-      background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 100%);
-      z-index: 60;
-      animation: slideDownFade 0.4s ease-out;
-    }
-    
-    @keyframes slideDownFade {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .video-call-controls {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 2rem;
-      background: linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 100%);
-      z-index: 60;
-      animation: slideUpFade 0.4s ease-out;
-    }
-    
-    @keyframes slideUpFade {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .video-control-btn {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      backdrop-filter: blur(10px);
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .video-control-btn::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      transform: scale(0);
-      transition: transform 0.3s ease;
-    }
-    
-    .video-control-btn:hover::before {
-      transform: scale(1);
-    }
-    
-    .video-control-btn:active {
-      transform: scale(0.95);
-    }
-    
-    .video-control-btn.end-call {
-      width: 64px;
-      height: 64px;
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
-    }
-    
-    .video-control-btn.end-call:hover {
-      background: linear-gradient(135deg, #dc2626, #b91c1c);
-      box-shadow: 0 12px 32px rgba(239, 68, 68, 0.6);
-      transform: scale(1.05);
-    }
-    
-    .video-control-btn.toggle {
-      background: rgba(75, 85, 99, 0.8);
-    }
-    
-    .video-control-btn.toggle:hover {
-      background: rgba(55, 65, 81, 0.9);
-    }
-    
-    .video-control-btn.toggle.active {
-      background: rgba(99, 102, 241, 0.9);
-    }
-    
-    .video-tile {
-      position: relative;
-      background: #000;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      transition: all 0.3s ease;
-      animation: videoTileIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    
-    @keyframes videoTileIn {
-      from { opacity: 0; transform: scale(0.8); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    
-    .video-tile:hover {
-      box-shadow: 0 12px 48px rgba(99, 102, 241, 0.3);
-      transform: translateY(-4px);
-    }
   </style>
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white h-screen overflow-hidden">
 
-  <!-- Animated Background Layers -->
-  <div class="chat-background"></div>
-  <div class="animated-orbs">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-  </div>
-
-  <div class="h-full flex content-layer">
+  <div class="h-full flex">
       
       <!-- Sidebar -->
       <aside id="chat-sidebar" class="sidebar flex flex-col bg-white dark:bg-gray-800">
@@ -572,61 +273,17 @@
       </aside>
       <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
 
-      <!-- Video Call Container - WhatsApp Style -->
-      <div id="video-call-container" class="hidden fixed inset-0 z-50 flex-col">
-        <!-- Header -->
-        <div class="video-call-header">
-          <div class="flex items-center justify-between max-w-7xl mx-auto">
-            <div class="flex items-center space-x-3">
-              <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-                <i class="fas fa-users text-white"></i>
-              </div>
-              <div>
-                <h2 class="text-white font-bold text-lg"><%= group.name %></h2>
-                <p class="text-gray-300 text-sm" id="call-duration">00:00</p>
-              </div>
+      <!-- Video Call Container -->
+      <div id="video-call-container" class="hidden absolute inset-0 bg-gray-900/80 z-50 flex-col items-center justify-center p-4">
+        <h2 class="text-2xl font-bold text-white mb-4">Group Video Call</h2>
+        <div id="video-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl flex-grow">
+            <div class="relative">
+                <video id="local-video" autoplay muted class="w-full h-full object-cover rounded-lg bg-black"></video>
+                <div class="absolute bottom-2 left-2 bg-black/50 text-white text-sm px-2 py-1 rounded">You</div>
             </div>
-            <button id="minimize-call-btn" class="text-white hover:bg-white/10 p-2 rounded-lg transition">
-              <i class="fas fa-compress text-xl"></i>
-            </button>
-          </div>
+            <!-- Remote videos will be added here -->
         </div>
-        
-        <!-- Video Grid -->
-        <div class="flex-grow flex items-center justify-center p-4 sm:p-8">
-          <div id="video-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-7xl h-full auto-rows-fr">
-            <!-- Remote videos will be added here dynamically -->
-          </div>
-        </div>
-        
-        <!-- Local Video PIP -->
-        <div class="local-video-pip video-tile">
-          <video id="local-video" autoplay muted playsinline class="w-full h-full object-cover"></video>
-          <div class="video-label">
-            <i class="fas fa-user mr-1"></i> You
-          </div>
-        </div>
-        
-        <!-- Control Bar -->
-        <div class="video-call-controls">
-          <div class="flex items-center justify-center space-x-4">
-            <button id="toggle-mic-btn" class="video-control-btn toggle active" title="Mute/Unmute">
-              <i class="fas fa-microphone text-white text-xl"></i>
-            </button>
-            <button id="toggle-camera-btn" class="video-control-btn toggle active" title="Camera On/Off">
-              <i class="fas fa-video text-white text-xl"></i>
-            </button>
-            <button id="end-video-call-btn" class="video-control-btn end-call" title="End Call">
-              <i class="fas fa-phone-slash text-white text-xl"></i>
-            </button>
-            <button id="toggle-screen-btn" class="video-control-btn toggle" title="Share Screen">
-              <i class="fas fa-desktop text-white text-xl"></i>
-            </button>
-            <button id="more-options-btn" class="video-control-btn toggle" title="More Options">
-              <i class="fas fa-ellipsis-v text-white text-xl"></i>
-            </button>
-          </div>
-        </div>
+        <button id="end-video-call-btn" class="mt-6 bg-red-600 text-white font-bold py-2 px-6 rounded-full hover:bg-red-700 transition-colors">End Call</button>
       </div>
 
       <!-- Main Chat Area -->
@@ -847,85 +504,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // ===== CREATE ANIMATED SPARKLES =====
-      function createSparkles() {
-        const orbsContainer = document.querySelector('.animated-orbs');
-        const sparkleCount = 20;
-        
-        for (let i = 0; i < sparkleCount; i++) {
-          const sparkle = document.createElement('div');
-          sparkle.classList.add('sparkle');
-          sparkle.style.left = Math.random() * 100 + '%';
-          sparkle.style.top = Math.random() * 100 + '%';
-          sparkle.style.animationDelay = Math.random() * 3 + 's';
-          sparkle.style.animationDuration = (2 + Math.random() * 2) + 's';
-          orbsContainer.appendChild(sparkle);
-        }
-      }
-      
-      createSparkles();
-      
-      // ===== VIDEO CALL ENHANCEMENTS =====
-      let isAudioMuted = false;
-      let isVideoOff = false;
-      let callStartTime = null;
-      let callDurationInterval = null;
-      
-      function startCallTimer() {
-        callStartTime = Date.now();
-        const durationEl = document.getElementById('call-duration');
-        
-        callDurationInterval = setInterval(() => {
-          const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
-          const minutes = Math.floor(elapsed / 60);
-          const seconds = elapsed % 60;
-          durationEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-        }, 1000);
-      }
-      
-      function stopCallTimer() {
-        if (callDurationInterval) {
-          clearInterval(callDurationInterval);
-          callDurationInterval = null;
-        }
-      }
-      
-      // Toggle microphone
-      const toggleMicBtn = document.getElementById('toggle-mic-btn');
-      if (toggleMicBtn) {
-        toggleMicBtn.addEventListener('click', () => {
-          isAudioMuted = !isAudioMuted;
-          toggleMicBtn.classList.toggle('active');
-          
-          if (localStream) {
-            localStream.getAudioTracks().forEach(track => {
-              track.enabled = !isAudioMuted;
-            });
-          }
-          
-          const icon = toggleMicBtn.querySelector('i');
-          icon.className = isAudioMuted ? 'fas fa-microphone-slash text-white text-xl' : 'fas fa-microphone text-white text-xl';
-        });
-      }
-      
-      // Toggle camera
-      const toggleCameraBtn = document.getElementById('toggle-camera-btn');
-      if (toggleCameraBtn) {
-        toggleCameraBtn.addEventListener('click', () => {
-          isVideoOff = !isVideoOff;
-          toggleCameraBtn.classList.toggle('active');
-          
-          if (localStream) {
-            localStream.getVideoTracks().forEach(track => {
-              track.enabled = !isVideoOff;
-            });
-          }
-          
-          const icon = toggleCameraBtn.querySelector('i');
-          icon.className = isVideoOff ? 'fas fa-video-slash text-white text-xl' : 'fas fa-video text-white text-xl';
-        });
-      }
-      
       // === RIPPLE EFFECT ===
       document.addEventListener('click', function(e) {
         const target = e.target.closest('.ripple-effect');
@@ -1051,9 +629,6 @@
           stopWebAudioRingtone();
           videoCallContainer.classList.remove('hidden');
           videoCallContainer.classList.add('flex');
-          
-          // Start call timer
-          startCallTimer();
 
           try {
               localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -1071,10 +646,6 @@
       function endCall() {
           log('info', 'Ending call...');
           isCalling = false;
-          
-          // Stop call timer
-          stopCallTimer();
-          
           for (const peerId in peerConnections) {
               if (peerConnections[peerId]) {
                   peerConnections[peerId].close();
@@ -1159,19 +730,14 @@
           
           container = document.createElement('div');
           container.id = `video-container-${peerId}`;
-          container.className = 'video-tile';
+          container.className = 'remote-video-container relative w-full h-full bg-black rounded-lg overflow-hidden';
           
           const video = document.createElement('video');
           video.autoplay = true;
           video.playsInline = true;
           video.className = 'w-full h-full object-cover';
           
-          const label = document.createElement('div');
-          label.className = 'video-label';
-          label.innerHTML = '<i class="fas fa-user mr-1"></i> Participant';
-          
           container.appendChild(video);
-          container.appendChild(label);
           videoGrid.appendChild(container);
           video.srcObject = stream;
           log('info', `Successfully added video element for ${peerId}.`);
@@ -1428,17 +994,17 @@
         }
 
         div.innerHTML = `
-          <div class="message-bubble message-new w-full flex ${isSelf ? 'justify-end' : 'justify-start'}" data-message-id="${message.id}">
+          <div class="message-bubble w-full flex ${isSelf ? 'justify-end' : 'justify-start'}" data-message-id="${message.id}">
             <div class="relative max-w-xl message-content">
-              <div class="rounded-2xl px-4 py-3 ${isSelf ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-br-lg shadow-lg' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-lg shadow-md'}">
+              <div class="rounded-2xl px-4 py-3 ${isSelf ? 'bg-indigo-600 text-white rounded-br-lg' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-lg shadow-sm'}">
                 <div class="font-bold text-sm mb-1">${message.username}</div>
                 ${replyHTML}
                 ${messageContentHTML}
               </div>
               <div class="message-actions gap-2 text-xs text-gray-500 dark:text-gray-400 ${isSelf ? 'self' : 'other'}">
-                <button class="reply-btn hover:text-indigo-500 transition-colors" data-parent-id="${message.id}" data-parent-username="${message.username}" data-parent-message="${message.message}" title="Reply"><i class="fas fa-reply"></i></button>
-                <button class="react-btn hover:text-yellow-500 transition-colors" title="React"><i class="fas fa-smile"></i></button>
-                ${(isSelf || ['owner', 'admin'].includes(userRole)) ? `<button class="delete-btn hover:text-red-500 transition-colors" data-message-id="${message.id}" title="Delete"><i class="fas fa-trash"></i></button>` : ''}
+                <button class="reply-btn hover:text-indigo-500" data-parent-id="${message.id}" data-parent-username="${message.username}" data-parent-message="${message.message}" title="Reply"><i class="fas fa-reply"></i></button>
+                <button class="react-btn hover:text-yellow-500" title="React"><i class="fas fa-smile"></i></button>
+                ${(isSelf || ['owner', 'admin'].includes(userRole)) ? `<button class="delete-btn hover:text-red-500" data-message-id="${message.id}" title="Delete"><i class="fas fa-trash"></i></button>` : ''}
               </div>
               <div class="flex items-center gap-2 mt-1.5 px-2 text-xs text-gray-400 dark:text-gray-500 ${isSelf ? 'justify-end' : ''}">
                 <span>${new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
@@ -1447,12 +1013,6 @@
           </div>`;
         
         messageContainer.appendChild(div);
-        
-        // Remove the "new" class after animation completes
-        setTimeout(() => {
-          div.querySelector('.message-bubble').classList.remove('message-new');
-        }, 1500);
-        
         messageContainer.scrollTop = messageContainer.scrollHeight;
       }
 
