@@ -221,6 +221,159 @@
     .notification-pulse {
       animation: pulse-glow 2s ease-in-out infinite;
     }
+    
+    /* ===== CHATBOT ASSISTANT STYLES ===== */
+    .chatbot-fab {
+      position: fixed;
+      bottom: 100px;
+      right: 30px;
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 100;
+      animation: fabPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes fabPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4); }
+      50% { transform: scale(1.05); box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6); }
+    }
+    
+    .chatbot-fab:hover {
+      transform: scale(1.1) rotate(10deg);
+      box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6);
+    }
+    
+    .chatbot-fab:active {
+      transform: scale(0.95);
+    }
+    
+    .chatbot-fab i {
+      color: white;
+      font-size: 28px;
+      animation: sparkle 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes sparkle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    .chatbot-popup {
+      position: fixed;
+      bottom: 100px;
+      right: 30px;
+      width: 380px;
+      max-width: calc(100vw - 60px);
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      z-index: 99;
+      transform: translateY(20px) scale(0.9);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      overflow: hidden;
+    }
+    
+    .dark .chatbot-popup {
+      background: #1f2937;
+      border: 1px solid #374151;
+    }
+    
+    .chatbot-popup.active {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .chatbot-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 16px 20px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .chatbot-body {
+      padding: 20px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .chatbot-input-area {
+      padding: 16px 20px;
+      border-top: 1px solid #e5e7eb;
+    }
+    
+    .dark .chatbot-input-area {
+      border-top-color: #374151;
+    }
+    
+    .chatbot-result {
+      background: #f3f4f6;
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      animation: slideInResult 0.4s ease-out;
+    }
+    
+    .dark .chatbot-result {
+      background: #374151;
+    }
+    
+    @keyframes slideInResult {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .chatbot-loading {
+      display: flex;
+      gap: 6px;
+      padding: 12px;
+      justify-content: center;
+    }
+    
+    .chatbot-loading span {
+      width: 8px;
+      height: 8px;
+      background: #667eea;
+      border-radius: 50%;
+      animation: bounce 1.4s ease-in-out infinite;
+    }
+    
+    .chatbot-loading span:nth-child(1) { animation-delay: -0.32s; }
+    .chatbot-loading span:nth-child(2) { animation-delay: -0.16s; }
+    
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+    
+    @media (max-width: 768px) {
+      .chatbot-fab {
+        bottom: 80px;
+        right: 20px;
+        width: 56px;
+        height: 56px;
+      }
+      .chatbot-fab i {
+        font-size: 24px;
+      }
+      .chatbot-popup {
+        bottom: 80px;
+        right: 20px;
+        width: calc(100vw - 40px);
+      }
+    }
   </style>
 </head>
 
@@ -481,6 +634,56 @@
       </div>
   </div>
 
+  <!-- AI English Assistant Chatbot FAB & Popup -->
+  <div id="ai-assistant-fab" class="chatbot-fab" title="AI English Assistant">
+    <i class="fas fa-magic"></i>
+  </div>
+
+  <div id="ai-assistant-popup" class="chatbot-popup">
+    <div class="chatbot-header">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+          <i class="fas fa-robot"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-lg">English Assistant</h3>
+          <p class="text-xs text-white/80">Improve your text</p>
+        </div>
+      </div>
+      <button id="close-ai-assistant" class="text-white hover:bg-white/20 rounded-lg p-2 transition">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="chatbot-body">
+      <div id="ai-result-container"></div>
+      <div id="ai-loading" class="chatbot-loading hidden">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+    
+    <div class="chatbot-input-area">
+      <form id="ai-assistant-form" class="space-y-3">
+        <textarea 
+          id="ai-text-input" 
+          rows="3" 
+          class="w-full p-3 bg-gray-100 dark:bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-800 dark:text-white resize-none"
+          placeholder="Type or paste your text here..."
+        ></textarea>
+        <div class="flex gap-2">
+          <button 
+            type="submit" 
+            class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-2.5 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all font-semibold shadow-md hover:shadow-lg"
+          >
+            <i class="fas fa-check mr-2"></i>Improve & Send
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Incoming Call Modal -->
   <div id="incoming-call-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/60 backdrop-blur-sm">
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-11/12 max-w-sm m-4 p-6 text-center">
@@ -504,6 +707,151 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // ===== AI ENGLISH ASSISTANT =====
+      const aiFab = document.getElementById('ai-assistant-fab');
+      const aiPopup = document.getElementById('ai-assistant-popup');
+      const closeAiBtn = document.getElementById('close-ai-assistant');
+      const aiForm = document.getElementById('ai-assistant-form');
+      const aiTextInput = document.getElementById('ai-text-input');
+      const aiResultContainer = document.getElementById('ai-result-container');
+      const aiLoading = document.getElementById('ai-loading');
+      
+      // Toggle popup
+      aiFab.addEventListener('click', () => {
+        aiPopup.classList.toggle('active');
+      });
+      
+      closeAiBtn.addEventListener('click', () => {
+        aiPopup.classList.remove('active');
+      });
+      
+      // Close popup when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!aiPopup.contains(e.target) && !aiFab.contains(e.target)) {
+          aiPopup.classList.remove('active');
+        }
+      });
+      
+      // Handle form submission
+      aiForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const userText = aiTextInput.value.trim();
+        if (!userText) return;
+        
+        // Show loading
+        aiLoading.classList.remove('hidden');
+        aiResultContainer.innerHTML = '';
+        
+        try {
+          // Call AI to improve text
+          const response = await fetch('/api/gemini-chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message: `Please improve this English text by fixing spelling errors, grammar mistakes, and making it clearer and more professional. Only return the improved text, nothing else: "${userText}"`,
+              history: []
+            })
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to get AI response');
+          }
+          
+          // Read the streaming response
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let improvedText = '';
+          
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            improvedText += decoder.decode(value, { stream: true });
+          }
+          
+          // Hide loading
+          aiLoading.classList.add('hidden');
+          
+          // Clean up the improved text (remove quotes if AI added them)
+          improvedText = improvedText.trim().replace(/^["']|["']$/g, '');
+          
+          // Display result
+          const resultDiv = document.createElement('div');
+          resultDiv.className = 'chatbot-result';
+          resultDiv.innerHTML = `
+            <div class="flex items-start justify-between mb-2">
+              <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                <span class="font-semibold">Improved Text:</span>
+              </div>
+            </div>
+            <p class="text-gray-800 dark:text-white mb-3">${improvedText}</p>
+            <div class="flex gap-2">
+              <button onclick="copyImprovedText('${improvedText.replace(/'/g, "\\'")}', this)" class="text-xs bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 px-3 py-1.5 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-800 transition">
+                <i class="fas fa-copy mr-1"></i>Copy
+              </button>
+              <button onclick="sendImprovedText('${improvedText.replace(/'/g, "\\'")}', this)" class="text-xs bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300 px-3 py-1.5 rounded-lg hover:bg-green-200 dark:hover:bg-green-800 transition">
+                <i class="fas fa-paper-plane mr-1"></i>Send to Group
+              </button>
+            </div>
+          `;
+          
+          aiResultContainer.appendChild(resultDiv);
+          
+          // Clear input
+          aiTextInput.value = '';
+          
+        } catch (error) {
+          console.error('AI Assistant error:', error);
+          aiLoading.classList.add('hidden');
+          
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'chatbot-result bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800';
+          errorDiv.innerHTML = `
+            <div class="flex items-center text-red-600 dark:text-red-400">
+              <i class="fas fa-exclamation-circle mr-2"></i>
+              <span class="text-sm">Failed to improve text. Please try again.</span>
+            </div>
+          `;
+          aiResultContainer.appendChild(errorDiv);
+        }
+      });
+      
+      // Global functions for result buttons
+      window.copyImprovedText = function(text, btn) {
+        navigator.clipboard.writeText(text).then(() => {
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '<i class="fas fa-check mr-1"></i>Copied!';
+          setTimeout(() => {
+            btn.innerHTML = originalHTML;
+          }, 2000);
+        });
+      };
+      
+      window.sendImprovedText = function(text, btn) {
+        // Send the improved text to the group
+        socket.emit('chatMessage', { 
+          groupId, 
+          userId, 
+          message: text,
+          priority: 'high'
+        });
+        
+        // Close the popup
+        aiPopup.classList.remove('active');
+        
+        // Clear the result
+        aiResultContainer.innerHTML = '';
+        
+        // Show success feedback
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check mr-1"></i>Sent!';
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+        btn.disabled = true;
+      };
+      
       // === RIPPLE EFFECT ===
       document.addEventListener('click', function(e) {
         const target = e.target.closest('.ripple-effect');
